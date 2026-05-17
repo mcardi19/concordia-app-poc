@@ -6,7 +6,7 @@ export type TextVariant = 'heading1' | 'heading2' | 'heading3' | 'body' | 'bodyS
 
 export interface TextProps extends RNTextProps {
   variant?: TextVariant;
-  color?: 'primary' | 'secondary' | 'subtle' | 'inverse';
+  color?: 'primary' | 'secondary' | 'subtle' | 'inverse' | 'brand' | 'link';
   allowFontScaling?: boolean;
 }
 
@@ -26,7 +26,11 @@ export function Text({
         ? theme.color.text.secondary
         : color === 'subtle'
           ? theme.color.text.subtle
-          : theme.color.text.inverse;
+          : color === 'brand'
+            ? theme.color.text.brand
+            : color === 'link'
+              ? theme.color.text.link
+              : theme.color.text.inverse;
 
   return (
     <RNText
@@ -35,6 +39,9 @@ export function Text({
         {
           fontSize: typography.fontSize,
           fontWeight: typography.fontWeight,
+          lineHeight: typography.fontSize * typography.lineHeight,
+          letterSpacing: typography.letterSpacing,
+          fontFamily: typography.fontFamily,
           color: colorValue,
         },
         style,

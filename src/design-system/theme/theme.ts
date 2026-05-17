@@ -1,6 +1,5 @@
 /**
  * Theme type and theme objects built from semantic tokens.
- * Light (and optionally dark) theme; consumed via useTheme().
  */
 
 import {
@@ -8,18 +7,22 @@ import {
   semanticSpacing,
   semanticTypography,
   semanticRadius,
-  semanticElevation,
+  semanticBorderWidth,
+  semanticShadow,
   semanticMotion,
   touchTargetMinSize,
 } from '@/design-system/tokens';
+import { primitiveFontFamily } from '@/design-system/tokens/primitive';
 
 export type Theme = {
   color: typeof semanticColors;
   spacing: typeof semanticSpacing;
   typography: typeof semanticTypography;
   radius: typeof semanticRadius;
-  elevation: typeof semanticElevation;
+  borderWidth: typeof semanticBorderWidth;
+  shadow: typeof semanticShadow;
   motion: typeof semanticMotion;
+  fontFamily: typeof primitiveFontFamily;
   touchTargetMinSize: number;
 };
 
@@ -28,7 +31,9 @@ export const lightTheme: Theme = {
   spacing: semanticSpacing,
   typography: semanticTypography,
   radius: semanticRadius,
-  elevation: semanticElevation,
+  borderWidth: semanticBorderWidth,
+  shadow: semanticShadow,
   motion: semanticMotion,
+  fontFamily: primitiveFontFamily,
   touchTargetMinSize,
 };

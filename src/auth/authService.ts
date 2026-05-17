@@ -9,9 +9,14 @@ import { logger } from '@/services/logger';
 
 export const authService = {
   async login(): Promise<void> {
-    // TODO: Open OIDC discovery, auth request with PKCE, store tokens.
+    // TODO: Hub SSO WebView → tp-set-custom-vars equivalent → store real SIS token.
     logger.info('Auth: login stub');
-    useAuthStore.getState().setUser({ id: 'stub-user', email: 'user@example.com', name: 'Test User' });
+    await secureStorage.setSisToken('stub-sis-token');
+    useAuthStore.getState().setUser({
+      id: '401872231',
+      email: 'maya.okonkwo@concordia.ca',
+      name: 'Maya R. Okonkwo',
+    });
   },
 
   async logout(): Promise<void> {

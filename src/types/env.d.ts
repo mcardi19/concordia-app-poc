@@ -4,6 +4,9 @@
  */
 export type Env = {
   EXPO_PUBLIC_API_URL?: string;
+  EXPO_PUBLIC_SIS_API_URL?: string;
+  EXPO_PUBLIC_MAPS_PROXY_URL?: string;
+  EXPO_PUBLIC_HUB_SSO_URL?: string;
   EXPO_PUBLIC_OIDC_ISSUER?: string;
   EXPO_PUBLIC_OIDC_CLIENT_ID?: string;
   EXPO_PUBLIC_OIDC_REDIRECT_URI?: string;

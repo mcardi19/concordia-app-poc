@@ -29,6 +29,9 @@ export default {
     web: { favicon: './assets/favicon.png' },
     extra: {
       EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+      EXPO_PUBLIC_SIS_API_URL: process.env.EXPO_PUBLIC_SIS_API_URL,
+      EXPO_PUBLIC_MAPS_PROXY_URL: process.env.EXPO_PUBLIC_MAPS_PROXY_URL,
+      EXPO_PUBLIC_HUB_SSO_URL: process.env.EXPO_PUBLIC_HUB_SSO_URL,
       EXPO_PUBLIC_OIDC_ISSUER: process.env.EXPO_PUBLIC_OIDC_ISSUER,
       EXPO_PUBLIC_OIDC_CLIENT_ID: process.env.EXPO_PUBLIC_OIDC_CLIENT_ID,
       EXPO_PUBLIC_OIDC_REDIRECT_URI: process.env.EXPO_PUBLIC_OIDC_REDIRECT_URI,

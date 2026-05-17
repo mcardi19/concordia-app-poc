@@ -32,13 +32,15 @@ export function Input({
       <TextInput
         style={[
           {
-            borderWidth: 1,
+            borderWidth: theme.borderWidth.default,
             borderColor: error ? theme.color.error : theme.color.border,
-            borderRadius: theme.radius.md,
+            borderRadius: theme.radius.lg,
             paddingHorizontal: theme.spacing.md,
             paddingVertical: theme.spacing.sm,
             minHeight: MIN_TOUCH_TARGET_SIZE,
             fontSize: theme.typography.body.fontSize,
+            lineHeight: theme.typography.body.fontSize * theme.typography.body.lineHeight,
+            fontFamily: theme.typography.body.fontFamily,
             color: theme.color.text.primary,
             backgroundColor: theme.color.background,
           },
@@ -51,7 +53,7 @@ export function Input({
         {...textInputProps}
       />
       {error ? (
-        <Text variant="caption" color="secondary" style={{ color: theme.color.error, marginTop: theme.spacing.xs }}>
+        <Text variant="caption" style={{ color: theme.color.error, marginTop: theme.spacing.xs }}>
           {error}
         </Text>
       ) : null}

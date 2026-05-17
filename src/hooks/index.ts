@@ -1,3 +1,9 @@
 export { useAuth } from './useAuth';
 export { useApi } from './useApi';
 export { useTheme } from '@/design-system/theme';
+export { useSchedule } from './useSchedule';
+export { useGrades } from './useGrades';
+export { useAccountBalance } from './useAccountBalance';
+export { useServicesSearch } from './useServicesSearch';
+export { useFeaturedEvents } from './useFeaturedEvents';
+export { useShuttleTracker } from './useShuttleTracker';

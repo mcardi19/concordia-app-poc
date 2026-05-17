@@ -33,14 +33,12 @@ export function Button({
     <Pressable
       style={({ pressed }) => [
         {
-          backgroundColor,
-          paddingHorizontal: theme.spacing.lg,
-          paddingVertical: theme.spacing.md,
-          borderRadius: theme.radius.md,
-          minHeight: MIN_TOUCH_TARGET_SIZE,
+          backgroundColor: pressed && variant === 'primary' ? theme.color.primaryHover : backgroundColor,
+          paddingHorizontal: theme.spacing.button.paddingHorizontal,
+          height: MIN_TOUCH_TARGET_SIZE,
+          borderRadius: theme.radius.button,
           justifyContent: 'center',
           alignItems: 'center',
-          opacity: pressed ? 0.9 : 1,
         },
         typeof style === 'function' ? style({ pressed }) : style,
       ]}
