@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { MaterialSymbol, msPerson, msWbSunny } from '@/components/icons';
-import { Screen, Text, Button } from '@/components/design-system';
+import { Screen, Text } from '@/components/design-system';
 import { useCardSurface, useTheme } from '@/design-system/theme';
 import { useAuthStore } from '@/state/authStore';
 import { todayTheme } from './todayTheme';
@@ -29,7 +29,7 @@ type BriefingItem = {
   tag: string;
   title: string;
   subtitle: string;
-  left?: { type: 'thumb'; label: string } | { type: 'balance'; amount: string; label: string };
+  left?: { type: 'thumb'; label: string };
 };
 
 const BRIEFING: BriefingItem[] = [
@@ -39,13 +39,6 @@ const BRIEFING: BriefingItem[] = [
     title: 'Spring Convocation tickets open at 5 p.m.',
     subtitle: '2 tickets per graduate · Until May 3',
     left: { type: 'thumb', label: 'QUAD' },
-  },
-  {
-    id: '2',
-    tag: 'Balance',
-    title: 'Dining dollars remaining this term.',
-    subtitle: '~$6.80/day avg · Top up in Wallet',
-    left: { type: 'balance', amount: '$184', label: 'MEAL PLAN' },
   },
   {
     id: '3',
@@ -75,16 +68,7 @@ function BriefingRow({ item }: { item: BriefingItem }) {
         borderBottomColor: theme.color.borderSubtle,
       }}
     >
-      {item.left?.type === 'balance' ? (
-        <View style={{ width: 88, marginRight: theme.spacing.md, justifyContent: 'center' }}>
-          <Text variant="heading3" color="brand" style={{ fontSize: 28, lineHeight: 32 }}>
-            {item.left.amount}
-          </Text>
-          <Text variant="caption" color="brand" style={{ letterSpacing: 1 }}>
-            {item.left.label}
-          </Text>
-        </View>
-      ) : item.left?.type === 'thumb' ? (
+      {item.left?.type === 'thumb' ? (
         <View
           style={{
             width: 72,
@@ -109,7 +93,10 @@ function BriefingRow({ item }: { item: BriefingItem }) {
         >
           {item.tag}
         </Text>
-        <Text variant="body" style={{ fontWeight: '600', marginBottom: 4 }}>
+        <Text
+          variant="body"
+          style={{ fontWeight: '600', marginBottom: 4, lineHeight: 20 }}
+        >
           {item.title}
         </Text>
         <Text variant="bodySmall" color="secondary">
@@ -235,13 +222,9 @@ export function TodayScreen() {
             <Text variant="bodySmall" color="secondary">
               Prof. Imogen Ashwell
             </Text>
-            <Text variant="bodySmall" color="secondary" style={{ marginBottom: theme.spacing.md }}>
+            <Text variant="bodySmall" color="secondary">
               Whitfield Hall, Room 204
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Button style={{ marginRight: theme.spacing.sm }}>Walk · 7 min</Button>
-              <Button variant="secondary">Notes</Button>
-            </View>
           </View>
         </View>
 
@@ -257,7 +240,7 @@ export function TodayScreen() {
             Today&apos;s Briefing
           </Text>
           <Text variant="caption" color="secondary" style={{ letterSpacing: 0.8 }}>
-            Four items
+            {BRIEFING.length} items
           </Text>
         </View>
 

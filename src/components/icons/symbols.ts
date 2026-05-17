@@ -18,6 +18,9 @@ import {
   msSearch,
   msChevronRight,
   msWbSunny,
+  msDocumentScanner,
+  msMeetingRoom,
+  msBookmarks,
 } from '@material-symbols-react-native/outlined-400';
 
 export type TabSymbolPair = {
@@ -54,4 +57,11 @@ export const featureSymbols: Record<FeatureSymbolKey, MsIconDefinition> = {
   person: msPerson,
 };
 
-export { msChevronRight, msWbSunny, msPerson };
+export {
+  msChevronRight,
+  msWbSunny,
+  msPerson,
+  msDocumentScanner,
+  msMeetingRoom,
+  msBookmarks,
+};

@@ -85,7 +85,7 @@ export function ScheduleHeader({ selectedDate, viewMode, onViewModeChange }: Pro
             fontSize: 34,
             lineHeight: 40,
             fontWeight: '700',
-            color: '#C9A859',
+            color: theme.color.text.primary,
           }}
         >
           {heading.suffix}
