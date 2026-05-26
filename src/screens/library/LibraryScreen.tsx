@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Screen, Text } from '@/components/design-system';
 import {
@@ -13,9 +13,61 @@ import {
   LibraryQuickActionCard,
 } from '@/components/feature/library';
 import { useCardSurface, useTheme } from '@/design-system/theme';
+import { fetchLibraryHours, isConcordiaOpenDataConfigured } from '@/api';
+
+function formatLocalDateIso(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 export function LibraryScreen() {
   const theme = useTheme();
+  const [openDataLine, setOpenDataLine] = useState<string | null>(null);
+  const [openDataError, setOpenDataError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!__DEV__) return;
+
+    let cancelled = false;
+
+    async function loadOpenDataSmokeTest() {
+      if (!isConcordiaOpenDataConfigured()) {
+        if (!cancelled) {
+          setOpenDataError(
+            'Open Data: add CONCORDIA_OPENDATA_USER and CONCORDIA_OPENDATA_API_KEY to .env, then restart Expo.',
+          );
+        }
+        return;
+      }
+
+      const dateIso = formatLocalDateIso(new Date());
+      try {
+        const rows = await fetchLibraryHours(dateIso);
+        if (cancelled) return;
+        setOpenDataError(null);
+        console.log('[Open Data] library/hours', dateIso, rows);
+        const preview = rows
+          .slice(0, 2)
+          .map((r) => `${r.service}: ${r.text}`)
+          .join(' · ');
+        setOpenDataLine(
+          rows.length ? `Today (${dateIso}): ${rows.length} rows · ${preview}` : 'Empty response from API',
+        );
+      } catch (e: unknown) {
+        if (cancelled) return;
+        setOpenDataLine(null);
+        setOpenDataError(e instanceof Error ? e.message : 'Open Data request failed');
+      }
+    }
+
+    void loadOpenDataSmokeTest();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const loansCardStyle = useCardSurface('none', {
     paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.lg,
@@ -40,6 +92,39 @@ export function LibraryScreen() {
         >
           Library
         </Text>
+
+        {__DEV__ ? (
+          <View
+            style={{
+              marginBottom: theme.spacing.md,
+              padding: theme.spacing.md,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: theme.color.borderSubtle,
+              backgroundColor: theme.color.backgroundSubtle,
+            }}
+          >
+            <Text variant="caption" color="secondary" style={{ fontWeight: '700', marginBottom: 6 }}>
+              Open Data (dev check)
+            </Text>
+            {openDataError ? (
+              <Text variant="bodySmall" style={{ color: theme.color.error }}>
+                {openDataError}
+              </Text>
+            ) : openDataLine ? (
+              <Text variant="bodySmall" color="secondary">
+                {openDataLine}
+              </Text>
+            ) : (
+              <Text variant="bodySmall" color="secondary">
+                Loading library hours…
+              </Text>
+            )}
+            <Text variant="caption" color="subtle" style={{ marginTop: 6 }}>
+              See Metro / Expo terminal for full JSON log.
+            </Text>
+          </View>
+        ) : null}
 
         <View
           style={{

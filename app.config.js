@@ -1,5 +1,5 @@
 /**
- * Expo app config. Environment variables (EXPO_PUBLIC_*) are read at build time.
+ * Expo app config. EXPO_PUBLIC_* and root `.env` (CONCORDIA_OPENDATA_*) feed `extra`; see docs/CONCORDIA_OPEN_DATA.md.
  * For production, use EAS environment secrets; never commit secrets to the repo.
  * @see docs/CONCORDIA_APP_ARCHITECTURE.md
  */
@@ -35,6 +35,9 @@ export default {
       EXPO_PUBLIC_OIDC_ISSUER: process.env.EXPO_PUBLIC_OIDC_ISSUER,
       EXPO_PUBLIC_OIDC_CLIENT_ID: process.env.EXPO_PUBLIC_OIDC_CLIENT_ID,
       EXPO_PUBLIC_OIDC_REDIRECT_URI: process.env.EXPO_PUBLIC_OIDC_REDIRECT_URI,
+      /** Concordia Open Data (@see docs/CONCORDIA_OPEN_DATA.md) — from root .env, not EXPO_PUBLIC_ */
+      concordiaOpenDataUser: process.env.CONCORDIA_OPENDATA_USER,
+      concordiaOpenDataApiKey: process.env.CONCORDIA_OPENDATA_API_KEY,
     },
   },
 };

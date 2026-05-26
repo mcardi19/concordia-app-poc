@@ -5,6 +5,8 @@ Production-ready React Native (Expo) foundation for the Concordia institutional 
 ## Docs
 
 - **[Architecture & conventions](docs/CONCORDIA_APP_ARCHITECTURE.md)** – Stack, folder structure, design system, security, accessibility, testing, CI/CD, and technical debt to avoid.
+- **[Concordia Open Data setup](docs/CONCORDIA_OPEN_DATA.md)** – Where to put your Open Data **User** and **API Key** (`CONCORDIA_OPENDATA_*` in root `.env`), and how `src/api/concordiaOpenDataClient.ts` uses them.
+- **[Open Data schemas for design](docs/CONCORDIA_OPEN_DATA_DATA_SHAPES.md)** – Field names, TypeScript-style shapes, and quirks for each public endpoint (use with Claude Design / mock data).
 
 ## Prerequisites
 
@@ -64,4 +66,8 @@ See [docs/CONCORDIA_APP_ARCHITECTURE.md](docs/CONCORDIA_APP_ARCHITECTURE.md). Su
 
 ## Environment
 
-Use `EXPO_PUBLIC_*` for build-time config (e.g. `EXPO_PUBLIC_API_URL`). See `app.config.js` and the architecture doc. Never commit secrets.
+- Use **`EXPO_PUBLIC_*`** for public feature flags and base URLs inlined at build time. See `app.config.js` and the architecture doc.
+
+- **[Concordia Open Data API](docs/CONCORDIA_OPEN_DATA.md)**: Put your portal **User** and **Key** in a root **`.env`** file as `CONCORDIA_OPENDATA_USER` and `CONCORDIA_OPENDATA_API_KEY`, then restart Expo. Copy [.env.example](.env.example) as a starting point.
+
+Never commit secrets.

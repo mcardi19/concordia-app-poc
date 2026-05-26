@@ -3,6 +3,10 @@
  * Set via EXPO_PUBLIC_* or app.config.js / EAS secrets.
  */
 export type Env = {
+  /** Root `.env`; consumed by app.config.js (not bundled as EXPO_PUBLIC_) */
+  CONCORDIA_OPENDATA_USER?: string;
+  CONCORDIA_OPENDATA_API_KEY?: string;
+
   EXPO_PUBLIC_API_URL?: string;
   EXPO_PUBLIC_SIS_API_URL?: string;
   EXPO_PUBLIC_MAPS_PROXY_URL?: string;
