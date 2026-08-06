@@ -38,7 +38,7 @@ export function Text({
       style={[
         {
           fontSize: typography.fontSize,
-          fontWeight: typography.fontWeight,
+          // Weight is encoded in the registered font file (e.g. Inter_600SemiBold).
           lineHeight: typography.fontSize * typography.lineHeight,
           letterSpacing: typography.letterSpacing,
           fontFamily: typography.fontFamily,

@@ -2,15 +2,16 @@ import type { MsIconDefinition } from 'material-symbols-react-native';
 import {
   msHome,
   msHomeFill,
+  msCalendarMonth,
+  msCalendarMonthFill,
   msCalendarToday,
-  msCalendarTodayFill,
   msMap,
   msMapFill,
-  msMenuBook,
-  msMenuBookFill,
   msPerson,
-  msPersonFill,
   msSchool,
+  msSchoolFill,
+  msAccountCircle,
+  msAccountCircleFill,
   msAccountBalanceWallet,
   msSchedule,
   msDirectionsBus,
@@ -21,6 +22,8 @@ import {
   msDocumentScanner,
   msMeetingRoom,
   msBookmarks,
+  msSecurity,
+  msLocationOn,
 } from '@material-symbols-react-native/outlined-400';
 
 export type TabSymbolPair = {
@@ -30,10 +33,12 @@ export type TabSymbolPair = {
 
 export const tabSymbols = {
   today: { outline: msHome, filled: msHomeFill },
-  schedule: { outline: msCalendarToday, filled: msCalendarTodayFill },
+  /** Figma Tab Navigation uses calendar_month for Schedule. */
+  schedule: { outline: msCalendarMonth, filled: msCalendarMonthFill },
   campus: { outline: msMap, filled: msMapFill },
-  library: { outline: msMenuBook, filled: msMenuBookFill },
-  me: { outline: msPerson, filled: msPersonFill },
+  /** Figma Tab Navigation uses school for the fourth tab (Library). */
+  library: { outline: msSchool, filled: msSchoolFill },
+  me: { outline: msAccountCircle, filled: msAccountCircleFill },
 } as const satisfies Record<string, TabSymbolPair>;
 
 export type FeatureSymbolKey =
@@ -64,4 +69,7 @@ export {
   msDocumentScanner,
   msMeetingRoom,
   msBookmarks,
+  msSecurity,
+  msSearch,
+  msLocationOn,
 };

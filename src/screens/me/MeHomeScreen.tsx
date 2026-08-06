@@ -8,7 +8,7 @@ import {
   DegreeProgressSection,
   StudentIdCard,
 } from '@/components/feature/me';
-import { useTheme } from '@/design-system/theme';
+import { useFloatingTabBarScrollInset } from '@/navigation/FloatingTabBar';
 import { useAuthStore } from '@/state/authStore';
 import { useAccountBalance } from '@/hooks/useAccountBalance';
 import { sumAccountBalance } from '@/api/balance';
@@ -24,7 +24,7 @@ import {
 type Props = MeStackScreenProps<'MeHome'>;
 
 export function MeHomeScreen({ navigation }: Props) {
-  const theme = useTheme();
+  const tabBarInset = useFloatingTabBarScrollInset();
   const user = useAuthStore((s) => s.user);
   const { data: balanceData } = useAccountBalance();
 
@@ -59,7 +59,7 @@ export function MeHomeScreen({ navigation }: Props) {
   return (
     <Screen edges={['top']}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: theme.spacing.xl }}
+        contentContainerStyle={{ paddingBottom: tabBarInset }}
         showsVerticalScrollIndicator={false}
       >
         <AccountHeader onSettingsPress={() => navigation.navigate('Settings')} />

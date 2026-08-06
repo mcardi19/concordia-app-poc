@@ -3,6 +3,7 @@ import { ScrollView } from 'react-native';
 import { Screen, Text } from '@/components/design-system';
 import { HomeFeatureCard } from '@/components/feature';
 import { useTheme } from '@/design-system/theme';
+import { useFloatingTabBarScrollInset } from '@/navigation/FloatingTabBar';
 import type { CampusStackScreenProps } from '@/navigation/types';
 
 type Props = CampusStackScreenProps<'CampusHome'>;
@@ -36,10 +37,14 @@ const CAMPUS_FEATURES = [
 
 export function CampusHomeScreen({ navigation }: Props) {
   const theme = useTheme();
+  const tabBarInset = useFloatingTabBarScrollInset();
 
   return (
     <Screen edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: tabBarInset }}
+      >
         <Text
           variant="heading1"
           color="brand"

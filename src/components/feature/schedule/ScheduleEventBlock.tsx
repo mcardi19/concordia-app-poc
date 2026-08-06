@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, type ViewStyle } from 'react-native';
 import { Text } from '@/components/design-system';
+import { fonts } from '@/design-system/fonts';
 import { useCardSurface } from '@/design-system/theme';
 import { useTheme } from '@/design-system/theme';
 import type { ScheduleEvent, ScheduleEventStatus } from './scheduleTypes';
@@ -63,7 +64,7 @@ export function ScheduleEventBlock({ event, status, height, nowLabel, style }: P
         <Text
           variant="caption"
           color="brand"
-          style={{ fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 }}
+          style={{ fontFamily: fonts.interBold, letterSpacing: 0.5, marginBottom: 4 }}
         >
           {nowLabel}
         </Text>
@@ -80,7 +81,7 @@ export function ScheduleEventBlock({ event, status, height, nowLabel, style }: P
               fontSize: 20,
               lineHeight: 26,
               color: titleColor,
-              fontWeight: '600',
+              fontFamily: fonts.interBold,
             }}
             numberOfLines={2}
           >

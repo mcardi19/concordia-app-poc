@@ -14,7 +14,7 @@ import { EmptyState } from '@/components/feature';
 import { MOCK_SCHEDULE_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import { getDayKey, isSameDay } from '@/components/feature/schedule/scheduleUtils';
 import type { ScheduleEvent } from '@/components/feature/schedule/scheduleTypes';
-import { useTheme } from '@/design-system/theme';
+import { useFloatingTabBarScrollInset } from '@/navigation/FloatingTabBar';
 import { formatWeekMonday } from '@/api/schedule';
 
 function getMockEventsForDate(date: Date): ScheduleEvent[] {
@@ -27,7 +27,7 @@ function getMockEventsForDate(date: Date): ScheduleEvent[] {
 }
 
 export function ScheduleScreen() {
-  const theme = useTheme();
+  const tabBarInset = useFloatingTabBarScrollInset();
   const [weekMonday] = useState(() => formatWeekMonday(new Date()));
   const weekDates = useMemo(() => getWeekDates(weekMonday), [weekMonday]);
   const [selectedDate, setSelectedDate] = useState(() => weekDates[4]);
@@ -51,7 +51,7 @@ export function ScheduleScreen() {
     <Screen edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: theme.spacing.xl }}
+        contentContainerStyle={{ paddingBottom: tabBarInset }}
       >
         <ScheduleHeader
           selectedDate={selectedDate}

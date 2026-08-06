@@ -2,6 +2,7 @@ import React from 'react';
 import { FlatList } from 'react-native';
 import { Screen, Text, Card, Button } from '@/components/design-system';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feature';
+import { fonts } from '@/design-system/fonts';
 import { useAccountBalance } from '@/hooks/useAccountBalance';
 import { sumAccountBalance } from '@/api/balance';
 
@@ -40,7 +41,7 @@ export function BalanceScreen() {
             keyExtractor={(item, i) => `${item.TERM_DESCR}-${i}`}
             renderItem={({ item }) => (
               <Card elevation="low" style={{ marginBottom: 12 }}>
-                <Text variant="body" style={{ fontWeight: '600' }}>
+                <Text variant="body" style={{ fontFamily: fonts.interSemiBold }}>
                   {item.TERM_DESCR}
                 </Text>
                 <Text variant="bodySmall" color="secondary">

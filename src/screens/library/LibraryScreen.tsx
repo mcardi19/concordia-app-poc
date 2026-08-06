@@ -12,7 +12,9 @@ import {
   LibraryLoanRow,
   LibraryQuickActionCard,
 } from '@/components/feature/library';
+import { fonts } from '@/design-system/fonts';
 import { useCardSurface, useTheme } from '@/design-system/theme';
+import { useFloatingTabBarScrollInset } from '@/navigation/FloatingTabBar';
 import { fetchLibraryHours, isConcordiaOpenDataConfigured } from '@/api';
 
 function formatLocalDateIso(d: Date): string {
@@ -24,6 +26,7 @@ function formatLocalDateIso(d: Date): string {
 
 export function LibraryScreen() {
   const theme = useTheme();
+  const tabBarInset = useFloatingTabBarScrollInset();
   const [openDataLine, setOpenDataLine] = useState<string | null>(null);
   const [openDataError, setOpenDataError] = useState<string | null>(null);
 
@@ -77,14 +80,14 @@ export function LibraryScreen() {
     <Screen edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: theme.spacing.xl }}
+        contentContainerStyle={{ paddingBottom: tabBarInset }}
       >
         <Text
           variant="heading1"
           style={{
             fontSize: 32,
             lineHeight: 38,
-            fontWeight: '700',
+            fontFamily: fonts.interBold,
             color: theme.color.text.primary,
             marginTop: theme.spacing.sm,
             marginBottom: theme.spacing.sm,
@@ -104,7 +107,7 @@ export function LibraryScreen() {
               backgroundColor: theme.color.backgroundSubtle,
             }}
           >
-            <Text variant="caption" color="secondary" style={{ fontWeight: '700', marginBottom: 6 }}>
+            <Text variant="caption" color="secondary" style={{ fontFamily: fonts.interBold, marginBottom: 6 }}>
               Open Data (dev check)
             </Text>
             {openDataError ? (
@@ -192,7 +195,7 @@ export function LibraryScreen() {
           <Text
             variant="caption"
             color="brand"
-            style={{ fontWeight: '700', letterSpacing: 0.4, flexShrink: 1, textAlign: 'right', marginLeft: 8 }}
+            style={{ fontFamily: fonts.interBold, letterSpacing: 0.4, flexShrink: 1, textAlign: 'right', marginLeft: 8 }}
           >
             {CURATED_BY}
           </Text>

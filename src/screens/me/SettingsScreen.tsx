@@ -9,7 +9,8 @@ import type { MeStackScreenProps } from '@/navigation/types';
 
 type Props = MeStackScreenProps<'Settings'>;
 
-export function SettingsScreen(_props: Props) {
+export function SettingsScreen(_props: Props) { // navigation props unused on this screen
+  void _props;
   const theme = useTheme();
   const { logout, isLoading } = useAuth();
 

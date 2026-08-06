@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/design-system';
+import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 import type { ScheduleViewMode } from './scheduleTypes';
 import { formatDayHeading, formatWeekMeta } from './scheduleUtils';
@@ -42,7 +43,7 @@ export function ScheduleHeader({ selectedDate, viewMode, onViewModeChange }: Pro
                 <Text
                   variant="bodySmall"
                   style={{
-                    fontWeight: active ? '600' : '400',
+                    fontFamily: active ? fonts.interSemiBold : fonts.interRegular,
                     color: active ? theme.color.primary : theme.color.text.subtle,
                     textTransform: 'capitalize',
                   }}
@@ -73,7 +74,7 @@ export function ScheduleHeader({ selectedDate, viewMode, onViewModeChange }: Pro
           style={{
             fontSize: 34,
             lineHeight: 40,
-            fontWeight: '700',
+            fontFamily: fonts.interBold,
             color: theme.color.text.primary,
           }}
         >
@@ -84,7 +85,7 @@ export function ScheduleHeader({ selectedDate, viewMode, onViewModeChange }: Pro
           style={{
             fontSize: 34,
             lineHeight: 40,
-            fontWeight: '700',
+            fontFamily: fonts.interBold,
             color: theme.color.text.primary,
           }}
         >

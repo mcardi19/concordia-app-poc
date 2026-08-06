@@ -5,5 +5,8 @@ export {
   msChevronRight,
   msWbSunny,
   msPerson,
+  msSecurity,
+  msSearch,
+  msLocationOn,
 } from './symbols';
 export type { TabSymbolPair, FeatureSymbolKey } from './symbols';

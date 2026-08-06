@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/design-system';
+import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 import type { CuratedBook } from './libraryData';
 
@@ -30,7 +31,7 @@ export function LibraryCuratedBook({ book }: Props) {
           variant="caption"
           style={{
             color: theme.color.text.inverse,
-            fontWeight: '700',
+            fontFamily: fonts.interBold,
             lineHeight: 14,
             marginBottom: 4,
           }}

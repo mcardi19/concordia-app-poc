@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/design-system';
+import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 import type { LibraryLoan } from './libraryData';
 
@@ -43,7 +44,7 @@ export function LibraryLoanRow({ loan, onRenew }: Props) {
       </View>
 
       <View style={{ flex: 1, paddingRight: theme.spacing.sm }}>
-        <Text variant="body" style={{ fontWeight: '600', marginBottom: 2, lineHeight: 20 }}>
+        <Text variant="body" style={{ fontFamily: fonts.interSemiBold, marginBottom: 2, lineHeight: 20 }}>
           {loan.title}
         </Text>
         <Text
@@ -56,7 +57,7 @@ export function LibraryLoanRow({ loan, onRenew }: Props) {
         <Text
           variant="caption"
           style={{
-            fontWeight: '700',
+            fontFamily: fonts.interBold,
             color: loan.dueUrgent ? theme.color.primary : theme.color.text.subtle,
             letterSpacing: 0.3,
           }}
@@ -81,7 +82,7 @@ export function LibraryLoanRow({ loan, onRenew }: Props) {
         <Text
           variant="bodySmall"
           style={{
-            fontWeight: '600',
+            fontFamily: fonts.interSemiBold,
             color: loan.dueUrgent ? theme.color.primary : theme.color.text.secondary,
           }}
         >

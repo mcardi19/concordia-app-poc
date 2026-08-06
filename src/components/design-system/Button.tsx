@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, PressableProps } from 'react-native';
 import { useTheme } from '@/design-system/theme';
+import { fonts } from '@/design-system/fonts';
 import { MIN_TOUCH_TARGET_SIZE } from '@/accessibility';
 import { Text } from './Text';
 
@@ -47,7 +48,7 @@ export function Button({
       {...pressableProps}
     >
       {typeof children === 'string' ? (
-        <Text variant="body" style={{ color: textColor, fontWeight: '600' }}>
+        <Text variant="body" style={{ color: textColor, fontFamily: fonts.interSemiBold }}>
           {children}
         </Text>
       ) : (

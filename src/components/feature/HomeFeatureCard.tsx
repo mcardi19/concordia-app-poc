@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, featureSymbols, msChevronRight, type FeatureSymbolKey } from '@/components/icons';
+import { fonts } from '@/design-system/fonts';
 import { useCardSurface } from '@/design-system/theme';
 import { useTheme } from '@/design-system/theme';
 
@@ -44,7 +45,7 @@ export function HomeFeatureCard({ title, subtitle, icon, onPress }: Props) {
         <MaterialSymbol icon={featureSymbols[icon]} size={24} color={theme.color.primary} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text variant="body" style={{ fontWeight: '600' }}>
+        <Text variant="body" style={{ fontFamily: fonts.interSemiBold }}>
           {title}
         </Text>
         <Text variant="bodySmall" color="secondary">

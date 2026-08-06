@@ -1,7 +1,12 @@
 /**
  * Concordia CDS typography primitives (16px root).
  * Source: wcms-aem/.../design-tokens/typography.less
+ *
+ * `fontFamily` values are Expo Font registration keys (see `fonts/fontMap.ts`).
+ * Weight is encoded in the font file — do not pair these keys with fontWeight.
  */
+
+import { fonts } from '@/design-system/fonts';
 
 export const primitiveFontSize = {
   '025': 12,
@@ -48,12 +53,20 @@ export const primitiveLetterSpacing = {
   body: -0.28,
 } as const;
 
+/**
+ * Registered Expo Font family keys (weight baked into each file).
+ * POC: Inter for all roles (Gill Sans Nova temporarily unused).
+ */
 export const primitiveFontFamily = {
-  body: 'Inter',
-  brand: 'GillSansNova',
-  brandCondensed: 'GillSansNovaCondensed',
+  body: fonts.interRegular,
+  bodyMedium: fonts.interMedium,
+  bodySemiBold: fonts.interSemiBold,
+  bodyBold: fonts.interBold,
+  brand: fonts.interBold,
+  brandCondensed: fonts.interBold,
 } as const;
 
+/** @deprecated Prefer weight-specific `primitiveFontFamily` keys; kept for token docs. */
 export const primitiveFontWeight = {
   light: '100' as const,
   book: '400' as const,

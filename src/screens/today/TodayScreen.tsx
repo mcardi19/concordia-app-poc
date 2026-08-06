@@ -1,253 +1,119 @@
-import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
-import { MaterialSymbol, msPerson, msWbSunny } from '@/components/icons';
-import { Screen, Text } from '@/components/design-system';
-import { useCardSurface, useTheme } from '@/design-system/theme';
-import { useAuthStore } from '@/state/authStore';
+import React, { useCallback } from 'react';
+import { ScrollView, View } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
+import { Screen } from '@/components/design-system';
+import {
+  ATTENTION_ITEMS,
+  CAMPUS_TODAY,
+  LATEST_UPDATES,
+  PINNED_CHIPS,
+  TODAY_SESSION,
+  TodayAttentionList,
+  TodayCampusCarousel,
+  TodayMasthead,
+  TodayPinnedChips,
+  TodaySectionHeader,
+  TodaySessionCard,
+  TodayUpdatesCarousel,
+  type PinnedChip,
+} from '@/components/feature/today';
+import { useTheme } from '@/design-system/theme';
+import { useFloatingTabBarScrollInset } from '@/navigation/FloatingTabBar';
+import type { TodayStackScreenProps } from '@/navigation/types';
 import { todayTheme } from './todayTheme';
 
-function formatHeaderDate(date = new Date()): string {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${days[date.getDay()]} · ${months[date.getMonth()]} ${date.getDate()} · ${date.getFullYear()}`;
+type Props = TodayStackScreenProps<'Today'>;
+
+function formatMastheadDate(date = new Date()): string {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
 }
 
 function getGreeting(date = new Date()): string {
   const h = date.getHours();
-  if (h < 12) return 'Good morning,';
-  if (h < 17) return 'Good afternoon,';
-  return 'Good evening,';
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
-function firstName(fullName?: string | null): string {
-  if (!fullName) return 'there';
-  return fullName.split(' ')[0] ?? fullName;
-}
-
-type BriefingItem = {
-  id: string;
-  tag: string;
-  title: string;
-  subtitle: string;
-  left?: { type: 'thumb'; label: string };
-};
-
-const BRIEFING: BriefingItem[] = [
-  {
-    id: '1',
-    tag: 'Campus',
-    title: 'Spring Convocation tickets open at 5 p.m.',
-    subtitle: '2 tickets per graduate · Until May 3',
-    left: { type: 'thumb', label: 'QUAD' },
-  },
-  {
-    id: '3',
-    tag: 'Due tomorrow',
-    title: '"The Waves" by Virginia Woolf — renew?',
-    subtitle: 'Bellamy Library · Hold queue: 0',
-    left: { type: 'thumb', label: 'LIBRARY' },
-  },
-  {
-    id: '4',
-    tag: 'TONIGHT · 7:30',
-    title: 'Chamber Ensemble: Shostakovich & Pärt',
-    subtitle: 'Redpath Hall · Free for students',
-    left: { type: 'thumb', label: 'EVENT' },
-  },
-];
-
-function BriefingRow({ item }: { item: BriefingItem }) {
+export function TodayScreen({ navigation }: Props) {
   const theme = useTheme();
+  const tabBarInset = useFloatingTabBarScrollInset();
+  const inset = theme.spacing.screenHorizontal;
 
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        paddingVertical: theme.spacing.md,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.color.borderSubtle,
-      }}
-    >
-      {item.left?.type === 'thumb' ? (
-        <View
-          style={{
-            width: 72,
-            height: 72,
-            marginRight: theme.spacing.md,
-            backgroundColor: todayTheme.accentMuted,
-            borderRadius: theme.radius.sm,
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            padding: 6,
-          }}
-        >
-          <Text variant="caption" color="brand" style={{ fontWeight: '700', letterSpacing: 0.5 }}>
-            {item.left.label}
-          </Text>
-        </View>
-      ) : null}
-      <View style={{ flex: 1 }}>
-        <Text
-          variant="caption"
-          style={{ color: todayTheme.labelCaps, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}
-        >
-          {item.tag}
-        </Text>
-        <Text
-          variant="body"
-          style={{ fontWeight: '600', marginBottom: 4, lineHeight: 20 }}
-        >
-          {item.title}
-        </Text>
-        <Text variant="bodySmall" color="secondary">
-          {item.subtitle}
-        </Text>
-      </View>
-    </View>
+  const handleChipPress = useCallback(
+    (chip: PinnedChip) => {
+      if (!chip.tab) return;
+
+      if (chip.meRoute) {
+        navigation.dispatch(
+          CommonActions.navigate({
+            name: 'Me',
+            params: { screen: chip.meRoute },
+          }),
+        );
+        return;
+      }
+      if (chip.campusRoute) {
+        navigation.dispatch(
+          CommonActions.navigate({
+            name: 'Campus',
+            params: { screen: chip.campusRoute },
+          }),
+        );
+        return;
+      }
+      navigation.dispatch(CommonActions.navigate({ name: chip.tab }));
+    },
+    [navigation],
   );
-}
-
-export function TodayScreen() {
-  const theme = useTheme();
-  const user = useAuthStore((s) => s.user);
-  const name = firstName(user?.name);
-  const classCardStyle = useCardSurface('low', {
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-    flexDirection: 'row',
-  });
-  const briefingCardStyle = useCardSurface('none', {
-    paddingHorizontal: theme.spacing.md,
-  });
 
   return (
-    <Screen edges={['top']}>
+    <Screen
+      edges={['top']}
+      padded={false}
+      style={{ backgroundColor: todayTheme.pageBackground }}
+    >
       <ScrollView
-        contentContainerStyle={{ paddingBottom: theme.spacing.xl }}
+        contentContainerStyle={{
+          paddingBottom: tabBarInset,
+          gap: 36,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginTop: theme.spacing.sm,
-            marginBottom: theme.spacing.lg,
-          }}
-        >
-          <View>
-            <Text
-              variant="caption"
-              style={{ color: todayTheme.labelCaps, letterSpacing: 1.2, marginBottom: 6 }}
-            >
-              {formatHeaderDate()}
-            </Text>
-            <Text
-              variant="heading1"
-              color="brand"
-              style={{ fontSize: 36, lineHeight: 40, fontWeight: '700' }}
-            >
-              Concordia.
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row' }}>
-            <Pressable
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: todayTheme.accentMuted,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 10,
-              }}
-              accessibilityLabel="Appearance"
-            >
-              <MaterialSymbol icon={msWbSunny} size={20} color={theme.color.primary} />
-            </Pressable>
-            <Pressable
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: todayTheme.accentMuted,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              accessibilityLabel="Profile"
-            >
-              <MaterialSymbol icon={msPerson} size={20} color={theme.color.primary} />
-            </Pressable>
-          </View>
+        <View style={{ paddingHorizontal: inset }}>
+          <TodayMasthead greeting={getGreeting()} dateLabel={formatMastheadDate()} />
         </View>
 
-        <Text variant="caption" color="secondary" style={{ letterSpacing: 1, marginBottom: 8 }}>
-          {getGreeting()}
-        </Text>
-        <Text variant="heading2" style={{ fontSize: 26, lineHeight: 34, marginBottom: theme.spacing.lg }}>
-          {name} — your next class starts in{' '}
-          <Text variant="heading2" color="brand" style={{ fontStyle: 'italic', fontSize: 26 }}>
-            42 minutes
-          </Text>
-          .
-        </Text>
-
-        <View style={classCardStyle}>
-          <View
-            style={{
-              paddingRight: theme.spacing.md,
-              marginRight: theme.spacing.md,
-              borderRightWidth: 1,
-              borderRightColor: theme.color.borderSubtle,
-              minWidth: 72,
-            }}
-          >
-            <Text variant="heading2" color="brand" style={{ fontSize: 28, lineHeight: 32 }}>
-              2:30
-            </Text>
-            <Text variant="caption" color="secondary">
-              PM
-            </Text>
-            <Text variant="caption" color="secondary" style={{ fontStyle: 'italic', marginTop: 8 }}>
-              3:45
-            </Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text variant="caption" color="secondary" style={{ letterSpacing: 0.5, marginBottom: 4 }}>
-              ENGL 342 · LECTURE
-            </Text>
-            <Text variant="heading3" style={{ marginBottom: 6 }}>
-              The Modernist Novel
-            </Text>
-            <Text variant="bodySmall" color="secondary">
-              Prof. Imogen Ashwell
-            </Text>
-            <Text variant="bodySmall" color="secondary">
-              Whitfield Hall, Room 204
-            </Text>
-          </View>
+        <View style={{ paddingHorizontal: inset }}>
+          <TodaySessionCard session={TODAY_SESSION} />
         </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            marginBottom: theme.spacing.sm,
-          }}
-        >
-          <Text variant="heading3" style={{ fontSize: 22 }}>
-            Today&apos;s Briefing
-          </Text>
-          <Text variant="caption" color="secondary" style={{ letterSpacing: 0.8 }}>
-            {BRIEFING.length} items
-          </Text>
+        <View style={{ paddingHorizontal: inset }}>
+          <TodaySectionHeader title="Pinned" actionLabel="Edit" />
+          <TodayPinnedChips chips={PINNED_CHIPS} onChipPress={handleChipPress} />
         </View>
 
-        <View style={briefingCardStyle}>
-          {BRIEFING.map((item) => (
-            <BriefingRow key={item.id} item={item} />
-          ))}
+        <View style={{ paddingHorizontal: inset }}>
+          <TodaySectionHeader title="Needs attention" showChevron />
+          <TodayAttentionList items={ATTENTION_ITEMS} />
+        </View>
+
+        <View>
+          <View style={{ paddingHorizontal: inset }}>
+            <TodaySectionHeader title="Latest updates" showChevron />
+          </View>
+          <TodayUpdatesCarousel items={LATEST_UPDATES} />
+        </View>
+
+        <View>
+          <View style={{ paddingHorizontal: inset }}>
+            <TodaySectionHeader title="Campus today" showChevron />
+          </View>
+          <TodayCampusCarousel items={CAMPUS_TODAY} />
         </View>
       </ScrollView>
     </Screen>

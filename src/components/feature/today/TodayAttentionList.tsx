@@ -1,0 +1,109 @@
+import React from 'react';
+import { Pressable, View } from 'react-native';
+import { MaterialSymbol } from '@/components/icons';
+import { Text } from '@/components/design-system';
+import { fonts } from '@/design-system/fonts';
+import { useTheme } from '@/design-system/theme';
+import type { AttentionItem } from './todayData';
+import { todayShadowHigh } from './todayShadows';
+
+type Props = {
+  items: AttentionItem[];
+  onActionPress?: (item: AttentionItem) => void;
+};
+
+export function TodayAttentionList({ items, onActionPress }: Props) {
+  const theme = useTheme();
+
+  return (
+    <View
+      style={{
+        borderRadius: theme.radius.lg,
+        backgroundColor: theme.color.background,
+        ...todayShadowHigh,
+      }}
+    >
+      <View style={{ borderRadius: theme.radius.lg, overflow: 'hidden' }}>
+        {items.map((item, index) => (
+          <View key={item.id}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                minHeight: 44,
+                paddingHorizontal: 12,
+                paddingVertical: 12,
+                backgroundColor: theme.color.background,
+              }}
+            >
+              <View
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  backgroundColor: 'rgba(145,34,56,0.06)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <MaterialSymbol icon={item.icon} size={18} color={theme.color.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  variant="body"
+                  style={{
+                    fontFamily: fonts.interSemiBold,
+                    fontSize: 15,
+                    lineHeight: 15 * 1.2,
+                    marginBottom: 2,
+                  }}
+                >
+                  {item.title}
+                </Text>
+                <Text
+                  variant="body"
+                  color="subtle"
+                  style={{
+                    fontFamily: fonts.interRegular,
+                    fontSize: 13,
+                    lineHeight: 13 * 1.45,
+                  }}
+                  numberOfLines={1}
+                >
+                  {item.subtitle}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => onActionPress?.(item)}
+                accessibilityRole="button"
+                accessibilityLabel={item.actionLabel}
+                style={{
+                  backgroundColor: 'rgba(145,34,56,0.1)',
+                  borderRadius: 6,
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                }}
+              >
+                <Text
+                  variant="body"
+                  color="brand"
+                  style={{
+                    fontFamily: fonts.interMedium,
+                    fontSize: 13,
+                    lineHeight: 13 * 1.2,
+                  }}
+                >
+                  {item.actionLabel}
+                </Text>
+              </Pressable>
+            </View>
+            {index < items.length - 1 ? (
+              <View style={{ height: 0.5, backgroundColor: 'rgba(0,0,0,0.06)' }} />
+            ) : null}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}

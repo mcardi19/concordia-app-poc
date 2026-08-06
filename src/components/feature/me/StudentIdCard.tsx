@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/design-system';
+import { fonts } from '@/design-system/fonts';
 import { useCardSurface } from '@/design-system/theme';
 import { useTheme } from '@/design-system/theme';
 import type { StudentProfile } from '@/types/profile';
@@ -94,7 +95,7 @@ export function StudentIdCard({ profile }: Props) {
               <Text variant="caption" color="secondary">
                 ID
               </Text>
-              <Text variant="bodySmall" color="brand" style={{ fontWeight: '600' }}>
+              <Text variant="bodySmall" color="brand" style={{ fontFamily: fonts.interSemiBold }}>
                 {formatStudentId(profile.studentId)}
               </Text>
             </View>
@@ -102,7 +103,7 @@ export function StudentIdCard({ profile }: Props) {
               <Text variant="caption" color="secondary">
                 Year
               </Text>
-              <Text variant="bodySmall" color="brand" style={{ fontWeight: '600' }}>
+              <Text variant="bodySmall" color="brand" style={{ fontFamily: fonts.interSemiBold }}>
                 {profile.yearLabel}
               </Text>
             </View>
@@ -110,7 +111,7 @@ export function StudentIdCard({ profile }: Props) {
               <Text variant="caption" color="secondary">
                 Advisor
               </Text>
-              <Text variant="bodySmall" color="brand" style={{ fontWeight: '600' }}>
+              <Text variant="bodySmall" color="brand" style={{ fontFamily: fonts.interSemiBold }}>
                 {profile.advisor}
               </Text>
             </View>
