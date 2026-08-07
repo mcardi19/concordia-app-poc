@@ -22,18 +22,19 @@ export function TodayPinnedChips({ chips, onChipPress }: Props) {
           onPress={() => onChipPress?.(chip)}
           accessibilityRole="button"
           accessibilityLabel={chip.label}
-          style={{
+          style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',
             gap: theme.spacing.sm,
             backgroundColor: theme.color.background,
             borderRadius: theme.radius.full,
             paddingHorizontal: 12.5,
-            paddingVertical: 8.5,
+            paddingVertical: 10,
             borderWidth: 0.5,
             borderColor: theme.color.background,
+            transform: [{ scale: pressed ? 0.975 : 1 }],
             ...todayShadowSoft,
-          }}
+          })}
         >
           <MaterialSymbol icon={chip.icon} size={18} color={chip.iconColor} />
           <Text

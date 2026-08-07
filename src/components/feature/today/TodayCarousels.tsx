@@ -1,12 +1,14 @@
 import React from 'react';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
 import type { CampusTodayItem, UpdateItem } from './todayData';
+import { todayHairlineCard } from './todaySurfaces';
 
 const UPDATE_CARD_WIDTH = 294;
+const UPDATE_IMAGE_HEIGHT = 152;
 const CAMPUS_CARD_WIDTH = 170;
-const CAROUSEL_GAP = 12;
+const CAROUSEL_GAP = 14;
 
 const horizontalCarouselProps = {
   horizontal: true as const,
@@ -51,11 +53,11 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
           style={{
             width: UPDATE_CARD_WIDTH,
             borderRadius: theme.radius.lg,
-            backgroundColor: theme.color.background,
             overflow: 'hidden',
+            ...todayHairlineCard,
           }}
         >
-          <View style={{ height: 136, width: UPDATE_CARD_WIDTH }}>
+          <View style={{ height: UPDATE_IMAGE_HEIGHT, width: UPDATE_CARD_WIDTH }}>
             <Image
               source={item.image}
               style={{ width: '100%', height: '100%' }}
@@ -64,10 +66,12 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
             <View style={{ position: 'absolute', top: 10, left: 10 }}>
               <View
                 style={{
-                  backgroundColor: theme.color.background,
+                  backgroundColor: 'rgba(255,255,255,0.92)',
                   borderRadius: 7,
                   paddingHorizontal: 9,
                   paddingVertical: 4,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: 'rgba(0,0,0,0.08)',
                 }}
               >
                 <Text
@@ -102,7 +106,7 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
               style={{
                 fontWeight: '600',
                 fontSize: 18,
-                lineHeight: 18 * 1.2,
+                lineHeight: 18 * 1.25,
                 letterSpacing: -0.4,
               }}
             >
@@ -143,8 +147,8 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
           style={{
             width: CAMPUS_CARD_WIDTH,
             borderRadius: theme.radius.lg,
-            backgroundColor: theme.color.background,
             overflow: 'hidden',
+            ...todayHairlineCard,
           }}
         >
           <Image
@@ -157,8 +161,8 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
               variant="body"
               style={{
                 fontWeight: '600',
-                fontSize: 16,
-                lineHeight: 16 * 1.2,
+                fontSize: 17,
+                lineHeight: 17 * 1.2,
                 letterSpacing: -0.4,
               }}
             >
@@ -169,8 +173,8 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
               color="subtle"
               style={{
                 fontWeight: '400',
-                fontSize: 13,
-                lineHeight: 13 * 1.45,
+                fontSize: 14,
+                lineHeight: 14 * 1.45,
                 marginTop: 4,
               }}
             >

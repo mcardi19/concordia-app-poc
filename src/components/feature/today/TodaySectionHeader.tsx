@@ -26,10 +26,10 @@ export function TodaySectionHeader({
       <Text
         variant="body"
         style={{
-          fontWeight: '700',
+          fontWeight: '600',
           fontSize: 22,
           lineHeight: 22,
-          letterSpacing: -0.4,
+          letterSpacing: -0.55,
           ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
         }}
       >
@@ -70,10 +70,10 @@ export function TodaySectionHeader({
             variant="caption"
             color="brand"
             style={{
-              fontWeight: '500',
-              letterSpacing: 0.2,
-              fontSize: 11,
-              lineHeight: 11 * 1.2,
+              fontWeight: '600',
+              letterSpacing: -0.1,
+              fontSize: 14,
+              lineHeight: 22,
             }}
           >
             {actionLabel}

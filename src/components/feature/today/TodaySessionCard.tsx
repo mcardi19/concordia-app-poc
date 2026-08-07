@@ -6,7 +6,7 @@ import { MaterialSymbol, msLocationOn } from '@/components/icons';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
 import type { TodaySession } from './todayData';
-import { todayShadowBrandButton, todayShadowMedium } from './todayShadows';
+import { todayShadowMedium } from './todayShadows';
 
 type Props = {
   session: TodaySession;
@@ -42,15 +42,15 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
               justifyContent: 'space-between',
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <PulsingStatusDot color={theme.color.success} />
               <Text
                 variant="body"
                 style={{
                   fontWeight: '500',
                   color: '#DDDDDD',
-                  fontSize: 13,
-                  lineHeight: 13 * 1.2,
+                  fontSize: 16,
+                  lineHeight: 16 * 1.2,
                 }}
               >
                 {session.statusLabel}
@@ -112,7 +112,6 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
                     paddingHorizontal: 24,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    ...todayShadowBrandButton,
                   }}
                 >
                   <Text
@@ -219,13 +218,13 @@ function PulsingStatusDot({ color }: { color: string }) {
   });
 
   return (
-    <View style={{ width: 8, height: 8, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 10, height: 10, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View
         style={{
           position: 'absolute',
-          width: 8,
-          height: 8,
-          borderRadius: 4,
+          width: 10,
+          height: 10,
+          borderRadius: 5,
           backgroundColor: color,
           opacity: haloOpacity,
           transform: [{ scale: haloScale }],
@@ -233,9 +232,9 @@ function PulsingStatusDot({ color }: { color: string }) {
       />
       <View
         style={{
-          width: 8,
-          height: 8,
-          borderRadius: 4,
+          width: 10,
+          height: 10,
+          borderRadius: 5,
           backgroundColor: color,
         }}
       />

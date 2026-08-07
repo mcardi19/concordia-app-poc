@@ -25,7 +25,12 @@ import {
   type PinnedChip,
 } from '@/components/feature/today';
 import { useTheme } from '@/design-system/theme';
-import { buildHomeExpandedLeftItems, HomeCompactTitle } from '@/navigation/HomeHeaderTitle';
+import { HomeCompactTitle, HomeLargeTitle } from '@/navigation/HomeHeaderTitle';
+import {
+  largeHomeOpacityForScroll,
+  nextTopBaseline,
+  scrollDistanceFromTop,
+} from '@/navigation/homeScrollTitle';
 import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
 import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
 import { useTabBarScrollInset } from '@/navigation/tabBarInset';
@@ -37,8 +42,6 @@ type Props = TodayStackScreenProps<'Today'>;
 /** Masthead veil turns on with scroll and stays while scrolled. */
 const GRADIENT_FADE_IN = [0, 20] as const;
 const MASTHEAD_OVERLAP = 56;
-/** Treat as “at top” within this delta of the resting offset. */
-const AT_TOP_EPSILON = 0.5;
 
 const PAGE_BG = todayTheme.pageBackground;
 const PAGE_BG_TRANSPARENT = 'rgba(247, 247, 248, 0)';
@@ -49,11 +52,10 @@ export function TodayScreen({ navigation }: Props) {
   const tabBarInset = useTabBarScrollInset();
   const inset = theme.spacing.screenHorizontal;
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [showLargeHome, setShowLargeHome] = useState(true);
-  const showLargeHomeRef = useRef(true);
-  /** Raw contentOffset.y when the list is at rest (handles inset quirks). */
-  const restOffsetYRef = useRef<number | null>(null);
   const lastTabMinimizeYRef = useRef(0);
+  const insetTopRef = useRef(0);
+  const topBaselineRef = useRef<number | null>(null);
+  const [largeHomeOpacity, setLargeHomeOpacity] = useState(1);
 
   const gradientOpacity = useMemo(
     () =>
@@ -67,12 +69,6 @@ export function TodayScreen({ navigation }: Props) {
 
   const gradientHeight = insets.top + HEADER_BAR_BUTTON_SIZE + MASTHEAD_OVERLAP;
 
-  const setLargeHomeVisible = useCallback((visible: boolean) => {
-    if (visible === showLargeHomeRef.current) return;
-    showLargeHomeRef.current = visible;
-    setShowLargeHome(visible);
-  }, []);
-
   useLayoutEffect(() => {
     if (Platform.OS !== 'ios') return;
 
@@ -84,50 +80,37 @@ export function TodayScreen({ navigation }: Props) {
       headerTitle: () => (
         <HomeCompactTitle color={theme.color.text.primary} scrollY={scrollY} />
       ),
-      // Hard-remove (not fade) so the card can never clip mid-glyph.
-      unstable_headerLeftItems: () =>
-        showLargeHome ? buildHomeExpandedLeftItems(theme.color.text.primary) : [],
+      unstable_headerLeftItems: () => [],
     });
-  }, [navigation, scrollY, showLargeHome, theme.color.text.primary]);
-
-  const onScrollBeginDrag = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      restOffsetYRef.current = event.nativeEvent.contentOffset.y;
-      // Hide immediately when the user starts scrolling down.
-      setLargeHomeVisible(false);
-    },
-    [setLargeHomeVisible],
-  );
+  }, [navigation, scrollY, theme.color.text.primary]);
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const rawY = event.nativeEvent.contentOffset.y;
-      reportTabBarScrollOffset(rawY, lastTabMinimizeYRef.current);
-      lastTabMinimizeYRef.current = rawY;
-      if (restOffsetYRef.current == null) {
-        restOffsetYRef.current = rawY;
+      const { contentOffset, contentInset, adjustedContentInset } = event.nativeEvent;
+      const reportedInset = adjustedContentInset?.top ?? contentInset?.top ?? 0;
+      if (reportedInset > 0) {
+        insetTopRef.current = reportedInset;
       }
-      const y = Math.max(0, rawY - restOffsetYRef.current);
-      scrollY.setValue(y);
-      // Only hide here — restore happens when scroll settles back at top.
-      if (y > AT_TOP_EPSILON) {
-        setLargeHomeVisible(false);
-      }
-    },
-    [scrollY, setLargeHomeVisible],
-  );
+      topBaselineRef.current = nextTopBaseline(
+        contentOffset.y,
+        topBaselineRef.current,
+      );
 
-  const onScrollSettle = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const rawY = event.nativeEvent.contentOffset.y;
-      if (restOffsetYRef.current == null) {
-        restOffsetYRef.current = rawY;
-      }
-      const y = Math.max(0, rawY - restOffsetYRef.current);
+      const y = scrollDistanceFromTop(
+        contentOffset.y,
+        insetTopRef.current,
+        topBaselineRef.current,
+      );
       scrollY.setValue(y);
-      setLargeHomeVisible(y <= AT_TOP_EPSILON);
+      const nextOpacity = largeHomeOpacityForScroll(y);
+      setLargeHomeOpacity((prev) =>
+        Math.abs(prev - nextOpacity) < 0.02 ? prev : nextOpacity,
+      );
+
+      reportTabBarScrollOffset(y, lastTabMinimizeYRef.current);
+      lastTabMinimizeYRef.current = y;
     },
-    [scrollY, setLargeHomeVisible],
+    [scrollY],
   );
 
   const handleChipPress = useCallback(
@@ -168,14 +151,11 @@ export function TodayScreen({ navigation }: Props) {
           contentContainerStyle={{
             paddingTop: theme.spacing.sm,
             paddingBottom: tabBarInset,
-            gap: 36,
+            gap: 40,
           }}
           contentInsetAdjustmentBehavior="automatic"
-          scrollEventThrottle={16}
-          onScrollBeginDrag={onScrollBeginDrag}
+          scrollEventThrottle={1}
           onScroll={onScroll}
-          onScrollEndDrag={onScrollSettle}
-          onMomentumScrollEnd={onScrollSettle}
           showsVerticalScrollIndicator={false}
         >
           <View style={{ paddingHorizontal: inset }}>
@@ -233,6 +213,27 @@ export function TodayScreen({ navigation }: Props) {
             style={{ flex: 1 }}
           />
         </Animated.View>
+
+        {Platform.OS === 'ios' && largeHomeOpacity > 0.02 ? (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: insets.top,
+              left: inset,
+              right: inset,
+              zIndex: 12,
+              height: HEADER_BAR_BUTTON_SIZE,
+              justifyContent: 'center',
+            }}
+          >
+            <HomeLargeTitle
+              color={theme.color.text.primary}
+              scrollY={scrollY}
+              opacity={largeHomeOpacity}
+            />
+          </View>
+        ) : null}
       </View>
     </Screen>
   );

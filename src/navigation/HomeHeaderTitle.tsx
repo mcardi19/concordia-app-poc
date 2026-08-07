@@ -1,21 +1,57 @@
 import React from 'react';
-import { Animated, Text as RNText, View } from 'react-native';
-import type { NativeStackHeaderItem } from '@react-navigation/native-stack';
+import { Animated, Text as RNText } from 'react-native';
 import { HEADER_BAR_BUTTON_SIZE } from './HeaderIconButton';
+import {
+  COMPACT_HOME_FADE_END,
+  COMPACT_HOME_FADE_START,
+  LARGE_HOME_FADE_END,
+} from './homeScrollTitle';
 
-type ScrollY = Animated.Value;
+type ScrollY = Animated.Value | Animated.AnimatedInterpolation<number>;
 
-/** Compact title arrives after large Home is removed. */
-const COMPACT_APPEAR_RANGE = [4, 20] as const;
+export const LARGE_HOME_FADE_RANGE = [0, LARGE_HOME_FADE_END] as const;
+export const COMPACT_HOME_FADE_RANGE = [
+  COMPACT_HOME_FADE_START,
+  COMPACT_HOME_FADE_END,
+] as const;
 
-/** Large Home in the native header — same row as the trailing actions. */
-export function HomeLargeTitle({ color }: { color: string }) {
+/**
+ * Large Home title — screen overlay.
+ * Prefer `opacity` (React state) so fade cannot stick when native Animated
+ * nodes fail to update; `scrollY` remains for translate.
+ */
+export function HomeLargeTitle({
+  color,
+  scrollY,
+  opacity: opacityProp,
+}: {
+  color: string;
+  scrollY: ScrollY;
+  /** 0–1 from scroll distance. When set, drives visibility reliably. */
+  opacity?: number;
+}) {
+  const animatedOpacity = scrollY.interpolate({
+    inputRange: [...LARGE_HOME_FADE_RANGE],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+  const translateY = scrollY.interpolate({
+    inputRange: [...LARGE_HOME_FADE_RANGE],
+    outputRange: [0, -8],
+    extrapolate: 'clamp',
+  });
+
+  const opacity = opacityProp ?? animatedOpacity;
+
   return (
-    <View
+    <Animated.View
+      pointerEvents="none"
       style={{
         height: HEADER_BAR_BUTTON_SIZE,
         justifyContent: 'center',
         overflow: 'hidden',
+        opacity,
+        transform: [{ translateY }],
       }}
     >
       <RNText
@@ -32,29 +68,25 @@ export function HomeLargeTitle({ color }: { color: string }) {
       >
         Home
       </RNText>
-    </View>
+    </Animated.View>
   );
 }
 
-export function buildHomeExpandedLeftItems(color: string): NativeStackHeaderItem[] {
-  return [
-    {
-      type: 'custom',
-      hidesSharedBackground: true,
-      element: <HomeLargeTitle color={color} />,
-    },
-  ];
-}
-
-/** Compact centred Home — fades in once large Home is gone. */
-export function HomeCompactTitle({ color, scrollY }: { color: string; scrollY: ScrollY }) {
+/** Compact centred Home — lives in the native headerTitle. */
+export function HomeCompactTitle({
+  color,
+  scrollY,
+}: {
+  color: string;
+  scrollY: ScrollY;
+}) {
   const opacity = scrollY.interpolate({
-    inputRange: [...COMPACT_APPEAR_RANGE],
+    inputRange: [...COMPACT_HOME_FADE_RANGE],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
   const translateY = scrollY.interpolate({
-    inputRange: [...COMPACT_APPEAR_RANGE],
+    inputRange: [...COMPACT_HOME_FADE_RANGE],
     outputRange: [6, 0],
     extrapolate: 'clamp',
   });
