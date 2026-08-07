@@ -12,9 +12,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "ca.concordia.app"
     },
     "android": {
+      "package": "ca.concordia.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,6 +25,7 @@
       },
       "predictiveBackGestureEnabled": false
     },
+    "plugins": ["expo-dev-client"],
     "web": {
       "favicon": "./assets/favicon.png"
     }

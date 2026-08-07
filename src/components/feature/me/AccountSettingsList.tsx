@@ -2,7 +2,6 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, msChevronRight } from '@/components/icons';
-import { fonts } from '@/design-system/fonts';
 import { useCardSurface } from '@/design-system/theme';
 import { useTheme } from '@/design-system/theme';
 import type { SettingsRow } from '@/types/profile';
@@ -39,7 +38,7 @@ export function AccountSettingsList({ rows, onRowPress }: Props) {
             accessibilityRole="button"
             accessibilityLabel={row.label}
           >
-            <Text variant="body" style={{ fontFamily: fonts.interMedium }}>
+            <Text variant="body" style={{ fontWeight: '500', }}>
               {row.label}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>

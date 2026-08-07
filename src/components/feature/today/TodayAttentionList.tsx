@@ -2,7 +2,6 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { MaterialSymbol } from '@/components/icons';
 import { Text } from '@/components/design-system';
-import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 import type { AttentionItem } from './todayData';
 import { todayShadowHigh } from './todayShadows';
@@ -53,7 +52,7 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
                 <Text
                   variant="body"
                   style={{
-                    fontFamily: fonts.interSemiBold,
+                    fontWeight: '600',
                     fontSize: 15,
                     lineHeight: 15 * 1.2,
                     marginBottom: 2,
@@ -65,7 +64,7 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
                   variant="body"
                   color="subtle"
                   style={{
-                    fontFamily: fonts.interRegular,
+                    fontWeight: '400',
                     fontSize: 13,
                     lineHeight: 13 * 1.45,
                   }}
@@ -89,7 +88,7 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
                   variant="body"
                   color="brand"
                   style={{
-                    fontFamily: fonts.interMedium,
+                    fontWeight: '500',
                     fontSize: 13,
                     lineHeight: 13 * 1.2,
                   }}

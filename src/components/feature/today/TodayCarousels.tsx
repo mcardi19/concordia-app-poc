@@ -1,7 +1,6 @@
 import React from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/components/design-system';
-import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 import type { CampusTodayItem, UpdateItem } from './todayData';
 import { todayShadowMedium, todayShadowSoft } from './todayShadows';
@@ -81,7 +80,7 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
                     <Text
                       variant="caption"
                       style={{
-                        fontFamily: fonts.interMedium,
+                        fontWeight: '500',
                         fontSize: 11,
                         lineHeight: 11 * 1.2,
                         letterSpacing: 0.2,
@@ -97,7 +96,7 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
                   variant="body"
                   color="brand"
                   style={{
-                    fontFamily: fonts.interMedium,
+                    fontWeight: '500',
                     fontSize: 13,
                     lineHeight: 13 * 1.2,
                     marginBottom: 4,
@@ -108,7 +107,7 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
                 <Text
                   variant="body"
                   style={{
-                    fontFamily: fonts.interSemiBold,
+                    fontWeight: '600',
                     fontSize: 16,
                     lineHeight: 16 * 1.2,
                     letterSpacing: -0.4,
@@ -169,7 +168,7 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
                 <Text
                   variant="body"
                   style={{
-                    fontFamily: fonts.interSemiBold,
+                    fontWeight: '600',
                     fontSize: 16,
                     lineHeight: 16 * 1.2,
                     letterSpacing: -0.4,
@@ -181,7 +180,7 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
                   variant="body"
                   color="subtle"
                   style={{
-                    fontFamily: fonts.interRegular,
+                    fontWeight: '400',
                     fontSize: 13,
                     lineHeight: 13 * 1.45,
                     marginTop: 4,

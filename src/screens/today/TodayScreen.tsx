@@ -1,5 +1,11 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { Animated, View, type LayoutChangeEvent } from 'react-native';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  Animated,
+  Platform,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +18,6 @@ import {
   TODAY_SESSION,
   TodayAttentionList,
   TodayCampusCarousel,
-  TodayMasthead,
   TodayPinnedChips,
   TodaySectionHeader,
   TodaySessionCard,
@@ -20,57 +25,110 @@ import {
   type PinnedChip,
 } from '@/components/feature/today';
 import { useTheme } from '@/design-system/theme';
-import { useFloatingTabBarScrollInset } from '@/navigation/FloatingTabBar';
+import { buildHomeExpandedLeftItems, HomeCompactTitle } from '@/navigation/HomeHeaderTitle';
+import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
+import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
+import { useTabBarScrollInset } from '@/navigation/tabBarInset';
 import type { TodayStackScreenProps } from '@/navigation/types';
 import { todayTheme } from './todayTheme';
 
 type Props = TodayStackScreenProps<'Today'>;
 
-/** Fade greeting/date out before the session card scrolls into that space. */
-const TITLE_FADE_DISTANCE = 20;
-/** Fade masthead gradient in as content scrolls underneath. */
-const GRADIENT_FADE_DISTANCE = 24;
-/** Clear space between masthead content and the session card. */
-const MASTHEAD_GAP = 20;
-/** How far the masthead gradient extends past the actions over the content. */
+/** Masthead veil turns on with scroll and stays while scrolled. */
+const GRADIENT_FADE_IN = [0, 20] as const;
 const MASTHEAD_OVERLAP = 56;
+/** Treat as “at top” within this delta of the resting offset. */
+const AT_TOP_EPSILON = 0.5;
 
 const PAGE_BG = todayTheme.pageBackground;
 const PAGE_BG_TRANSPARENT = 'rgba(247, 247, 248, 0)';
 
-function formatMastheadDate(date = new Date()): string {
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-function getGreeting(date = new Date()): string {
-  const h = date.getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
-}
-
 export function TodayScreen({ navigation }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const tabBarInset = useFloatingTabBarScrollInset();
+  const tabBarInset = useTabBarScrollInset();
   const inset = theme.spacing.screenHorizontal;
-
-  const [mastheadHeight, setMastheadHeight] = useState(0);
   const scrollY = useRef(new Animated.Value(0)).current;
-  const titleOpacity = scrollY.interpolate({
-    inputRange: [0, TITLE_FADE_DISTANCE],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-  const gradientOpacity = scrollY.interpolate({
-    inputRange: [0, GRADIENT_FADE_DISTANCE],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
+  const [showLargeHome, setShowLargeHome] = useState(true);
+  const showLargeHomeRef = useRef(true);
+  /** Raw contentOffset.y when the list is at rest (handles inset quirks). */
+  const restOffsetYRef = useRef<number | null>(null);
+  const lastTabMinimizeYRef = useRef(0);
+
+  const gradientOpacity = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [...GRADIENT_FADE_IN, 9999],
+        outputRange: [0, 1, 1],
+        extrapolate: 'clamp',
+      }),
+    [scrollY],
+  );
+
+  const gradientHeight = insets.top + HEADER_BAR_BUTTON_SIZE + MASTHEAD_OVERLAP;
+
+  const setLargeHomeVisible = useCallback((visible: boolean) => {
+    if (visible === showLargeHomeRef.current) return;
+    showLargeHomeRef.current = visible;
+    setShowLargeHome(visible);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    navigation.setOptions({
+      title: '',
+      headerTransparent: true,
+      headerShadowVisible: false,
+      headerStyle: undefined,
+      headerTitle: () => (
+        <HomeCompactTitle color={theme.color.text.primary} scrollY={scrollY} />
+      ),
+      // Hard-remove (not fade) so the card can never clip mid-glyph.
+      unstable_headerLeftItems: () =>
+        showLargeHome ? buildHomeExpandedLeftItems(theme.color.text.primary) : [],
+    });
+  }, [navigation, scrollY, showLargeHome, theme.color.text.primary]);
+
+  const onScrollBeginDrag = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      restOffsetYRef.current = event.nativeEvent.contentOffset.y;
+      // Hide immediately when the user starts scrolling down.
+      setLargeHomeVisible(false);
+    },
+    [setLargeHomeVisible],
+  );
+
+  const onScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const rawY = event.nativeEvent.contentOffset.y;
+      reportTabBarScrollOffset(rawY, lastTabMinimizeYRef.current);
+      lastTabMinimizeYRef.current = rawY;
+      if (restOffsetYRef.current == null) {
+        restOffsetYRef.current = rawY;
+      }
+      const y = Math.max(0, rawY - restOffsetYRef.current);
+      scrollY.setValue(y);
+      // Only hide here — restore happens when scroll settles back at top.
+      if (y > AT_TOP_EPSILON) {
+        setLargeHomeVisible(false);
+      }
+    },
+    [scrollY, setLargeHomeVisible],
+  );
+
+  const onScrollSettle = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const rawY = event.nativeEvent.contentOffset.y;
+      if (restOffsetYRef.current == null) {
+        restOffsetYRef.current = rawY;
+      }
+      const y = Math.max(0, rawY - restOffsetYRef.current);
+      scrollY.setValue(y);
+      setLargeHomeVisible(y <= AT_TOP_EPSILON);
+    },
+    [scrollY, setLargeHomeVisible],
+  );
 
   const handleChipPress = useCallback(
     (chip: PinnedChip) => {
@@ -99,85 +157,26 @@ export function TodayScreen({ navigation }: Props) {
     [navigation],
   );
 
-  const handleMastheadLayout = useCallback((event: LayoutChangeEvent) => {
-    setMastheadHeight(event.nativeEvent.layout.height);
-  }, []);
-
-  const handleScroll = useRef(
-    Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-      useNativeDriver: true,
-    }),
-  ).current;
-
   return (
     <Screen
       edges={[]}
       padded={false}
       style={{ backgroundColor: todayTheme.pageBackground }}
     >
-      <View style={{ flex: 1 }}>
-        <View
-          onLayout={handleMastheadLayout}
-          pointerEvents="box-none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 10,
-          }}
-        >
-          <Animated.View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              opacity: gradientOpacity,
-            }}
-          >
-            <LinearGradient
-              colors={[
-                PAGE_BG,
-                'rgba(247, 247, 248, 0.92)',
-                'rgba(247, 247, 248, 0.7)',
-                'rgba(247, 247, 248, 0.4)',
-                'rgba(247, 247, 248, 0.15)',
-                PAGE_BG_TRANSPARENT,
-              ]}
-              locations={[0, 0.22, 0.42, 0.62, 0.82, 1]}
-              style={{ flex: 1 }}
-            />
-          </Animated.View>
-          <View
-            pointerEvents="box-none"
-            style={{
-              paddingHorizontal: inset,
-              paddingTop: insets.top + theme.spacing.sm,
-              paddingBottom: MASTHEAD_GAP + MASTHEAD_OVERLAP,
-            }}
-          >
-            <TodayMasthead
-              greeting={getGreeting()}
-              dateLabel={formatMastheadDate()}
-              titleOpacity={titleOpacity}
-            />
-          </View>
-        </View>
-
+      <View style={{ flex: 1 }} collapsable={false}>
         <Animated.ScrollView
           contentContainerStyle={{
-            // Leave the gradient fade overlapping the top of the session card.
-            paddingTop:
-              Math.max((mastheadHeight || insets.top + theme.spacing.sm + 92) - MASTHEAD_OVERLAP, 0),
+            paddingTop: theme.spacing.sm,
             paddingBottom: tabBarInset,
             gap: 36,
           }}
-          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="automatic"
           scrollEventThrottle={16}
-          onScroll={handleScroll}
+          onScrollBeginDrag={onScrollBeginDrag}
+          onScroll={onScroll}
+          onScrollEndDrag={onScrollSettle}
+          onMomentumScrollEnd={onScrollSettle}
+          showsVerticalScrollIndicator={false}
         >
           <View style={{ paddingHorizontal: inset }}>
             <TodaySessionCard session={TODAY_SESSION} />
@@ -207,6 +206,33 @@ export function TodayScreen({ navigation }: Props) {
             <TodayCampusCarousel items={CAMPUS_TODAY} />
           </View>
         </Animated.ScrollView>
+
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            height: gradientHeight,
+            opacity: gradientOpacity,
+          }}
+        >
+          <LinearGradient
+            colors={[
+              PAGE_BG,
+              'rgba(247, 247, 248, 0.96)',
+              'rgba(247, 247, 248, 0.82)',
+              'rgba(247, 247, 248, 0.55)',
+              'rgba(247, 247, 248, 0.28)',
+              'rgba(247, 247, 248, 0.1)',
+              PAGE_BG_TRANSPARENT,
+            ]}
+            locations={[0, 0.22, 0.4, 0.58, 0.74, 0.88, 1]}
+            style={{ flex: 1 }}
+          />
+        </Animated.View>
       </View>
     </Screen>
   );

@@ -16,8 +16,12 @@ export default {
       resizeMode: 'contain',
       backgroundColor: '#ffffff',
     },
-    ios: { supportsTablet: true },
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: 'ca.concordia.app',
+    },
     android: {
+      package: 'ca.concordia.app',
       adaptiveIcon: {
         backgroundColor: '#E6F4FE',
         foregroundImage: './assets/android-icon-foreground.png',
@@ -27,6 +31,7 @@ export default {
       predictiveBackGestureEnabled: false,
     },
     web: { favicon: './assets/favicon.png' },
+    plugins: ['expo-dev-client'],
     extra: {
       EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
       EXPO_PUBLIC_SIS_API_URL: process.env.EXPO_PUBLIC_SIS_API_URL,

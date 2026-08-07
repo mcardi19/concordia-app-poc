@@ -8,7 +8,7 @@ import {
   primitiveSpacing,
   primitiveFontSize,
   primitiveLineHeight,
-  primitiveFontFamily,
+  primitiveFontWeight,
   primitiveRadius,
   primitiveBorderWidth,
   primitiveShadow,
@@ -73,41 +73,43 @@ export const semanticSpacing = {
 } as const;
 
 export const semanticTypography = {
+  /** Display / headings — platform default for now; Gill reserved for explicit call sites. */
   heading1: {
     fontSize: primitiveFontSize['250'],
     lineHeight: primitiveLineHeight.brandHeading,
     letterSpacing: primitiveFontSize['250'] * -0.01,
-    fontFamily: primitiveFontFamily.brand,
+    fontWeight: primitiveFontWeight.extraBold,
   },
   heading2: {
     fontSize: primitiveFontSize['200'],
     lineHeight: primitiveLineHeight.brandHeading,
     letterSpacing: primitiveFontSize['200'] * -0.01,
-    fontFamily: primitiveFontFamily.brand,
+    fontWeight: primitiveFontWeight.extraBold,
   },
   heading3: {
     fontSize: primitiveFontSize['125'],
     lineHeight: primitiveLineHeight.brandLead,
     letterSpacing: primitiveFontSize['125'] * 0.01,
-    fontFamily: primitiveFontFamily.brand,
+    fontWeight: primitiveFontWeight.bold,
   },
+  /** Interface / body — platform default font; weight via fontWeight only. */
   body: {
     fontSize: primitiveFontSize['075'],
     lineHeight: primitiveLineHeight.body,
     letterSpacing: primitiveFontSize['075'] * -0.0175,
-    fontFamily: primitiveFontFamily.body,
+    fontWeight: primitiveFontWeight.bodyRegular,
   },
   bodySmall: {
     fontSize: primitiveFontSize['050'],
     lineHeight: primitiveLineHeight.body,
     letterSpacing: primitiveFontSize['050'] * -0.0175,
-    fontFamily: primitiveFontFamily.body,
+    fontWeight: primitiveFontWeight.bodyRegular,
   },
   caption: {
     fontSize: primitiveFontSize['025'],
     lineHeight: primitiveLineHeight.label,
     letterSpacing: primitiveFontSize['025'] * -0.0175,
-    fontFamily: primitiveFontFamily.body,
+    fontWeight: primitiveFontWeight.bodyRegular,
   },
 } as const;
 

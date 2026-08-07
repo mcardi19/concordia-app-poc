@@ -2,7 +2,6 @@ import React from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import { MaterialSymbol, msChevronRightSemibold } from '@/components/icons';
 import { Text } from '@/components/design-system';
-import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 
 type Props = {
@@ -27,7 +26,7 @@ export function TodaySectionHeader({
       <Text
         variant="body"
         style={{
-          fontFamily: fonts.interSemiBold,
+          fontWeight: '600',
           fontSize: 20,
           lineHeight: 20,
           letterSpacing: -0.4,
@@ -71,7 +70,7 @@ export function TodaySectionHeader({
             variant="caption"
             color="brand"
             style={{
-              fontFamily: fonts.interMedium,
+              fontWeight: '500',
               letterSpacing: 0.2,
               fontSize: 11,
               lineHeight: 11 * 1.2,

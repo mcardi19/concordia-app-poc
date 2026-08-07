@@ -33,10 +33,13 @@ export function Screen({
   return (
     <Wrapper
       style={[{ flex: 1, backgroundColor: theme.color.background }, style]}
+      collapsable={false}
       {...safeAreaProps}
       {...rest}
     >
-      <View style={[{ flex: 1 }, insetStyle]}>{children}</View>
+      <View style={[{ flex: 1 }, insetStyle]} collapsable={false}>
+        {children}
+      </View>
     </Wrapper>
   );
 }

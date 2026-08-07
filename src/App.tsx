@@ -1,11 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from '@/design-system/theme';
+import { ThemeProvider, useTheme } from '@/design-system/theme';
 import { useConcordiaFonts } from '@/design-system/fonts';
 import { RootNavigator } from '@/navigation';
+import { createNavigationTheme } from '@/navigation/navigationTheme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // Splash may already be hidden in Fast Refresh / web.
@@ -19,23 +20,25 @@ const queryClient = new QueryClient({
   },
 });
 
+function AppNavigation() {
+  const theme = useTheme();
+  const navigationTheme = useMemo(() => createNavigationTheme(theme), [theme]);
+
+  return (
+    <NavigationContainer theme={navigationTheme}>
+      <RootNavigator />
+      <StatusBar style="auto" />
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
-  const { loaded, error, missingKeys } = useConcordiaFonts();
+  const { loaded, error } = useConcordiaFonts();
 
   useEffect(() => {
     if (!loaded && !error) return;
-
-    if (error) {
-      const message = `[fonts] Failed to load required Concordia fonts (${missingKeys.join(', ')}): ${error.message}`;
-      if (__DEV__) {
-        console.warn(message);
-      } else {
-        console.error(message);
-      }
-    }
-
     SplashScreen.hideAsync().catch(() => {});
-  }, [loaded, error, missingKeys]);
+  }, [loaded, error]);
 
   if (!loaded && !error) {
     return null;
@@ -44,10 +47,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <NavigationContainer>
-          <RootNavigator />
-          <StatusBar style="auto" />
-        </NavigationContainer>
+        <AppNavigation />
       </ThemeProvider>
     </QueryClientProvider>
   );

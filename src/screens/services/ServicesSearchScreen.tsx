@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { Screen, Text, Button, Input, Card } from '@/components/design-system';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feature';
-import { fonts } from '@/design-system/fonts';
 import { useServicesSearch } from '@/hooks/useServicesSearch';
 import type { CampusCode } from '@/types/campus';
 
@@ -49,7 +48,7 @@ export function ServicesSearchScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card elevation="low" style={{ marginBottom: 8 }}>
-            <Text variant="body" style={{ fontFamily: fonts.interSemiBold }}>
+            <Text variant="body" style={{ fontWeight: '600', }}>
               {item.label}
             </Text>
             <Text variant="bodySmall" color="secondary">

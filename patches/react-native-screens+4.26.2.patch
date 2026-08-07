@@ -1,0 +1,144 @@
+diff --git a/node_modules/react-native-screens/ios/RNSScreen.mm b/node_modules/react-native-screens/ios/RNSScreen.mm
+index 9b66012..adc62b9 100644
+--- a/node_modules/react-native-screens/ios/RNSScreen.mm
++++ b/node_modules/react-native-screens/ios/RNSScreen.mm
+@@ -146,10 +146,7 @@ - (void)updateBounds
+ 
+     auto newState = react::RNSScreenState{RCTSizeFromCGSize(self.bounds.size), {0, effectiveContentOffsetY}};
+ 
+-    _state->updateState(std::move(newState),
+-                        _synchronousShadowStateUpdatesEnabled
+-                            ? facebook::react::EventQueue::UpdateMode::unstable_Immediate
+-                            : facebook::react::EventQueue::UpdateMode::Asynchronous);
++    _state->updateState(std::move(newState));
+ 
+     // TODO: Requesting layout on every layout is wrong. We should look for a way to get rid of this.
+     UINavigationController *navctr = _controller.navigationController;
+diff --git a/node_modules/react-native-screens/ios/RNSScreenStackHeaderConfig.mm b/node_modules/react-native-screens/ios/RNSScreenStackHeaderConfig.mm
+index 1c84484..e65d0ec 100644
+--- a/node_modules/react-native-screens/ios/RNSScreenStackHeaderConfig.mm
++++ b/node_modules/react-native-screens/ios/RNSScreenStackHeaderConfig.mm
+@@ -181,10 +181,7 @@ - (void)updateShadowStateWithSize:(CGSize)size
+ 
+   if (newState != _lastSendState) {
+     _lastSendState = newState;
+-    _state->updateState(std::move(newState),
+-                        _synchronousShadowStateUpdatesEnabled
+-                            ? facebook::react::EventQueue::UpdateMode::unstable_Immediate
+-                            : facebook::react::EventQueue::UpdateMode::Asynchronous);
++    _state->updateState(std::move(newState));
+   }
+ }
+ 
+diff --git a/node_modules/react-native-screens/ios/RNSScreenStackHeaderSubview.mm b/node_modules/react-native-screens/ios/RNSScreenStackHeaderSubview.mm
+index add33c4..8bb7684 100644
+--- a/node_modules/react-native-screens/ios/RNSScreenStackHeaderSubview.mm
++++ b/node_modules/react-native-screens/ios/RNSScreenStackHeaderSubview.mm
+@@ -90,10 +90,7 @@ - (void)updateShadowStateWithFrame:(CGRect)frame
+   if (!CGRectEqualToRect(frame, _lastScheduledFrame)) {
+     auto newState =
+         react::RNSScreenStackHeaderSubviewState(RCTSizeFromCGSize(frame.size), RCTPointFromCGPoint(frame.origin));
+-    _state->updateState(std::move(newState),
+-                        _synchronousShadowStateUpdatesEnabled
+-                            ? facebook::react::EventQueue::UpdateMode::unstable_Immediate
+-                            : facebook::react::EventQueue::UpdateMode::Asynchronous);
++    _state->updateState(std::move(newState));
+ 
+     _lastScheduledFrame = frame;
+   }
+diff --git a/node_modules/react-native-screens/ios/gamma/modals/form-sheet/RNSFormSheetHostShadowStateProxy.mm b/node_modules/react-native-screens/ios/gamma/modals/form-sheet/RNSFormSheetHostShadowStateProxy.mm
+index df29ca7..7f0c8cb 100644
+--- a/node_modules/react-native-screens/ios/gamma/modals/form-sheet/RNSFormSheetHostShadowStateProxy.mm
++++ b/node_modules/react-native-screens/ios/gamma/modals/form-sheet/RNSFormSheetHostShadowStateProxy.mm
+@@ -35,7 +35,7 @@ - (void)updateShadowStateWithBounds:(CGRect)bounds origin:(CGPoint)origin
+   if (!CGRectEqualToRect(frame, _lastScheduledFrame)) {
+     auto newState = react::RNSFormSheetHostState{RCTSizeFromCGSize(bounds.size), RCTPointFromCGPoint(origin)};
+ 
+-    _state->updateState(std::move(newState), facebook::react::EventQueue::UpdateMode::unstable_Immediate);
++    _state->updateState(std::move(newState));
+ 
+     _lastScheduledFrame = frame;
+   }
+diff --git a/node_modules/react-native-screens/ios/gamma/split/RNSSplitScreenShadowStateProxy.mm b/node_modules/react-native-screens/ios/gamma/split/RNSSplitScreenShadowStateProxy.mm
+index 03470e1..0be0c29 100644
+--- a/node_modules/react-native-screens/ios/gamma/split/RNSSplitScreenShadowStateProxy.mm
++++ b/node_modules/react-native-screens/ios/gamma/split/RNSSplitScreenShadowStateProxy.mm
+@@ -44,7 +44,7 @@ - (void)updateShadowStateWithFrame:(CGRect)frame
+ 
+   if (!CGRectEqualToRect(frame, _lastScheduledFrame)) {
+     auto newState = react::RNSSplitScreenState{RCTSizeFromCGSize(frame.size), RCTPointFromCGPoint(frame.origin)};
+-    _state->updateState(std::move(newState), facebook::react::EventQueue::UpdateMode::unstable_Immediate);
++    _state->updateState(std::move(newState));
+ 
+     _lastScheduledFrame = frame;
+   }
+diff --git a/node_modules/react-native-screens/ios/safe-area/RNSSafeAreaViewComponentView.mm b/node_modules/react-native-screens/ios/safe-area/RNSSafeAreaViewComponentView.mm
+index 5fa1be3..ef8e980 100644
+--- a/node_modules/react-native-screens/ios/safe-area/RNSSafeAreaViewComponentView.mm
++++ b/node_modules/react-native-screens/ios/safe-area/RNSSafeAreaViewComponentView.mm
+@@ -104,7 +104,7 @@ - (void)updateState
+   }
+ 
+   auto newData = facebook::react::RNSSafeAreaViewState{RCTEdgeInsetsFromUIEdgeInsets(_currentSafeAreaInsets)};
+-  _state->updateState(std::move(newData), facebook::react::EventQueue::UpdateMode::unstable_Immediate);
++  _state->updateState(std::move(newData));
+ }
+ 
+ #pragma mark - RCTComponentViewProtocol
+diff --git a/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm b/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm
+index fee81a8..dcdc7b6 100644
+--- a/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm
++++ b/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm
+@@ -47,8 +47,23 @@ - (void)configureTabBarItemForTabScreenController:(nonnull RNSTabsScreenViewCont
+ {
+   UITabBarItem *tabBarItem = tabScreenCtrl.tabBarItem;
+ 
+-  tabBarItem.standardAppearance = tabScreenCtrl.tabScreenComponentView.standardAppearance;
+-  tabBarItem.scrollEdgeAppearance = tabScreenCtrl.tabScreenComponentView.scrollEdgeAppearance;
++  // iOS 26+ Liquid Glass is disabled when a custom UITabBarAppearance is applied
++  // (Apple: UIBarAppearance / backgroundColor interfere with the glass material).
++  // Keep system appearance unless an explicit opaque background was requested.
++  if (@available(iOS 26.0, *)) {
++    UITabBarAppearance *requested = tabScreenCtrl.tabScreenComponentView.standardAppearance;
++    BOOL hasExplicitBackground = requested != nil && requested.backgroundColor != nil;
++    if (hasExplicitBackground) {
++      tabBarItem.standardAppearance = requested;
++      tabBarItem.scrollEdgeAppearance = tabScreenCtrl.tabScreenComponentView.scrollEdgeAppearance;
++    } else {
++      tabBarItem.standardAppearance = nil;
++      tabBarItem.scrollEdgeAppearance = nil;
++    }
++  } else {
++    tabBarItem.standardAppearance = tabScreenCtrl.tabScreenComponentView.standardAppearance;
++    tabBarItem.scrollEdgeAppearance = tabScreenCtrl.tabScreenComponentView.scrollEdgeAppearance;
++  }
+ 
+   [self setIconsForTabBarItem:tabBarItem
+                fromScreenView:tabScreenCtrl.tabScreenComponentView
+diff --git a/node_modules/react-native-screens/ios/tabs/bottom-accessory/RNSTabsBottomAccessoryShadowStateProxy.mm b/node_modules/react-native-screens/ios/tabs/bottom-accessory/RNSTabsBottomAccessoryShadowStateProxy.mm
+index 74b4851..83004cc 100644
+--- a/node_modules/react-native-screens/ios/tabs/bottom-accessory/RNSTabsBottomAccessoryShadowStateProxy.mm
++++ b/node_modules/react-native-screens/ios/tabs/bottom-accessory/RNSTabsBottomAccessoryShadowStateProxy.mm
+@@ -31,8 +31,7 @@ - (void)updateShadowStateWithFrame:(CGRect)frame
+     if (_bottomAccessoryView.state != nullptr) {
+       auto newState =
+           react::RNSTabsBottomAccessoryState{RCTSizeFromCGSize(frame.size), RCTPointFromCGPoint(frame.origin)};
+-      _bottomAccessoryView.state->updateState(std::move(newState),
+-                                              facebook::react::EventQueue::UpdateMode::unstable_Immediate);
++      _bottomAccessoryView.state->updateState(std::move(newState));
+       _previousFrame = frame;
+     }
+   }
+diff --git a/node_modules/react-native-screens/src/fabric/gamma/stack/StackHeaderConfigAndroidNativeComponent.ts b/node_modules/react-native-screens/src/fabric/gamma/stack/StackHeaderConfigAndroidNativeComponent.ts
+index 06b8e7f..228cbef 100644
+--- a/node_modules/react-native-screens/src/fabric/gamma/stack/StackHeaderConfigAndroidNativeComponent.ts
++++ b/node_modules/react-native-screens/src/fabric/gamma/stack/StackHeaderConfigAndroidNativeComponent.ts
+@@ -123,7 +123,7 @@ export type StackHeaderToolbarMenuElementOptionsAndroid = Partial<
+ 
+ export interface NativeCommands {
+   setToolbarMenuElementOptions: (
+-    viewRef: React.ComponentRef<ComponentType>,
++    viewRef: React.ElementRef<ComponentType>,
+     id: string,
+     // We use the array here only due to codegen limitation. We're using only
+     // the first index of the array.

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Linking } from 'react-native';
 import { Screen, Text, Card, Button } from '@/components/design-system';
-import { fonts } from '@/design-system/fonts';
 import { API_CONFIG } from '@/config/api';
 import { DEFAULT_SHUTTLE_TIMES } from '@/services/shuttle/shuttleData';
 
@@ -15,7 +14,7 @@ export function ShuttleScheduleScreen() {
         departures (Mon–Thu); use the tracker for next buses.
       </Text>
       <Card elevation="low" style={{ marginBottom: 16 }}>
-        <Text variant="body" style={{ fontFamily: fonts.interSemiBold, marginBottom: 8 }}>
+        <Text variant="body" style={{ fontWeight: '600', marginBottom: 8 }}>
           Loyola → SGW (Mon–Thu, sample)
         </Text>
         <Text variant="bodySmall" color="secondary">
@@ -23,7 +22,7 @@ export function ShuttleScheduleScreen() {
         </Text>
       </Card>
       <Card elevation="low" style={{ marginBottom: 16 }}>
-        <Text variant="body" style={{ fontFamily: fonts.interSemiBold, marginBottom: 8 }}>
+        <Text variant="body" style={{ fontWeight: '600', marginBottom: 8 }}>
           SGW → Loyola (Mon–Thu, sample)
         </Text>
         <Text variant="bodySmall" color="secondary">

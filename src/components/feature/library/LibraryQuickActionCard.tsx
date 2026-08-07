@@ -7,7 +7,6 @@ import {
   msDocumentScanner,
   msMeetingRoom,
 } from '@/components/icons/symbols';
-import { fonts } from '@/design-system/fonts';
 import { useCardSurface } from '@/design-system/theme';
 import { useTheme } from '@/design-system/theme';
 import type { LibraryQuickAction } from './libraryData';
@@ -48,7 +47,7 @@ export function LibraryQuickActionCard({ action, onPress }: Props) {
         <Text
           variant="caption"
           color="brand"
-          style={{ fontFamily: fonts.interSemiBold, textAlign: 'center', lineHeight: 16 }}
+          style={{ fontWeight: '600', textAlign: 'center', lineHeight: 16 }}
         >
           {action.label}
         </Text>

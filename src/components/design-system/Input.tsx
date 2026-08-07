@@ -40,7 +40,7 @@ export function Input({
             minHeight: MIN_TOUCH_TARGET_SIZE,
             fontSize: theme.typography.body.fontSize,
             lineHeight: theme.typography.body.fontSize * theme.typography.body.lineHeight,
-            fontFamily: theme.typography.body.fontFamily,
+            fontWeight: theme.typography.body.fontWeight,
             color: theme.color.text.primary,
             backgroundColor: theme.color.background,
           },

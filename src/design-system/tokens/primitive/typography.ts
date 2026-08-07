@@ -2,11 +2,11 @@
  * Concordia CDS typography primitives (16px root).
  * Source: wcms-aem/.../design-tokens/typography.less
  *
- * `fontFamily` values are Expo Font registration keys (see `fonts/fontMap.ts`).
- * Weight is encoded in the font file — do not pair these keys with fontWeight.
+ * Default roles use the platform UI font (SF Pro / Roboto).
+ * Gill Sans Nova faces stay registered for explicit opt-in (e.g. Today session card).
  */
 
-import { fonts } from '@/design-system/fonts';
+import { fonts } from '@/design-system/fonts/fontMap';
 
 export const primitiveFontSize = {
   '025': 12,
@@ -54,19 +54,28 @@ export const primitiveLetterSpacing = {
 } as const;
 
 /**
- * Registered Expo Font family keys (weight baked into each file).
- * POC: Inter for all roles (Gill Sans Nova temporarily unused).
+ * Brand family keys — PostScript names registered via expo-font.
+ * Condensed default matches web h1/h2 (weight 800 → Cn Heavy).
  */
 export const primitiveFontFamily = {
-  body: fonts.interRegular,
-  bodyMedium: fonts.interMedium,
-  bodySemiBold: fonts.interSemiBold,
-  bodyBold: fonts.interBold,
-  brand: fonts.interBold,
-  brandCondensed: fonts.interBold,
+  brand: fonts.brand,
+  brandBook: fonts.brandBook,
+  brandBookItalic: fonts.brandBookItalic,
+  brandHeavy: fonts.brandHeavy,
+  brandHeavyItalic: fonts.brandHeavyItalic,
+  brandExtraBold: fonts.brandExtraBold,
+  brandUltraBold: fonts.brandUltraBold,
+  brandCondensed: fonts.brandCondensed,
+  brandCondensedMedium: fonts.brandCondensedMedium,
+  brandCondensedHeavy: fonts.brandCondensedHeavy,
+  brandCondensedExtraBold: fonts.brandCondensedExtraBold,
+  brandExtraCondensedBold: fonts.brandExtraCondensedBold,
 } as const;
 
-/** @deprecated Prefer weight-specific `primitiveFontFamily` keys; kept for token docs. */
+/**
+ * Numeric CDS weights. Prefer selecting a Gill face via `primitiveFontFamily`
+ * for brand type; use these weights only with the platform body font.
+ */
 export const primitiveFontWeight = {
   light: '100' as const,
   book: '400' as const,

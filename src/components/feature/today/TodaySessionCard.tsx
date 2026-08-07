@@ -4,7 +4,6 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialSymbol, msLocationOn } from '@/components/icons';
 import { Text } from '@/components/design-system';
-import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 import type { TodaySession } from './todayData';
 import { todayShadowBrandButton, todayShadowMedium } from './todayShadows';
@@ -48,7 +47,7 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
               <Text
                 variant="body"
                 style={{
-                  fontFamily: fonts.interMedium,
+                  fontWeight: '500',
                   color: '#DDDDDD',
                   fontSize: 13,
                   lineHeight: 13 * 1.2,
@@ -63,7 +62,7 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
                 <Text
                   variant="body"
                   style={{
-                    fontFamily: fonts.interSemiBold,
+                    fontWeight: '600',
                     color: '#CECAC2',
                     fontSize: 15,
                     lineHeight: 15 * 1.2,
@@ -74,7 +73,7 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
                 <Text
                   variant="heading2"
                   style={{
-                    fontFamily: fonts.interSemiBold,
+                    fontWeight: '600',
                     color: theme.color.text.inverse,
                     fontSize: 32,
                     lineHeight: 32 * 0.94,
@@ -100,7 +99,7 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
                 <MetaField label="Prof" value={session.professor} />
               </View>
 
-              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'stretch' }}>
                 <Pressable
                   onPress={onViewDetails}
                   accessibilityRole="button"
@@ -112,13 +111,14 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
                     paddingVertical: 13,
                     paddingHorizontal: 24,
                     alignItems: 'center',
+                    justifyContent: 'center',
                     ...todayShadowBrandButton,
                   }}
                 >
                   <Text
                     variant="body"
                     style={{
-                      fontFamily: fonts.interSemiBold,
+                      fontWeight: '600',
                       color: theme.color.text.inverse,
                       fontSize: 17,
                       lineHeight: 17 * 1.2,
@@ -133,7 +133,6 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
                   accessibilityLabel="Open location"
                   style={{
                     width: 48,
-                    height: 43,
                     borderRadius: 8,
                     overflow: 'hidden',
                     borderWidth: 1,
@@ -145,6 +144,7 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
                     tint="light"
                     style={{
                       flex: 1,
+                      borderRadius: 8,
                       alignItems: 'center',
                       justifyContent: 'center',
                       // Figma: backdrop-blur 12.5 + rgba(255,255,255,0.25)
@@ -169,7 +169,7 @@ function MetaField({ label, value }: { label: string; value: string }) {
       <Text
         variant="body"
         style={{
-          fontFamily: fonts.interMedium,
+          fontWeight: '500',
           color: 'rgba(255,255,255,0.7)',
           fontSize: 15,
           lineHeight: 15 * 1.2,
@@ -181,7 +181,7 @@ function MetaField({ label, value }: { label: string; value: string }) {
       <Text
         variant="body"
         style={{
-          fontFamily: fonts.interSemiBold,
+          fontWeight: '600',
           color: '#FFFFFF',
           fontSize: 17,
           lineHeight: 17 * 1.2,

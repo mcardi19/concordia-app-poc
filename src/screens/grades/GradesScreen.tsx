@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { Screen, Text, Button, Card } from '@/components/design-system';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feature';
-import { fonts } from '@/design-system/fonts';
 import { useGrades } from '@/hooks/useGrades';
 import type { GradesEndpointType } from '@/types/sis';
 
@@ -45,7 +44,7 @@ export function GradesScreen() {
           keyExtractor={(item, i) => `${item.DESCR}-${i}`}
           renderItem={({ item }) => (
             <Card elevation="low" style={{ marginBottom: 12 }}>
-              <Text variant="body" style={{ fontFamily: fonts.interSemiBold }}>
+              <Text variant="body" style={{ fontWeight: '600', }}>
                 {item.DESCR}
               </Text>
               <Text variant="bodySmall" color="secondary">
@@ -64,7 +63,7 @@ export function GradesScreen() {
           keyExtractor={(item, i) => `${item.DIPLOMA_DESCR}-${i}`}
           renderItem={({ item }) => (
             <Card elevation="low" style={{ marginBottom: 12 }}>
-              <Text variant="body" style={{ fontFamily: fonts.interSemiBold }}>
+              <Text variant="body" style={{ fontWeight: '600', }}>
                 {item.DIPLOMA_DESCR}
               </Text>
               <Text variant="bodySmall" color="secondary">

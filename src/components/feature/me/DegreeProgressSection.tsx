@@ -1,7 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/design-system';
-import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 import type { DegreeProgress } from '@/types/profile';
 
@@ -27,7 +26,7 @@ export function DegreeProgressSection({ progress }: Props) {
           Degree progress
         </Text>
         <Text variant="bodySmall" color="brand" style={{ textAlign: 'right' }}>
-          <Text style={{ fontFamily: fonts.interBold, fontSize: 18, color: theme.color.primary }}>
+          <Text style={{ fontWeight: '700', fontSize: 18, color: theme.color.primary }}>
             {progress.earnedCredits}
           </Text>
           {` of ${progress.totalCredits} credits`}

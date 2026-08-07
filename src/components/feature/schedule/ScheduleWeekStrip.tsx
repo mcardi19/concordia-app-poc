@@ -1,7 +1,6 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/design-system';
-import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 import { dayHasEvents, getDayLetter, isSameDay } from './scheduleUtils';
 import type { ScheduleEvent } from './scheduleTypes';
@@ -47,7 +46,7 @@ export function ScheduleWeekStrip({ weekDates, selectedDate, events, onSelectDat
             <Text
               variant="caption"
               style={{
-                fontFamily: fonts.interSemiBold,
+                fontWeight: '600',
                 color: selected ? theme.color.text.inverse : theme.color.text.subtle,
                 marginBottom: 4,
               }}
@@ -57,7 +56,7 @@ export function ScheduleWeekStrip({ weekDates, selectedDate, events, onSelectDat
             <Text
               variant="bodySmall"
               style={{
-                fontFamily: selected ? fonts.interBold : fonts.interMedium,
+                fontWeight: selected ? '700' : '500',
                 color: selected ? theme.color.text.inverse : theme.color.text.primary,
               }}
             >

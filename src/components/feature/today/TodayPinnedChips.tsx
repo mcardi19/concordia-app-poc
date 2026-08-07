@@ -2,7 +2,6 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { MaterialSymbol } from '@/components/icons';
 import { Text } from '@/components/design-system';
-import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
 import type { PinnedChip } from './todayData';
 import { todayShadowSoft } from './todayShadows';
@@ -40,7 +39,7 @@ export function TodayPinnedChips({ chips, onChipPress }: Props) {
           <Text
             variant="body"
             style={{
-              fontFamily: fonts.interMedium,
+              fontWeight: '500',
               fontSize: 15,
               lineHeight: 15 * 1.2,
             }}
