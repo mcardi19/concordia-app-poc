@@ -1,5 +1,5 @@
-import React from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Platform, Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -8,18 +8,8 @@ import { useTheme } from '@/design-system/theme';
 import { primitiveIconSize } from '@/design-system/tokens/primitive';
 import type { MainTabParamList } from './types';
 
-/** Figma Tab Navigation — Main tab nav: 0 4 14 / 8%. */
-const TAB_SHADOW = Platform.select({
-  ios: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-  },
-  android: { elevation: 8 },
-  default: {},
-});
-
+/** Page grey (#F7F7F8) at slight transparency so BlurView reads through. */
+const TAB_BAR_SURFACE = 'rgba(247, 247, 248, 0.72)';
 /** Figma inactive tab icon fill (#8A8070). */
 const ICON_INACTIVE = '#8A8070';
 /** Figma brand / active icon fill. */
@@ -33,8 +23,10 @@ const BAR_PADDING = 4;
 /** Outer pill height (Figma Tab Navigation). */
 const PILL_HEIGHT = 64;
 const TAB_ITEM_HEIGHT = PILL_HEIGHT - BAR_PADDING * 2;
-/** Gap between pill and home-indicator / safe-area bottom (Figma: 16). */
-const BOTTOM_GAP = 16;
+/** Gap between pill and home-indicator / safe-area bottom. */
+const BOTTOM_GAP = 4;
+
+type TabLayout = { x: number; width: number };
 
 const TAB_ICONS = {
   Today: tabSymbols.today,
@@ -57,6 +49,53 @@ export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarP
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom + BOTTOM_GAP;
 
+  const layoutsRef = useRef<Record<number, TabLayout>>({});
+  const [indicatorVisible, setIndicatorVisible] = useState(false);
+  const didAnimateRef = useRef(false);
+  const indicatorX = useRef(new Animated.Value(0)).current;
+  const indicatorWidth = useRef(new Animated.Value(0)).current;
+
+  const moveIndicatorTo = (index: number, animated: boolean) => {
+    const layout = layoutsRef.current[index];
+    if (!layout) return;
+
+    if (!animated || !didAnimateRef.current) {
+      indicatorX.setValue(layout.x);
+      indicatorWidth.setValue(layout.width);
+      didAnimateRef.current = true;
+      setIndicatorVisible(true);
+      return;
+    }
+
+    Animated.parallel([
+      Animated.timing(indicatorX, {
+        toValue: layout.x,
+        duration: theme.motion.durationNormal,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+      Animated.timing(indicatorWidth, {
+        toValue: layout.width,
+        duration: theme.motion.durationNormal,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+
+  useEffect(() => {
+    moveIndicatorTo(state.index, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- layouts + index drive the indicator
+  }, [state.index]);
+
+  const handleTabLayout = (index: number) => (event: LayoutChangeEvent) => {
+    const { x, width } = event.nativeEvent.layout;
+    layoutsRef.current[index] = { x, width };
+    if (index === state.index) {
+      moveIndicatorTo(index, false);
+    }
+  };
+
   return (
     <View
       pointerEvents="box-none"
@@ -72,86 +111,112 @@ export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarP
       <View
         style={{
           borderRadius: theme.radius.full,
-          ...TAB_SHADOW,
+          backgroundColor: TAB_BAR_SURFACE,
+          ...theme.shadow.high,
         }}
       >
-        <BlurView
-          intensity={Platform.OS === 'ios' ? 24 : 40}
-          tint="light"
-          // Figma: BACKGROUND_BLUR radius 5 + white fill
-          experimentalBlurMethod="dimezisBlurView"
+        <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            height: PILL_HEIGHT,
             borderRadius: theme.radius.full,
+            borderWidth: 1,
+            borderColor: theme.color.background,
             overflow: 'hidden',
-            padding: BAR_PADDING,
-            backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.72)' : '#FFFFFF',
-            ...Platform.select({
-              android: { borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.04)' },
-              default: {},
-            }),
+            ...theme.shadow.low,
           }}
-          accessibilityRole="tablist"
         >
-          {state.routes.map((route, index) => {
-            const focused = state.index === index;
-            const { options } = descriptors[route.key];
-            const routeName = route.name as keyof MainTabParamList;
-            const icons = TAB_ICONS[routeName];
-            const label = options.title ?? TAB_LABELS[routeName] ?? route.name;
-            const color = focused ? ICON_ACTIVE : ICON_INACTIVE;
+          <BlurView
+            intensity={Platform.OS === 'ios' ? 64 : 56}
+            tint="light"
+            style={{
+              height: PILL_HEIGHT,
+              backgroundColor: TAB_BAR_SURFACE,
+            }}
+            accessibilityRole="tablist"
+          >
+            <View
+              style={{
+                flex: 1,
+                margin: BAR_PADDING,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              {indicatorVisible ? (
+                <Animated.View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    borderRadius: theme.radius.full,
+                    backgroundColor: ACTIVE_PILL,
+                    width: indicatorWidth,
+                    transform: [{ translateX: indicatorX }],
+                  }}
+                />
+              ) : null}
 
-            const onPress = () => {
-              const event = navigation.emit({
-                type: 'tabPress',
-                target: route.key,
-                canPreventDefault: true,
-              });
-              if (!focused && !event.defaultPrevented) {
-                navigation.navigate(route.name, route.params);
-              }
-            };
+              {state.routes.map((route, index) => {
+                const focused = state.index === index;
+                const { options } = descriptors[route.key];
+                const routeName = route.name as keyof MainTabParamList;
+                const icons = TAB_ICONS[routeName];
+                const label = options.title ?? TAB_LABELS[routeName] ?? route.name;
+                const color = focused ? ICON_ACTIVE : ICON_INACTIVE;
 
-            const onLongPress = () => {
-              navigation.emit({
-                type: 'tabLongPress',
-                target: route.key,
-              });
-            };
+                const onPress = () => {
+                  const event = navigation.emit({
+                    type: 'tabPress',
+                    target: route.key,
+                    canPreventDefault: true,
+                  });
+                  if (!focused && !event.defaultPrevented) {
+                    navigation.navigate(route.name, route.params);
+                  }
+                };
 
-            return (
-              <Pressable
-                key={route.key}
-                onPress={onPress}
-                onLongPress={onLongPress}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: focused }}
-                accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: TAB_ITEM_HEIGHT,
-                  paddingHorizontal: TAB_HORIZONTAL_PADDING,
-                  borderRadius: theme.radius.full,
-                  backgroundColor: focused ? ACTIVE_PILL : 'transparent',
-                  minWidth: theme.touchTargetMinSize,
-                }}
-              >
-                {icons ? (
-                  <MaterialSymbol
-                    icon={icons.outline}
-                    filled={icons.filled}
-                    active={focused}
-                    size={ICON_SIZE}
-                    color={color}
-                  />
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </BlurView>
+                const onLongPress = () => {
+                  navigation.emit({
+                    type: 'tabLongPress',
+                    target: route.key,
+                  });
+                };
+
+                return (
+                  <Pressable
+                    key={route.key}
+                    onPress={onPress}
+                    onLongPress={onLongPress}
+                    onLayout={handleTabLayout(index)}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: focused }}
+                    accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
+                    style={{
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      paddingHorizontal: TAB_HORIZONTAL_PADDING,
+                      borderRadius: theme.radius.full,
+                      minWidth: theme.touchTargetMinSize,
+                      zIndex: 1,
+                    }}
+                  >
+                    {icons ? (
+                      <MaterialSymbol
+                        icon={icons.outline}
+                        filled={icons.filled}
+                        active={focused}
+                        size={ICON_SIZE}
+                        color={color}
+                      />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </BlurView>
+        </View>
       </View>
     </View>
   );

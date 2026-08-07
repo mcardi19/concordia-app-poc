@@ -24,7 +24,7 @@ import {
   msBookmarks,
   msSecurity,
   msLocationOn,
-} from '@material-symbols-react-native/outlined-400';
+} from '@material-symbols-react-native/rounded-400';
 
 export type TabSymbolPair = {
   outline: MsIconDefinition;

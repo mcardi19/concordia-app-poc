@@ -1,14 +1,14 @@
 import type { ImageSourcePropType } from 'react-native';
 import type { MsIconDefinition } from 'material-symbols-react-native';
 import {
-  msDirectionsBus,
-  msHome,
-  msMeetingRoom,
-  msMenuBook,
-  msSchool,
+  msDirectionsBusFill,
+  msHomeFill,
+  msMeetingRoomFill,
+  msMenuBookFill,
+  msSchoolFill,
   msAssignment,
   msPayments,
-} from '@material-symbols-react-native/outlined-400';
+} from '@material-symbols-react-native/rounded-400';
 
 /* eslint-disable @typescript-eslint/no-require-imports -- Metro static image assets */
 export const sessionHeroImage = require('../../../../assets/today/session-hero.png') as ImageSourcePropType;
@@ -71,14 +71,14 @@ export const TODAY_SESSION: TodaySession = {
 };
 
 export const PINNED_CHIPS: PinnedChip[] = [
-  { id: 'moodle', label: 'Moodle', icon: msHome, iconColor: '#7B2D8E' },
-  { id: 'library', label: 'Library', icon: msMenuBook, iconColor: '#912338', tab: 'Library' },
-  { id: 'grades', label: 'Grades', icon: msSchool, iconColor: '#C9A859', tab: 'Me', meRoute: 'Grades' },
-  { id: 'room', label: 'Room booking', icon: msMeetingRoom, iconColor: '#057D78' },
+  { id: 'moodle', label: 'Moodle', icon: msHomeFill, iconColor: '#7B2D8E' },
+  { id: 'library', label: 'Library', icon: msMenuBookFill, iconColor: '#912338', tab: 'Library' },
+  { id: 'grades', label: 'Grades', icon: msSchoolFill, iconColor: '#C9A859', tab: 'Me', meRoute: 'Grades' },
+  { id: 'room', label: 'Room booking', icon: msMeetingRoomFill, iconColor: '#057D78' },
   {
     id: 'shuttle',
     label: 'Shuttle',
-    icon: msDirectionsBus,
+    icon: msDirectionsBusFill,
     iconColor: '#0072A8',
     tab: 'Campus',
     campusRoute: 'ShuttleSchedule',
@@ -117,6 +117,13 @@ export const LATEST_UPDATES: UpdateItem[] = [
     title: 'Library extended hours start next week',
     image: updateImage2,
   },
+  {
+    id: '3',
+    badge: 'Student life',
+    eyebrow: 'Announcement',
+    title: 'Orientation week schedule is now available',
+    image: updateImage1,
+  },
 ];
 
 export const CAMPUS_TODAY: CampusTodayItem[] = [
@@ -130,6 +137,18 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     id: '2',
     title: 'Free coffee at the Hive',
     meta: 'EV Building · 11 AM–4 PM',
+    image: campusImage2,
+  },
+  {
+    id: '3',
+    title: 'Wellness Wednesdays',
+    meta: 'SGW Hall Building · 12–2 PM',
+    image: campusImage1,
+  },
+  {
+    id: '4',
+    title: 'Open mic at the Hive',
+    meta: 'Loyola Campus Centre · 5–7 PM',
     image: campusImage2,
   },
 ];

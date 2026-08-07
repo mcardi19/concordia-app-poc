@@ -2,7 +2,7 @@ import React from 'react';
 import { MsIcon, type MsIconDefinition } from 'material-symbols-react-native';
 
 export type MaterialSymbolProps = {
-  /** Outlined symbol (default / inactive). */
+  /** Outlined/rounded symbol (default / inactive). */
   icon: MsIconDefinition;
   /** Filled symbol when active; falls back to icon if omitted. */
   filled?: MsIconDefinition;

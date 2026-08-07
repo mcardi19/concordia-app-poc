@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { MaterialSymbol, msChevronRight } from '@/components/icons';
 import { Text } from '@/components/design-system';
 import { fonts } from '@/design-system/fonts';
@@ -23,20 +23,23 @@ export function TodaySectionHeader({
   const theme = useTheme();
 
   const heading = (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
       <Text
         variant="body"
         style={{
           fontFamily: fonts.interSemiBold,
-          fontSize: 18,
-          lineHeight: 18 * 1.02,
+          fontSize: 20,
+          lineHeight: 20,
           letterSpacing: -0.4,
+          ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
         }}
       >
         {title}
       </Text>
       {showChevron ? (
-        <MaterialSymbol icon={msChevronRight} size={18} color={theme.color.primary} />
+        <View style={{ marginBottom: -2 }}>
+          <MaterialSymbol icon={msChevronRight} size={32} color={theme.color.primary} />
+        </View>
       ) : null}
     </View>
   );
@@ -47,7 +50,7 @@ export function TodaySectionHeader({
         flexDirection: 'row',
         alignItems: 'flex-end',
         justifyContent: 'space-between',
-        marginBottom: 10,
+        marginBottom: 16,
       }}
     >
       {onPress ? (

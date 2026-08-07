@@ -9,6 +9,8 @@ import { todayShadowMedium, todayShadowSoft } from './todayShadows';
 const UPDATE_CARD_WIDTH = 294;
 const CAMPUS_CARD_WIDTH = 170;
 const CAROUSEL_GAP = 12;
+/** Room for card drop-shadows so horizontal ScrollView doesn't clip them. */
+const SHADOW_INSET = 20;
 
 type UpdatesProps = {
   items: UpdateItem[];
@@ -19,92 +21,96 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
   const theme = useTheme();
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      decelerationRate="fast"
-      snapToInterval={UPDATE_CARD_WIDTH + CAROUSEL_GAP}
-      snapToAlignment="start"
-      disableIntervalMomentum
-      contentContainerStyle={{
-        gap: CAROUSEL_GAP,
-        paddingLeft: theme.spacing.screenHorizontal,
-        paddingRight: theme.spacing.screenHorizontal,
-        paddingVertical: 8,
-      }}
-    >
-      {items.map((item) => (
-        <Pressable
-          key={item.id}
-          onPress={() => onPress?.(item)}
-          accessibilityRole="button"
-          accessibilityLabel={item.title}
-          style={{
-            width: UPDATE_CARD_WIDTH,
-            borderRadius: theme.radius.lg,
-            backgroundColor: theme.color.background,
-            ...todayShadowSoft,
-          }}
-        >
-          <View style={{ borderRadius: theme.radius.lg, overflow: 'hidden' }}>
-            <View style={{ height: 136, width: UPDATE_CARD_WIDTH }}>
-              <Image
-                source={item.image}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="cover"
-              />
-              <View style={{ position: 'absolute', top: 10, left: 10 }}>
-                <View
-                  style={{
-                    backgroundColor: theme.color.background,
-                    borderRadius: 7,
-                    paddingHorizontal: 9,
-                    paddingVertical: 4,
-                  }}
-                >
-                  <Text
-                    variant="caption"
+    <View style={{ marginVertical: -SHADOW_INSET / 2 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        snapToInterval={UPDATE_CARD_WIDTH + CAROUSEL_GAP}
+        snapToAlignment="start"
+        disableIntervalMomentum
+        removeClippedSubviews={false}
+        style={{ overflow: 'visible' }}
+        contentContainerStyle={{
+          gap: CAROUSEL_GAP,
+          paddingLeft: theme.spacing.screenHorizontal,
+          paddingRight: theme.spacing.screenHorizontal,
+          paddingVertical: SHADOW_INSET,
+        }}
+      >
+        {items.map((item) => (
+          <Pressable
+            key={item.id}
+            onPress={() => onPress?.(item)}
+            accessibilityRole="button"
+            accessibilityLabel={item.title}
+            style={{
+              width: UPDATE_CARD_WIDTH,
+              borderRadius: theme.radius.lg,
+              backgroundColor: theme.color.background,
+              ...todayShadowSoft,
+            }}
+          >
+            <View style={{ borderRadius: theme.radius.lg, overflow: 'hidden' }}>
+              <View style={{ height: 136, width: UPDATE_CARD_WIDTH }}>
+                <Image
+                  source={item.image}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+                <View style={{ position: 'absolute', top: 10, left: 10 }}>
+                  <View
                     style={{
-                      fontFamily: fonts.interMedium,
-                      fontSize: 11,
-                      lineHeight: 11 * 1.2,
-                      letterSpacing: 0.2,
+                      backgroundColor: theme.color.background,
+                      borderRadius: 7,
+                      paddingHorizontal: 9,
+                      paddingVertical: 4,
                     }}
                   >
-                    {item.badge}
-                  </Text>
+                    <Text
+                      variant="caption"
+                      style={{
+                        fontFamily: fonts.interMedium,
+                        fontSize: 11,
+                        lineHeight: 11 * 1.2,
+                        letterSpacing: 0.2,
+                      }}
+                    >
+                      {item.badge}
+                    </Text>
+                  </View>
                 </View>
               </View>
+              <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+                <Text
+                  variant="body"
+                  color="brand"
+                  style={{
+                    fontFamily: fonts.interMedium,
+                    fontSize: 13,
+                    lineHeight: 13 * 1.2,
+                    marginBottom: 4,
+                  }}
+                >
+                  {item.eyebrow}
+                </Text>
+                <Text
+                  variant="body"
+                  style={{
+                    fontFamily: fonts.interSemiBold,
+                    fontSize: 16,
+                    lineHeight: 16 * 1.2,
+                    letterSpacing: -0.4,
+                  }}
+                >
+                  {item.title}
+                </Text>
+              </View>
             </View>
-            <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
-              <Text
-                variant="body"
-                color="brand"
-                style={{
-                  fontFamily: fonts.interMedium,
-                  fontSize: 13,
-                  lineHeight: 13 * 1.2,
-                  marginBottom: 4,
-                }}
-              >
-                {item.eyebrow}
-              </Text>
-              <Text
-                variant="body"
-                style={{
-                  fontFamily: fonts.interSemiBold,
-                  fontSize: 16,
-                  lineHeight: 16 * 1.2,
-                  letterSpacing: -0.4,
-                }}
-              >
-                {item.title}
-              </Text>
-            </View>
-          </View>
-        </Pressable>
-      ))}
-    </ScrollView>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -117,67 +123,71 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
   const theme = useTheme();
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      decelerationRate="fast"
-      snapToInterval={CAMPUS_CARD_WIDTH + CAROUSEL_GAP}
-      snapToAlignment="start"
-      disableIntervalMomentum
-      contentContainerStyle={{
-        gap: CAROUSEL_GAP,
-        paddingLeft: theme.spacing.screenHorizontal,
-        paddingRight: theme.spacing.screenHorizontal,
-        paddingVertical: 8,
-      }}
-    >
-      {items.map((item) => (
-        <Pressable
-          key={item.id}
-          onPress={() => onPress?.(item)}
-          accessibilityRole="button"
-          accessibilityLabel={item.title}
-          style={{
-            width: CAMPUS_CARD_WIDTH,
-            borderRadius: theme.radius.lg,
-            backgroundColor: theme.color.background,
-            ...todayShadowMedium,
-          }}
-        >
-          <View style={{ borderRadius: theme.radius.lg, overflow: 'hidden' }}>
-            <Image
-              source={item.image}
-              style={{ width: CAMPUS_CARD_WIDTH, height: 79 }}
-              resizeMode="cover"
-            />
-            <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
-              <Text
-                variant="body"
-                style={{
-                  fontFamily: fonts.interSemiBold,
-                  fontSize: 16,
-                  lineHeight: 16 * 1.2,
-                  letterSpacing: -0.4,
-                }}
-              >
-                {item.title}
-              </Text>
-              <Text
-                variant="body"
-                color="subtle"
-                style={{
-                  fontFamily: fonts.interRegular,
-                  fontSize: 13,
-                  lineHeight: 13 * 1.45,
-                  marginTop: 4,
-                }}
-              >
-                {item.meta}
-              </Text>
+    <View style={{ marginVertical: -SHADOW_INSET / 2 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        snapToInterval={CAMPUS_CARD_WIDTH + CAROUSEL_GAP}
+        snapToAlignment="start"
+        disableIntervalMomentum
+        removeClippedSubviews={false}
+        style={{ overflow: 'visible' }}
+        contentContainerStyle={{
+          gap: CAROUSEL_GAP,
+          paddingLeft: theme.spacing.screenHorizontal,
+          paddingRight: theme.spacing.screenHorizontal,
+          paddingVertical: SHADOW_INSET,
+        }}
+      >
+        {items.map((item) => (
+          <Pressable
+            key={item.id}
+            onPress={() => onPress?.(item)}
+            accessibilityRole="button"
+            accessibilityLabel={item.title}
+            style={{
+              width: CAMPUS_CARD_WIDTH,
+              borderRadius: theme.radius.lg,
+              backgroundColor: theme.color.background,
+              ...todayShadowMedium,
+            }}
+          >
+            <View style={{ borderRadius: theme.radius.lg, overflow: 'hidden' }}>
+              <Image
+                source={item.image}
+                style={{ width: CAMPUS_CARD_WIDTH, height: 79 }}
+                resizeMode="cover"
+              />
+              <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+                <Text
+                  variant="body"
+                  style={{
+                    fontFamily: fonts.interSemiBold,
+                    fontSize: 16,
+                    lineHeight: 16 * 1.2,
+                    letterSpacing: -0.4,
+                  }}
+                >
+                  {item.title}
+                </Text>
+                <Text
+                  variant="body"
+                  color="subtle"
+                  style={{
+                    fontFamily: fonts.interRegular,
+                    fontSize: 13,
+                    lineHeight: 13 * 1.45,
+                    marginTop: 4,
+                  }}
+                >
+                  {item.meta}
+                </Text>
+              </View>
             </View>
-          </View>
-        </Pressable>
-      ))}
-    </ScrollView>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
   );
 }

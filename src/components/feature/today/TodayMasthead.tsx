@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Animated, Pressable, View } from 'react-native';
 import { MaterialSymbol, msSearch, msSecurity } from '@/components/icons';
 import { Text } from '@/components/design-system';
 import { fonts } from '@/design-system/fonts';
@@ -9,6 +9,7 @@ import { todayShadowSoft } from './todayShadows';
 type Props = {
   greeting: string;
   dateLabel: string;
+  titleOpacity?: Animated.Value | Animated.AnimatedInterpolation<number>;
   onSecurityPress?: () => void;
   onSearchPress?: () => void;
 };
@@ -16,6 +17,7 @@ type Props = {
 export function TodayMasthead({
   greeting,
   dateLabel,
+  titleOpacity,
   onSecurityPress,
   onSearchPress,
 }: Props) {
@@ -39,7 +41,10 @@ export function TodayMasthead({
         alignItems: 'flex-start',
       }}
     >
-      <View style={{ flex: 1, paddingRight: theme.spacing.sm }}>
+      <Animated.View
+        pointerEvents="none"
+        style={{ flex: 1, paddingRight: theme.spacing.sm, opacity: titleOpacity ?? 1 }}
+      >
         <Text
           variant="body"
           style={{
@@ -64,7 +69,7 @@ export function TodayMasthead({
         >
           {dateLabel}
         </Text>
-      </View>
+      </Animated.View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Pressable
           style={actionButtonStyle}
