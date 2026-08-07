@@ -141,13 +141,13 @@ export function TodayScreen({ navigation }: Props) {
             <LinearGradient
               colors={[
                 PAGE_BG,
+                'rgba(247, 247, 248, 0.92)',
                 'rgba(247, 247, 248, 0.7)',
                 'rgba(247, 247, 248, 0.4)',
-                'rgba(247, 247, 248, 0.18)',
-                'rgba(247, 247, 248, 0.06)',
+                'rgba(247, 247, 248, 0.15)',
                 PAGE_BG_TRANSPARENT,
               ]}
-              locations={[0, 0.2, 0.4, 0.6, 0.8, 1]}
+              locations={[0, 0.22, 0.42, 0.62, 0.82, 1]}
               style={{ flex: 1 }}
             />
           </Animated.View>

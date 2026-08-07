@@ -1,14 +1,12 @@
 import type { ImageSourcePropType } from 'react-native';
 import type { MsIconDefinition } from 'material-symbols-react-native';
-import {
-  msDirectionsBusFill,
-  msHomeFill,
-  msMeetingRoomFill,
-  msMenuBookFill,
-  msSchoolFill,
-  msAssignment,
-  msPayments,
-} from '@material-symbols-react-native/rounded-400';
+import { msDirectionsBusFill } from '@material-symbols-react-native/rounded-400/msDirectionsBusFill';
+import { msHomeFill } from '@material-symbols-react-native/rounded-400/msHomeFill';
+import { msMeetingRoomFill } from '@material-symbols-react-native/rounded-400/msMeetingRoomFill';
+import { msMenuBookFill } from '@material-symbols-react-native/rounded-400/msMenuBookFill';
+import { msSchoolFill } from '@material-symbols-react-native/rounded-400/msSchoolFill';
+import { msAssignment } from '@material-symbols-react-native/rounded-400/msAssignment';
+import { msPayments } from '@material-symbols-react-native/rounded-400/msPayments';
 
 /* eslint-disable @typescript-eslint/no-require-imports -- Metro static image assets */
 export const sessionHeroImage = require('../../../../assets/today/session-hero.png') as ImageSourcePropType;

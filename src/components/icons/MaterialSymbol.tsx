@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import { MsIcon, type MsIconDefinition } from 'material-symbols-react-native';
 
 export type MaterialSymbolProps = {
@@ -19,5 +20,9 @@ export function MaterialSymbol({
   color,
 }: MaterialSymbolProps) {
   const resolved = active && filled ? filled : icon;
-  return <MsIcon icon={resolved} size={size} color={color} />;
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <MsIcon icon={resolved} size={size} color={color} />
+    </View>
+  );
 }

@@ -4,6 +4,7 @@ import { MaterialSymbol, msSearch, msSecurity } from '@/components/icons';
 import { Text } from '@/components/design-system';
 import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
+import { todayTheme } from '@/screens/today/todayTheme';
 import { todayShadowSoft } from './todayShadows';
 
 type Props = {
@@ -27,9 +28,11 @@ export function TodayMasthead({
     width: 44,
     height: 44,
     borderRadius: theme.radius.full,
-    backgroundColor: theme.color.background,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
+    backgroundColor: todayTheme.pageBackground,
+    borderWidth: 1,
+    borderColor: theme.color.background,
     ...todayShadowSoft,
   };
 
@@ -43,7 +46,10 @@ export function TodayMasthead({
     >
       <Animated.View
         pointerEvents="none"
-        style={{ flex: 1, paddingRight: theme.spacing.sm, opacity: titleOpacity ?? 1 }}
+        style={[
+          { flex: 1, paddingRight: theme.spacing.sm },
+          titleOpacity != null ? { opacity: titleOpacity } : null,
+        ]}
       >
         <Text
           variant="body"
@@ -52,7 +58,7 @@ export function TodayMasthead({
             fontSize: 27,
             lineHeight: 27 * 1.02,
             letterSpacing: -1.2,
-            marginBottom: 4,
+            marginBottom: 0,
           }}
         >
           {greeting}

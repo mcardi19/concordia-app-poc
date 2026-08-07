@@ -3,6 +3,7 @@ export {
   tabSymbols,
   featureSymbols,
   msChevronRight,
+  msChevronRightSemibold,
   msWbSunny,
   msPerson,
   msSecurity,

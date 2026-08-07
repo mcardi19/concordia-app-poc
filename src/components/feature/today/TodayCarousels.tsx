@@ -12,6 +12,22 @@ const CAROUSEL_GAP = 12;
 /** Room for card drop-shadows so horizontal ScrollView doesn't clip them. */
 const SHADOW_INSET = 20;
 
+const horizontalCarouselProps = {
+  horizontal: true as const,
+  showsHorizontalScrollIndicator: false,
+  showsVerticalScrollIndicator: false,
+  decelerationRate: 'fast' as const,
+  snapToAlignment: 'start' as const,
+  disableIntervalMomentum: true,
+  removeClippedSubviews: false,
+  /** Lock to X once the gesture chooses a direction (iOS). */
+  directionalLockEnabled: true,
+  /** Prevent vertical rubber-banding inside the horizontal carousel. */
+  alwaysBounceVertical: false,
+  overScrollMode: 'never' as const,
+  style: { overflow: 'visible' as const },
+};
+
 type UpdatesProps = {
   items: UpdateItem[];
   onPress?: (item: UpdateItem) => void;
@@ -21,21 +37,16 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
   const theme = useTheme();
 
   return (
-    <View style={{ marginVertical: -SHADOW_INSET / 2 }}>
+    <View style={{ marginVertical: -SHADOW_INSET }}>
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
+        {...horizontalCarouselProps}
         snapToInterval={UPDATE_CARD_WIDTH + CAROUSEL_GAP}
-        snapToAlignment="start"
-        disableIntervalMomentum
-        removeClippedSubviews={false}
-        style={{ overflow: 'visible' }}
         contentContainerStyle={{
           gap: CAROUSEL_GAP,
           paddingLeft: theme.spacing.screenHorizontal,
           paddingRight: theme.spacing.screenHorizontal,
           paddingVertical: SHADOW_INSET,
+          alignItems: 'flex-start',
         }}
       >
         {items.map((item) => (
@@ -123,21 +134,16 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
   const theme = useTheme();
 
   return (
-    <View style={{ marginVertical: -SHADOW_INSET / 2 }}>
+    <View style={{ marginVertical: -SHADOW_INSET }}>
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
+        {...horizontalCarouselProps}
         snapToInterval={CAMPUS_CARD_WIDTH + CAROUSEL_GAP}
-        snapToAlignment="start"
-        disableIntervalMomentum
-        removeClippedSubviews={false}
-        style={{ overflow: 'visible' }}
         contentContainerStyle={{
           gap: CAROUSEL_GAP,
           paddingLeft: theme.spacing.screenHorizontal,
           paddingRight: theme.spacing.screenHorizontal,
           paddingVertical: SHADOW_INSET,
+          alignItems: 'flex-start',
         }}
       >
         {items.map((item) => (

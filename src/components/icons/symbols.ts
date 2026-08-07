@@ -1,30 +1,29 @@
 import type { MsIconDefinition } from 'material-symbols-react-native';
-import {
-  msHome,
-  msHomeFill,
-  msCalendarMonth,
-  msCalendarMonthFill,
-  msCalendarToday,
-  msMap,
-  msMapFill,
-  msPerson,
-  msSchool,
-  msSchoolFill,
-  msAccountCircle,
-  msAccountCircleFill,
-  msAccountBalanceWallet,
-  msSchedule,
-  msDirectionsBus,
-  msEvent,
-  msSearch,
-  msChevronRight,
-  msWbSunny,
-  msDocumentScanner,
-  msMeetingRoom,
-  msBookmarks,
-  msSecurity,
-  msLocationOn,
-} from '@material-symbols-react-native/rounded-400';
+import { msHome } from '@material-symbols-react-native/rounded-400/msHome';
+import { msHomeFill } from '@material-symbols-react-native/rounded-400/msHomeFill';
+import { msCalendarMonth } from '@material-symbols-react-native/rounded-400/msCalendarMonth';
+import { msCalendarMonthFill } from '@material-symbols-react-native/rounded-400/msCalendarMonthFill';
+import { msCalendarToday } from '@material-symbols-react-native/rounded-400/msCalendarToday';
+import { msMap } from '@material-symbols-react-native/rounded-400/msMap';
+import { msMapFill } from '@material-symbols-react-native/rounded-400/msMapFill';
+import { msPerson } from '@material-symbols-react-native/rounded-400/msPerson';
+import { msSchool } from '@material-symbols-react-native/rounded-400/msSchool';
+import { msSchoolFill } from '@material-symbols-react-native/rounded-400/msSchoolFill';
+import { msAccountCircle } from '@material-symbols-react-native/rounded-400/msAccountCircle';
+import { msAccountCircleFill } from '@material-symbols-react-native/rounded-400/msAccountCircleFill';
+import { msAccountBalanceWallet } from '@material-symbols-react-native/rounded-400/msAccountBalanceWallet';
+import { msSchedule } from '@material-symbols-react-native/rounded-400/msSchedule';
+import { msDirectionsBus } from '@material-symbols-react-native/rounded-400/msDirectionsBus';
+import { msEvent } from '@material-symbols-react-native/rounded-400/msEvent';
+import { msSearch } from '@material-symbols-react-native/rounded-400/msSearch';
+import { msChevronRight } from '@material-symbols-react-native/rounded-400/msChevronRight';
+import { msChevronRight as msChevronRightSemibold } from '@material-symbols-react-native/rounded-600/msChevronRight';
+import { msWbSunny } from '@material-symbols-react-native/rounded-400/msWbSunny';
+import { msDocumentScanner } from '@material-symbols-react-native/rounded-400/msDocumentScanner';
+import { msMeetingRoom } from '@material-symbols-react-native/rounded-400/msMeetingRoom';
+import { msBookmarks } from '@material-symbols-react-native/rounded-400/msBookmarks';
+import { msSecurity } from '@material-symbols-react-native/rounded-400/msSecurity';
+import { msLocationOn } from '@material-symbols-react-native/rounded-400/msLocationOn';
 
 export type TabSymbolPair = {
   outline: MsIconDefinition;
@@ -64,6 +63,7 @@ export const featureSymbols: Record<FeatureSymbolKey, MsIconDefinition> = {
 
 export {
   msChevronRight,
+  msChevronRightSemibold,
   msWbSunny,
   msPerson,
   msDocumentScanner,

@@ -120,8 +120,8 @@ export function TodaySessionCard({ session, onViewDetails, onLocationPress }: Pr
                     style={{
                       fontFamily: fonts.interSemiBold,
                       color: theme.color.text.inverse,
-                      fontSize: 15,
-                      lineHeight: 15 * 1.2,
+                      fontSize: 17,
+                      lineHeight: 17 * 1.2,
                     }}
                   >
                     View details

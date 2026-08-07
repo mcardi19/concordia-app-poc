@@ -26,7 +26,7 @@ export function TodayPinnedChips({ chips, onChipPress }: Props) {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 4,
+            gap: theme.spacing.sm,
             backgroundColor: theme.color.background,
             borderRadius: theme.radius.full,
             paddingHorizontal: 12.5,

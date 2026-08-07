@@ -5,11 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { MaterialSymbol, tabSymbols } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
-import { primitiveIconSize } from '@/design-system/tokens/primitive';
+import { TODAY_CHROME_SURFACE } from '@/components/feature/today/todayChrome';
 import type { MainTabParamList } from './types';
 
-/** Page grey (#F7F7F8) at slight transparency so BlurView reads through. */
-const TAB_BAR_SURFACE = 'rgba(247, 247, 248, 0.72)';
+/** Page grey at slight transparency so BlurView reads through. */
+const TAB_BAR_SURFACE = TODAY_CHROME_SURFACE;
 /** Figma inactive tab icon fill (#8A8070). */
 const ICON_INACTIVE = '#8A8070';
 /** Figma brand / active icon fill. */
@@ -17,7 +17,7 @@ const ICON_ACTIVE = '#912238';
 /** Figma brand-tint-05 active item background. */
 const ACTIVE_PILL = 'rgba(145, 34, 56, 0.05)';
 
-const ICON_SIZE = primitiveIconSize.xl;
+const ICON_SIZE = 26;
 const TAB_HORIZONTAL_PADDING = 20;
 const BAR_PADDING = 4;
 /** Outer pill height (Figma Tab Navigation). */
@@ -25,6 +25,14 @@ const PILL_HEIGHT = 64;
 const TAB_ITEM_HEIGHT = PILL_HEIGHT - BAR_PADDING * 2;
 /** Gap between pill and home-indicator / safe-area bottom. */
 const BOTTOM_GAP = 4;
+/** Stronger than `shadow.high` so the floating pill reads clearly over content. */
+const TAB_BAR_SHADOW = {
+  shadowColor: '#241F1F',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.28,
+  shadowRadius: 24,
+  elevation: 12,
+} as const;
 
 type TabLayout = { x: number; width: number };
 
@@ -112,7 +120,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarP
         style={{
           borderRadius: theme.radius.full,
           backgroundColor: TAB_BAR_SURFACE,
-          ...theme.shadow.high,
+          ...TAB_BAR_SHADOW,
         }}
       >
         <View

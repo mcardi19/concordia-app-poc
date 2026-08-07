@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform, Pressable, View } from 'react-native';
-import { MaterialSymbol, msChevronRight } from '@/components/icons';
+import { MaterialSymbol, msChevronRightSemibold } from '@/components/icons';
 import { Text } from '@/components/design-system';
 import { fonts } from '@/design-system/fonts';
 import { useTheme } from '@/design-system/theme';
@@ -37,8 +37,8 @@ export function TodaySectionHeader({
         {title}
       </Text>
       {showChevron ? (
-        <View style={{ marginBottom: -2 }}>
-          <MaterialSymbol icon={msChevronRight} size={32} color={theme.color.primary} />
+        <View style={{ marginBottom: -1 }}>
+          <MaterialSymbol icon={msChevronRightSemibold} size={22} color={theme.color.primary} />
         </View>
       ) : null}
     </View>
