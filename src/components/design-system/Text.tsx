@@ -10,10 +10,6 @@ export interface TextProps extends RNTextProps {
   allowFontScaling?: boolean;
 }
 
-function isGillFace(fontFamily: string | undefined): boolean {
-  return typeof fontFamily === 'string' && fontFamily.startsWith('GillSansNova');
-}
-
 export function Text({
   variant = 'body',
   color = 'primary',
@@ -43,24 +39,16 @@ export function Text({
     color: colorValue,
   };
 
-  // Brand faces are weight-specific PostScript names — set family only.
-  // Body/UI variants keep platform default + fontWeight.
-  if (
-    'fontFamily' in typography &&
-    typeof typography.fontFamily === 'string' &&
-    typography.fontFamily
-  ) {
-    baseStyle.fontFamily = typography.fontFamily;
-  } else if ('fontWeight' in typography && typography.fontWeight) {
+  // Platform UI font only (SF Pro / Roboto). Ignore token/style fontFamily for now.
+  if ('fontWeight' in typography && typography.fontWeight) {
     baseStyle.fontWeight = typography.fontWeight;
   }
 
   const flattened = StyleSheet.flatten([baseStyle, style]) as TextStyle;
-  // Avoid RN remapping a weight-specific Gill face via fontWeight.
-  if (isGillFace(flattened.fontFamily) && flattened.fontWeight != null) {
-    const { fontWeight: _ignored, ...withoutWeight } = flattened;
+  if (flattened.fontFamily != null) {
+    const { fontFamily: _ignored, ...withoutFamily } = flattened;
     return (
-      <RNText allowFontScaling={allowFontScaling} style={withoutWeight} {...rest} />
+      <RNText allowFontScaling={allowFontScaling} style={withoutFamily} {...rest} />
     );
   }
 

@@ -26,9 +26,9 @@ export function TodaySectionHeader({
       <Text
         variant="body"
         style={{
-          fontWeight: '600',
-          fontSize: 20,
-          lineHeight: 20,
+          fontWeight: '700',
+          fontSize: 22,
+          lineHeight: 22,
           letterSpacing: -0.4,
           ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
         }}

@@ -38,23 +38,23 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
             >
               <View
                 style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
                   backgroundColor: 'rgba(145,34,56,0.06)',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <MaterialSymbol icon={item.icon} size={18} color={theme.color.primary} />
+                <MaterialSymbol icon={item.icon} size={22} color={theme.color.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text
                   variant="body"
                   style={{
                     fontWeight: '600',
-                    fontSize: 15,
-                    lineHeight: 15 * 1.2,
+                    fontSize: 18,
+                    lineHeight: 18 * 1.2,
                     marginBottom: 2,
                   }}
                 >
@@ -65,8 +65,8 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
                   color="subtle"
                   style={{
                     fontWeight: '400',
-                    fontSize: 13,
-                    lineHeight: 13 * 1.45,
+                    fontSize: 15,
+                    lineHeight: 15 * 1.45,
                   }}
                   numberOfLines={1}
                 >
@@ -79,9 +79,9 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
                 accessibilityLabel={item.actionLabel}
                 style={{
                   backgroundColor: 'rgba(145,34,56,0.1)',
-                  borderRadius: 6,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
+                  borderRadius: 8,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
                 }}
               >
                 <Text
@@ -89,8 +89,8 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
                   color="brand"
                   style={{
                     fontWeight: '500',
-                    fontSize: 13,
-                    lineHeight: 13 * 1.2,
+                    fontSize: 15,
+                    lineHeight: 15 * 1.2,
                   }}
                 >
                   {item.actionLabel}

@@ -73,7 +73,7 @@ export const semanticSpacing = {
 } as const;
 
 export const semanticTypography = {
-  /** Display / headings — platform default for now; Gill reserved for explicit call sites. */
+  /** Display / headings — platform UI font (SF Pro / Roboto) for now. */
   heading1: {
     fontSize: primitiveFontSize['250'],
     lineHeight: primitiveLineHeight.brandHeading,
@@ -92,7 +92,7 @@ export const semanticTypography = {
     letterSpacing: primitiveFontSize['125'] * 0.01,
     fontWeight: primitiveFontWeight.bold,
   },
-  /** Interface / body — platform default font; weight via fontWeight only. */
+  /** Interface / body — platform UI font (SF Pro / Roboto); weight via fontWeight only. */
   body: {
     fontSize: primitiveFontSize['075'],
     lineHeight: primitiveLineHeight.body,

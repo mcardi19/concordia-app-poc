@@ -2,8 +2,8 @@
  * Concordia CDS typography primitives (16px root).
  * Source: wcms-aem/.../design-tokens/typography.less
  *
- * Default roles use the platform UI font (SF Pro / Roboto).
- * Gill Sans Nova faces stay registered for explicit opt-in (e.g. Today session card).
+ * All UI roles use the platform font (SF Pro / Roboto) for now.
+ * Gill Sans Nova faces remain mapped for a later brand opt-in.
  */
 
 import { fonts } from '@/design-system/fonts/fontMap';
@@ -83,6 +83,7 @@ export const primitiveFontWeight = {
   semiBold: '600' as const,
   bold: '700' as const,
   extraBold: '800' as const,
+  black: '900' as const,
   bodyLight: '300' as const,
   bodyRegular: '400' as const,
   bodyMedium: '500' as const,

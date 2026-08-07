@@ -1,4 +1,3 @@
-import { useFonts } from 'expo-font';
 import { FONT_FILES, REQUIRED_FONT_KEYS, type RegisteredFontKey } from './fontMap';
 
 export type FontLoadResult = {
@@ -18,17 +17,17 @@ export function areBrandFontsReady(loaded: boolean, error: Error | null): boolea
 }
 
 /**
- * Font bootstrap hook — registers every Gill Sans Nova face in `FONT_FILES`.
+ * Font bootstrap hook.
+ *
+ * Brand (Gill Sans Nova) registration is deferred — all UI type uses the
+ * platform font (SF Pro on iOS, Roboto on Android) for now.
  */
 export function useConcordiaFonts(): FontLoadResult {
-  const [loaded, error] = useFonts(FONT_FILES);
-  const brandFontsReady = areBrandFontsReady(loaded, error ?? null);
-
   return {
-    loaded,
-    error: error ?? null,
-    missingKeys: brandFontsReady ? [] : REQUIRED_FONT_KEYS,
-    brandFontsReady,
+    loaded: true,
+    error: null,
+    missingKeys: [],
+    brandFontsReady: false,
   };
 }
 
