@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, useTheme } from '@/design-system/theme';
 import { useConcordiaFonts } from '@/design-system/fonts';
@@ -25,10 +27,12 @@ function AppNavigation() {
   const navigationTheme = useMemo(() => createNavigationTheme(theme), [theme]);
 
   return (
-    <NavigationContainer theme={navigationTheme}>
-      <RootNavigator />
-      <StatusBar style="auto" />
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer theme={navigationTheme}>
+        <RootNavigator />
+        <StatusBar style="auto" />
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
 
@@ -45,10 +49,12 @@ export default function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AppNavigation />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AppNavigation />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

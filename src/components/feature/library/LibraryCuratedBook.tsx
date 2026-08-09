@@ -21,6 +21,7 @@ export function LibraryCuratedBook({ book }: Props) {
           width: COVER_WIDTH,
           height: COVER_HEIGHT,
           borderRadius: theme.radius.sm,
+          borderCurve: 'continuous',
           backgroundColor: book.coverColor,
           padding: theme.spacing.sm,
           justifyContent: 'flex-end',

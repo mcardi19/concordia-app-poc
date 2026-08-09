@@ -4,6 +4,7 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 
 export type RootStackParamList = {
   Main: undefined;
+  SessionDetail: undefined;
   Login: undefined;
 };
 

@@ -53,6 +53,7 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
           style={{
             width: UPDATE_CARD_WIDTH,
             borderRadius: theme.radius.lg,
+            borderCurve: 'continuous',
             overflow: 'hidden',
             ...todayHairlineCard,
           }}
@@ -68,6 +69,7 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.92)',
                   borderRadius: 7,
+                  borderCurve: 'continuous',
                   paddingHorizontal: 9,
                   paddingVertical: 4,
                   borderWidth: StyleSheet.hairlineWidth,
@@ -147,6 +149,7 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
           style={{
             width: CAMPUS_CARD_WIDTH,
             borderRadius: theme.radius.lg,
+            borderCurve: 'continuous',
             overflow: 'hidden',
             ...todayHairlineCard,
           }}

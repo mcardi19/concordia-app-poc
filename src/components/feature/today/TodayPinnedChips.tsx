@@ -28,7 +28,9 @@ export function TodayPinnedChips({ chips, onChipPress }: Props) {
             gap: theme.spacing.sm,
             backgroundColor: theme.color.background,
             borderRadius: theme.radius.full,
-            paddingHorizontal: 12.5,
+            borderCurve: 'continuous',
+            paddingLeft: 12.5,
+            paddingRight: 16,
             paddingVertical: 10,
             borderWidth: 0.5,
             borderColor: theme.color.background,
@@ -41,8 +43,8 @@ export function TodayPinnedChips({ chips, onChipPress }: Props) {
             variant="body"
             style={{
               fontWeight: '500',
-              fontSize: 15,
-              lineHeight: 15 * 1.2,
+              fontSize: 17,
+              lineHeight: 17 * 1.2,
             }}
           >
             {chip.label}

@@ -1,6 +1,7 @@
 import { Platform, type ViewStyle } from 'react-native';
 import { useTheme } from './ThemeProvider';
 import type { Theme } from './theme';
+import { SQUIRCLE_CURVE } from './radiusStyle';
 
 export type CardElevation = 'none' | 'low' | 'medium' | 'high';
 
@@ -13,6 +14,7 @@ export function getCardSurfaceStyle(
   const base: ViewStyle = {
     backgroundColor: theme.color.background,
     borderRadius: theme.radius.lg,
+    borderCurve: SQUIRCLE_CURVE,
     borderWidth: theme.borderWidth.default,
     borderColor: theme.color.borderSubtle,
   };

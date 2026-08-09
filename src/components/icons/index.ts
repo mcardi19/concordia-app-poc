@@ -9,5 +9,6 @@ export {
   msSecurity,
   msSearch,
   msLocationOn,
+  msClose,
 } from './symbols';
 export type { TabSymbolPair, FeatureSymbolKey } from './symbols';

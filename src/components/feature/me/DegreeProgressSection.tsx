@@ -38,6 +38,7 @@ export function DegreeProgressSection({ progress }: Props) {
           flexDirection: 'row',
           height: 10,
           borderRadius: theme.radius.button,
+          borderCurve: 'continuous',
           overflow: 'hidden',
           marginBottom: theme.spacing.md,
         }}
@@ -69,6 +70,7 @@ export function DegreeProgressSection({ progress }: Props) {
                 width: 10,
                 height: 10,
                 borderRadius: 2,
+                borderCurve: 'continuous',
                 backgroundColor: segment.color,
                 marginRight: theme.spacing.xs,
               }}

@@ -80,7 +80,6 @@ export function ScheduleEventBlock({ event, status, height, nowLabel, style }: P
               fontSize: 20,
               lineHeight: 26,
               color: titleColor,
-              fontWeight: '700',
             }}
             numberOfLines={2}
           >

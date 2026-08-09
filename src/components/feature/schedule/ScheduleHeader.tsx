@@ -56,6 +56,7 @@ export function ScheduleHeader({ selectedDate, viewMode, onViewModeChange }: Pro
                       backgroundColor: theme.color.primary,
                       marginTop: 4,
                       borderRadius: 1,
+                      borderCurve: 'continuous',
                     }}
                   />
                 ) : (

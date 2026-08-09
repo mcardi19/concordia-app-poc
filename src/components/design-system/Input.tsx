@@ -35,6 +35,7 @@ export function Input({
             borderWidth: theme.borderWidth.default,
             borderColor: error ? theme.color.error : theme.color.border,
             borderRadius: theme.radius.lg,
+            borderCurve: 'continuous',
             paddingHorizontal: theme.spacing.md,
             paddingVertical: theme.spacing.sm,
             minHeight: MIN_TOUCH_TARGET_SIZE,

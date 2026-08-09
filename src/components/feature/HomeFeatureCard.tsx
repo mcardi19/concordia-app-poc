@@ -35,6 +35,7 @@ export function HomeFeatureCard({ title, subtitle, icon, onPress }: Props) {
           width: 44,
           height: 44,
           borderRadius: theme.radius.lg,
+          borderCurve: 'continuous',
           backgroundColor: theme.color.backgroundMuted,
           alignItems: 'center',
           justifyContent: 'center',

@@ -86,6 +86,7 @@ export function ScheduleDayTimeline({ events, selectedDate, now = new Date() }: 
                 width: 8,
                 height: 8,
                 borderRadius: 4,
+                borderCurve: 'continuous',
                 backgroundColor: theme.color.primary,
                 marginRight: 4,
               }}

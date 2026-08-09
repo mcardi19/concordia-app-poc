@@ -77,19 +77,19 @@ export const semanticTypography = {
   heading1: {
     fontSize: primitiveFontSize['250'],
     lineHeight: primitiveLineHeight.brandHeading,
-    letterSpacing: primitiveFontSize['250'] * -0.01,
-    fontWeight: primitiveFontWeight.extraBold,
+    letterSpacing: 0,
+    fontWeight: primitiveFontWeight.bold,
   },
   heading2: {
     fontSize: primitiveFontSize['200'],
     lineHeight: primitiveLineHeight.brandHeading,
-    letterSpacing: primitiveFontSize['200'] * -0.01,
-    fontWeight: primitiveFontWeight.extraBold,
+    letterSpacing: 0,
+    fontWeight: primitiveFontWeight.bold,
   },
   heading3: {
     fontSize: primitiveFontSize['125'],
     lineHeight: primitiveLineHeight.brandLead,
-    letterSpacing: primitiveFontSize['125'] * 0.01,
+    letterSpacing: 0,
     fontWeight: primitiveFontWeight.bold,
   },
   /** Interface / body — platform UI font (SF Pro / Roboto); weight via fontWeight only. */

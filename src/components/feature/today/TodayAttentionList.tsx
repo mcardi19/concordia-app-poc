@@ -24,6 +24,7 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
     <View
       style={{
         borderRadius: theme.radius.lg,
+        borderCurve: 'continuous',
         overflow: 'hidden',
         ...todayHairlineCard,
       }}
@@ -45,6 +46,7 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
                 width: ICON_TILE,
                 height: ICON_TILE,
                 borderRadius: 10,
+                borderCurve: 'continuous',
                 backgroundColor: 'rgba(145,34,56,0.08)',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -84,6 +86,7 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
               style={{
                 backgroundColor: 'rgba(145,34,56,0.1)',
                 borderRadius: 8,
+                borderCurve: 'continuous',
                 paddingHorizontal: 14,
                 paddingVertical: 8,
               }}

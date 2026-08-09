@@ -24,6 +24,7 @@ import { msMeetingRoom } from '@material-symbols-react-native/rounded-400/msMeet
 import { msBookmarks } from '@material-symbols-react-native/rounded-400/msBookmarks';
 import { msSecurity } from '@material-symbols-react-native/rounded-400/msSecurity';
 import { msLocationOn } from '@material-symbols-react-native/rounded-400/msLocationOn';
+import { msClose } from '@material-symbols-react-native/rounded-400/msClose';
 
 export type TabSymbolPair = {
   outline: MsIconDefinition;
@@ -72,4 +73,5 @@ export {
   msSecurity,
   msSearch,
   msLocationOn,
+  msClose,
 };

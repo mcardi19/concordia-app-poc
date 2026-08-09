@@ -1,6 +1,7 @@
 export { ThemeProvider, useTheme } from './ThemeProvider';
 export { lightTheme, type Theme } from './theme';
 export { getCardSurfaceStyle, useCardSurface, type CardElevation } from './cardSurface';
+export { radiusStyle, SQUIRCLE_CURVE } from './radiusStyle';
 export {
   getScreenHorizontalPaddingStyle,
   getScreenScrollContentStyle,

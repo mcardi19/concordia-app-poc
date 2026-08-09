@@ -24,12 +24,10 @@ export function TodaySectionHeader({
   const heading = (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
       <Text
-        variant="body"
+        variant="heading3"
         style={{
-          fontWeight: '600',
           fontSize: 22,
           lineHeight: 22,
-          letterSpacing: -0.55,
           ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
         }}
       >

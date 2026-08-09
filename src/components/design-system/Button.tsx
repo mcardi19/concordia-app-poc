@@ -37,6 +37,7 @@ export function Button({
           paddingHorizontal: theme.spacing.button.paddingHorizontal,
           height: MIN_TOUCH_TARGET_SIZE,
           borderRadius: theme.radius.button,
+          borderCurve: 'continuous',
           justifyContent: 'center',
           alignItems: 'center',
         },

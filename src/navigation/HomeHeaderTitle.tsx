@@ -60,9 +60,9 @@ export function HomeLargeTitle({
         style={{
           fontSize: 34,
           lineHeight: 40,
-          fontWeight: '600',
+          fontWeight: '700',
           color,
-          letterSpacing: 0.4,
+          letterSpacing: 0,
           marginTop: -2,
         }}
       >

@@ -37,6 +37,7 @@ export function ScheduleWeekStrip({ weekDates, selectedDate, events, onSelectDat
               paddingVertical: theme.spacing.xs,
               paddingHorizontal: 6,
               borderRadius: theme.radius.lg,
+              borderCurve: 'continuous',
               backgroundColor: selected ? theme.color.primary : 'transparent',
               opacity: pressed ? 0.85 : 1,
             })}
@@ -67,6 +68,7 @@ export function ScheduleWeekStrip({ weekDates, selectedDate, events, onSelectDat
                 width: 4,
                 height: 4,
                 borderRadius: 2,
+                borderCurve: 'continuous',
                 marginTop: 6,
                 backgroundColor: hasEvents
                   ? selected

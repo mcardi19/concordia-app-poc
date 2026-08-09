@@ -90,7 +90,6 @@ export function LibraryScreen() {
           style={{
             fontSize: 32,
             lineHeight: 38,
-            fontWeight: '700',
             color: theme.color.text.primary,
             marginTop: theme.spacing.sm,
             marginBottom: theme.spacing.sm,
@@ -105,6 +104,7 @@ export function LibraryScreen() {
               marginBottom: theme.spacing.md,
               padding: theme.spacing.md,
               borderRadius: 8,
+              borderCurve: 'continuous',
               borderWidth: 1,
               borderColor: theme.color.borderSubtle,
               backgroundColor: theme.color.backgroundSubtle,
@@ -147,6 +147,7 @@ export function LibraryScreen() {
               width: 8,
               height: 8,
               borderRadius: 4,
+              borderCurve: 'continuous',
               backgroundColor: theme.color.success,
               marginRight: theme.spacing.sm,
             }}

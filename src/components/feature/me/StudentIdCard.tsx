@@ -18,6 +18,7 @@ function PhotoPlaceholder() {
         height: 108,
         backgroundColor: theme.color.backgroundMuted,
         borderRadius: theme.radius.sm,
+        borderCurve: 'continuous',
         overflow: 'hidden',
       }}
     >
