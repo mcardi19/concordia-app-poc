@@ -1,13 +1,12 @@
 import React from 'react';
 import {
-  Image,
+  StyleSheet,
   View,
+  type ImageStyle,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import Animated, {
-  Extrapolation,
-  interpolate,
   useAnimatedStyle,
   type SharedValue,
 } from 'react-native-reanimated';
@@ -53,20 +52,32 @@ type Props = {
   /** Reanimated style for the professor meta field during expand. */
   profStyle?: StyleProp<ViewStyle>;
   /**
-   * Extra inset for overlay content (not the image). Used when the hero sheet
-   * bleeds past the screen so title/meta stay in the visible frame.
+   * Reanimated transform for the hero photo. `cover` resolves against this
+   * hero's own box, so the detail hero and the list card crop the photo
+   * differently; the expand uses this to hold the card's crop at progress 0.
    */
-  contentInset?: number;
-  /** 0–1 progress that eases contentInset in (keeps card handoff aligned). */
-  contentInsetProgress?: SharedValue<number>;
+  imageStyle?: StyleProp<ImageStyle>;
   /**
-   * Progress at which sheet radius bleed begins. Bleed inset stays 0 until then
-   * so content does not pull inward before the flush rect fills the screen.
+   * 0–1 expand progress. Drives the overlay morph with transforms only — the
+   * overlay's own layout is fixed so no frame of the expand dirties Yoga.
    */
-  contentInsetBleedStart?: number;
+  morphProgress?: SharedValue<number>;
   /**
-   * Detail chrome top (safe-area aligned). When set with contentInsetProgress,
-   * the status badge morphs from card padding into this row beside the close control.
+   * Negative px offset for right-anchored overlay content. The detail hero is
+   * laid out at screen width but the clip window is card width while collapsed,
+   * so right-anchored cells shift left by the window's missing width to land on
+   * the card's right padding.
+   */
+  rightShift?: SharedValue<number>;
+  /**
+   * Negative px offset lifting title + meta so they hug the bottom of a clip
+   * window that is still shorter than the hero.
+   */
+  contentShift?: SharedValue<number>;
+  /**
+   * Detail chrome top (safe-area aligned). When set with morphProgress, the
+   * status badge translates from card padding into this row beside the close
+   * control — position only, so its box never re-lays out.
    */
   chromeTop?: number;
   /** Detail chrome horizontal inset (matches close button). */
@@ -95,9 +106,10 @@ export function SessionHero({
   actionsInteractive = true,
   cardActionsStyle,
   profStyle,
-  contentInset = 0,
-  contentInsetProgress,
-  contentInsetBleedStart = 0,
+  imageStyle,
+  morphProgress,
+  rightShift,
+  contentShift,
   chromeTop,
   chromeHorizontal,
   sharedTransition = false,
@@ -113,12 +125,12 @@ export function SessionHero({
   const theme = useTheme();
 
   const image = (
-    <Image
+    <Animated.Image
       source={session.image}
       resizeMode="cover"
       // Avoid Android’s default Image fade-in (reads as a photo flash on expand).
       fadeDuration={0}
-      style={
+      style={[
         fillContainer
           ? {
               position: 'absolute',
@@ -129,8 +141,9 @@ export function SessionHero({
               width: '100%',
               height: '100%',
             }
-          : { width: '100%', height }
-      }
+          : { width: '100%', height },
+        imageStyle,
+      ]}
     />
   );
 
@@ -148,9 +161,9 @@ export function SessionHero({
       actionsInteractive={actionsInteractive}
       cardActionsStyle={cardActionsStyle}
       profStyle={profStyle}
-      contentInset={contentInset}
-      contentInsetProgress={contentInsetProgress}
-      contentInsetBleedStart={contentInsetBleedStart}
+      morphProgress={morphProgress}
+      rightShift={rightShift}
+      contentShift={contentShift}
       chromeTop={chromeTop}
       chromeHorizontal={chromeHorizontal}
       contentStyle={contentStyle}
@@ -192,9 +205,9 @@ type OverlayProps = {
   actionsInteractive: boolean;
   cardActionsStyle?: StyleProp<ViewStyle>;
   profStyle?: StyleProp<ViewStyle>;
-  contentInset: number;
-  contentInsetProgress?: SharedValue<number>;
-  contentInsetBleedStart: number;
+  morphProgress?: SharedValue<number>;
+  rightShift?: SharedValue<number>;
+  contentShift?: SharedValue<number>;
   chromeTop?: number;
   chromeHorizontal?: number;
   contentStyle?: StyleProp<ViewStyle>;
@@ -212,9 +225,9 @@ function SessionHeroOverlay({
   actionsInteractive,
   cardActionsStyle,
   profStyle,
-  contentInset,
-  contentInsetProgress,
-  contentInsetBleedStart,
+  morphProgress,
+  rightShift,
+  contentShift,
   chromeTop,
   chromeHorizontal,
   contentStyle,
@@ -222,92 +235,49 @@ function SessionHeroOverlay({
   onViewDetailsPressIn,
   onViewDetailsPressOut,
 }: OverlayProps) {
-  const bleedExtra = (t: number) => {
-    'worklet';
-    if (!contentInsetProgress) {
-      return contentInset;
-    }
-    if (contentInsetBleedStart <= 0) {
-      return interpolate(t, [0, 1], [0, contentInset]);
-    }
-    return (
-      contentInset *
-      interpolate(
-        t,
-        [contentInsetBleedStart, 1],
-        [0, 1],
-        Extrapolation.CLAMP,
-      )
-    );
-  };
-
-  const badgeStyle = useAnimatedStyle(() => {
-    const t = contentInsetProgress?.value ?? 0;
-    const extra = bleedExtra(t);
-    // Morph into the detail close-button row (same top + vertical centre).
-    const topBase =
-      chromeTop != null && contentInsetProgress
-        ? interpolate(t, [0, 1], [SESSION_HERO_CONTENT_PAD, chromeTop])
+  /**
+   * The badge box is fixed; only its position animates. Translating instead of
+   * moving top/left/right keeps the morph off the layout thread — a badge that
+   * re-lays-out 60×/sec is what made the expand drop frames.
+   */
+  const badgeTransform = useAnimatedStyle(() => {
+    const t = morphProgress?.value ?? 0;
+    const targetTop =
+      chromeTop != null
+        ? chromeTop + (HEADER_BAR_BUTTON_SIZE - SESSION_STATUS_BADGE_HEIGHT) / 2
         : SESSION_HERO_CONTENT_PAD;
-    const sideBase =
-      chromeHorizontal != null && contentInsetProgress
-        ? interpolate(t, [0, 1], [SESSION_HERO_CONTENT_PAD, chromeHorizontal])
-        : SESSION_HERO_CONTENT_PAD;
-    const rowHeight =
-      chromeTop != null && contentInsetProgress
-        ? interpolate(
-            t,
-            [0, 1],
-            [SESSION_STATUS_BADGE_HEIGHT, HEADER_BAR_BUTTON_SIZE],
-          )
-        : SESSION_STATUS_BADGE_HEIGHT;
+    const targetLeft = chromeHorizontal ?? SESSION_HERO_CONTENT_PAD;
     return {
-      position: 'absolute' as const,
-      top: topBase + extra,
-      left: sideBase + extra,
-      right: sideBase + extra,
-      height: rowHeight,
-      justifyContent: 'center' as const,
-      zIndex: 2,
+      transform: [
+        { translateY: (targetTop - SESSION_HERO_CONTENT_PAD) * t },
+        { translateX: (targetLeft - SESSION_HERO_CONTENT_PAD) * t },
+      ],
     };
   });
 
-  const titleStyle = useAnimatedStyle(() => {
-    const t = contentInsetProgress?.value ?? 0;
-    const extra = bleedExtra(t);
-    return {
-      gap: 8,
-      marginBottom: 16,
-      paddingHorizontal: SESSION_HERO_CONTENT_PAD + extra,
-    };
-  });
+  // Lifts title + meta so they sit on the bottom edge of a still-collapsed window.
+  const columnTransform = useAnimatedStyle(() => ({
+    transform: [{ translateY: contentShift?.value ?? 0 }],
+  }));
 
-  const metaStyle = useAnimatedStyle(() => {
-    const t = contentInsetProgress?.value ?? 0;
-    const extra = bleedExtra(t);
-    const pad = SESSION_HERO_CONTENT_PAD + extra;
-    return {
-      flexDirection: 'row' as const,
-      alignItems: 'flex-end' as const,
-      gap: 16,
-      paddingTop: SESSION_HERO_CONTENT_PAD,
-      paddingBottom: SESSION_HERO_CONTENT_PAD,
-      paddingLeft: pad,
-      paddingRight: pad,
-      backgroundColor: todayTheme.sessionMetaFooter,
-    };
-  });
+  // Right-anchored cell tracks the clip window's right edge, not the hero's.
+  const rightCellTransform = useAnimatedStyle(() => ({
+    transform: [{ translateX: rightShift?.value ?? 0 }],
+  }));
 
   return (
     <View pointerEvents="box-none" style={[absoluteFill, contentStyle]}>
       {showStatusBadge ? (
-        <Animated.View pointerEvents="none" style={badgeStyle}>
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.badge, badgeTransform]}
+        >
           <SessionStatusBadge label={session.statusLabel} />
         </Animated.View>
       ) : null}
 
-      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Animated.View style={titleStyle}>
+      <Animated.View style={[styles.column, columnTransform]}>
+        <View style={styles.title}>
           <Text
             variant="body"
             style={{
@@ -330,12 +300,12 @@ function SessionHeroOverlay({
           >
             {session.title}
           </Text>
-        </Animated.View>
+        </View>
 
-        <Animated.View style={metaStyle}>
+        <View style={styles.meta}>
           <MetaField label="Ends" value={session.ends} />
           <MetaField label="Room" value={session.room} />
-          <View style={{ flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+          <Animated.View style={[styles.rightCell, rightCellTransform]}>
             {showProfessor ? (
               <Animated.View
                 pointerEvents="none"
@@ -345,32 +315,81 @@ function SessionHeroOverlay({
               </Animated.View>
             ) : null}
             {showActions ? (
-              <Animated.View style={cardActionsStyle}>
+              <Animated.View
+                pointerEvents={actionsInteractive ? 'auto' : 'none'}
+                accessibilityElementsHidden={!actionsInteractive}
+                importantForAccessibility={
+                  actionsInteractive ? 'auto' : 'no-hide-descendants'
+                }
+                style={cardActionsStyle}
+              >
                 <SessionHeroActions
-                  onViewDetails={actionsInteractive ? onViewDetails : undefined}
-                  onViewDetailsPressIn={
-                    actionsInteractive ? onViewDetailsPressIn : undefined
-                  }
-                  onViewDetailsPressOut={
-                    actionsInteractive ? onViewDetailsPressOut : undefined
-                  }
+                  interactive={actionsInteractive}
+                  onViewDetails={onViewDetails}
+                  onViewDetailsPressIn={onViewDetailsPressIn}
+                  onViewDetailsPressOut={onViewDetailsPressOut}
                 />
               </Animated.View>
             ) : !showProfessor ? (
               <MetaField label="Prof" value={session.professor} />
             ) : null}
-          </View>
-        </Animated.View>
-      </View>
+          </Animated.View>
+        </View>
+      </Animated.View>
     </View>
   );
 }
 
+/**
+ * Every box below is fixed. The expand morph only ever writes `transform` and
+ * `opacity` on top of these, so no frame of it can dirty layout.
+ */
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: SESSION_HERO_CONTENT_PAD,
+    left: SESSION_HERO_CONTENT_PAD,
+    right: SESSION_HERO_CONTENT_PAD,
+    height: SESSION_STATUS_BADGE_HEIGHT,
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  column: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  title: {
+    gap: 8,
+    marginBottom: 16,
+    paddingHorizontal: SESSION_HERO_CONTENT_PAD,
+  },
+  meta: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 16,
+    padding: SESSION_HERO_CONTENT_PAD,
+    backgroundColor: todayTheme.sessionMetaFooter,
+  },
+  rightCell: {
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+  },
+});
+
+/**
+ * Always renders the same control, interactive or not. Branching to a plain
+ * View for the non-interactive copy made the expand overlay show a flat fill
+ * where the list card shows liquid glass — a visible colour pop at handoff.
+ */
 export function SessionHeroActions({
+  interactive = true,
   onViewDetails,
   onViewDetailsPressIn,
   onViewDetailsPressOut,
 }: {
+  /** When false the control is decorative (expand overlay) but looks identical. */
+  interactive?: boolean;
   onViewDetails?: () => void;
   onViewDetailsPressIn?: () => void;
   onViewDetailsPressOut?: () => void;
@@ -379,44 +398,11 @@ export function SessionHeroActions({
 }) {
   const theme = useTheme();
 
-  const label = (
-    <Text
-      variant="body"
-      style={{
-        fontWeight: '600',
-        color: theme.color.text.inverse,
-        fontSize: 16,
-        lineHeight: 16 * 1.2,
-      }}
-    >
-      View details
-    </Text>
-  );
-
-  if (!onViewDetails) {
-    return (
-      <View
-        style={{
-          height: SESSION_ACTIONS_ROW_HEIGHT,
-          paddingHorizontal: 18,
-          borderRadius: 10,
-          borderCurve: 'continuous',
-          overflow: 'hidden',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: todayTheme.sessionButton,
-        }}
-      >
-        {label}
-      </View>
-    );
-  }
-
   return (
     <GlassActionButton
-      onPress={onViewDetails}
-      onPressIn={onViewDetailsPressIn}
-      onPressOut={onViewDetailsPressOut}
+      onPress={interactive ? onViewDetails : undefined}
+      onPressIn={interactive ? onViewDetailsPressIn : undefined}
+      onPressOut={interactive ? onViewDetailsPressOut : undefined}
       pressScaleEnabled={false}
       accessibilityLabel="View details"
       style={{
@@ -428,7 +414,17 @@ export function SessionHeroActions({
       }}
       fallbackBackgroundColor={todayTheme.sessionButton}
     >
-      {label}
+      <Text
+        variant="body"
+        style={{
+          fontWeight: '600',
+          color: theme.color.text.inverse,
+          fontSize: 16,
+          lineHeight: 16 * 1.2,
+        }}
+      >
+        View details
+      </Text>
     </GlassActionButton>
   );
 }

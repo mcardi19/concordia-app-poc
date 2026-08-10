@@ -1,21 +1,29 @@
-import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   AccessibilityInfo,
   BackHandler,
   Dimensions,
+  Image,
   Platform,
   StyleSheet,
   View,
+  type ImageSourcePropType,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, {
   Extrapolation,
-  Easing,
   interpolate,
   runOnJS,
   useAnimatedProps,
   useAnimatedReaction,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withSpring,
   withTiming,
@@ -29,8 +37,6 @@ import {
 } from '@/components/feature/today/SessionHero';
 import { useSessionExpansionStore } from '@/components/feature/today/sessionExpansionStore';
 import {
-  PRESS_SCALE,
-  SPRING_RELEASE,
   cardScaleSV,
   sourceHiddenSV,
 } from '@/components/feature/today/sessionExpansionShared';
@@ -48,16 +54,27 @@ const DETAIL_HERO_HEIGHT = Math.max(
   SESSION_HERO_MIN_HEIGHT,
 );
 
-/** Full open/close morph duration (card ↔ fullscreen). */
-const TRANSITION_MS = 280;
-/** Decelerate into the final frame — soft landing instead of a hard cut. */
-const TRANSITION_EASING = Easing.bezier(0.22, 1, 0.36, 1);
-/** Radius bleed eases in late so it does not make width hit the screen early. */
-const BLEED_START = 0.88;
-/** Hide list card once the sheet has started covering it. */
+/**
+ * Springs, not timing curves. A fixed-duration ease-out always reads as a cut
+ * because it arrives with zero velocity on a schedule; a critically damped
+ * spring decelerates into the frame the way the App Store expand does.
+ * `dampingRatio: 1` = fastest settle with no overshoot.
+ */
+const OPEN_SPRING = { duration: 520, dampingRatio: 1 } as const;
+const CLOSE_SPRING = { duration: 420, dampingRatio: 1 } as const;
+
+/** Hide the list card once the sheet has started covering it. */
 const SOURCE_HIDE_PROGRESS = 0.04;
+/** Repaint the list card under the overlay before the collapse fully lands. */
+const SOURCE_REVEAL_PROGRESS = 0.06;
 /** Full-screen frost behind the expanding sheet (expo-blur max is 100). */
 const BACKDROP_BLUR_INTENSITY = 100;
+/**
+ * Quantise blur intensity. Each distinct value re-rasterises the whole
+ * UIVisualEffectView, so a per-frame ramp costs ~60 of them; in 12-point steps
+ * it costs ~9 and looks identical in motion.
+ */
+const BLUR_STEP = 12;
 const androidBlurMethod =
   Platform.OS === 'android' ? ('dimezisBlurView' as const) : undefined;
 
@@ -69,9 +86,12 @@ const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 /**
  * Transparent-modal host for the App Store Today–style shared expand.
- * One progress value morphs measured card geometry → full screen.
- * Screen insets close proportionally so width and height edges arrive together.
- * Corner radius stays at the card value for the whole interaction.
+ *
+ * Performance contract: the clip window (`sheetStyle`) is the ONLY node whose
+ * layout animates. Everything inside it is laid out once at final size and
+ * absolutely positioned, so resizing the window is a single cheap Yoga pass
+ * with a fully cached subtree instead of a re-layout + text re-measure of the
+ * whole detail view every frame. All content adjustment is transform/opacity.
  */
 export function SessionDetailScreen({ navigation }: Props) {
   const theme = useTheme();
@@ -89,6 +109,8 @@ export function SessionDetailScreen({ navigation }: Props) {
   const reset = useSessionExpansionStore((s) => s.reset);
 
   const progress = useSharedValue(0);
+  /** UI-thread close flag — the source reveal reaction must not lag a commit. */
+  const collapsing = useSharedValue(0);
   const [closing, setClosing] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -113,12 +135,17 @@ export function SessionDetailScreen({ navigation }: Props) {
 
   const animateTo = useCallback(
     (to: number, onDone?: () => void) => {
-      progress.value = withTiming(
+      if (reduceMotion) {
+        progress.value = withTiming(to, { duration: 0 }, (finished) => {
+          if (finished && onDone) {
+            runOnJS(onDone)();
+          }
+        });
+        return;
+      }
+      progress.value = withSpring(
         to,
-        {
-          duration: reduceMotion ? 0 : TRANSITION_MS,
-          easing: TRANSITION_EASING,
-        },
+        to === 1 ? OPEN_SPRING : CLOSE_SPRING,
         (finished) => {
           if (finished && onDone) {
             runOnJS(onDone)();
@@ -134,21 +161,13 @@ export function SessionDetailScreen({ navigation }: Props) {
   }, []);
 
   const finishClose = useCallback(() => {
-    // Land on the tap-sized frame, reveal the list card at PRESS_SCALE under it,
-    // wait for that paint, dismiss the overlay, then spring back to resting.
+    // The list card was already revealed at SOURCE_REVEAL_PROGRESS and has had
+    // real frames to paint, so dismiss immediately — no rAF chain. The old
+    // triple-rAF wait froze the last ~50ms of every close.
     progress.value = 0;
-    cardScaleSV.value = PRESS_SCALE;
-    sourceHiddenSV.value = 0;
-    setSourceHidden(false);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          navigation.goBack();
-          cardScaleSV.value = withSpring(1, SPRING_RELEASE);
-        });
-      });
-    });
-  }, [navigation, progress, setSourceHidden]);
+    cardScaleSV.value = 1;
+    navigation.goBack();
+  }, [navigation, progress]);
 
   useEffect(() => {
     return () => {
@@ -156,15 +175,17 @@ export function SessionDetailScreen({ navigation }: Props) {
     };
   }, [reset]);
 
-  /**
-   * Corner radius never animates. The sheet expands to a rect larger than the
-   * screen so the constant radius sits outside the clipped viewport — full-bleed
-   * without squaring corners mid-flight.
-   * Continuous/squircle curves need more bleed than the nominal radius.
-   */
   const cardRadius =
     pressedOrigin?.borderRadius ?? restingOrigin?.borderRadius ?? theme.radius.xl;
-  const edgeBleed = Math.max(cardRadius * 5, 60);
+  /**
+   * Corner radius at full screen. The old build hid the radius by expanding the
+   * sheet past the viewport, which forced every child to carry a matching
+   * animated bleed inset (and therefore re-layout). Interpolating the radius
+   * instead keeps content in plain screen coordinates. Devices with a home
+   * indicator have rounded displays; 44 is a close approximation of the real
+   * 47–55pt corner and reads as flush against the dark backdrop.
+   */
+  const screenRadius = insets.bottom > 0 ? 44 : 0;
 
   // Open from pressed frame; close retargets to a derived tap-sized frame.
   const originX = useSharedValue(pressedOrigin?.x ?? 0);
@@ -172,6 +193,25 @@ export function SessionDetailScreen({ navigation }: Props) {
   const originW = useSharedValue(pressedOrigin?.width ?? SCREEN_W);
   const originH = useSharedValue(
     pressedOrigin?.height ?? SESSION_HERO_MIN_HEIGHT,
+  );
+
+  /** Live clip-window size — content transforms are derived from these. */
+  const frameW = useDerivedValue(
+    () => originW.value + (SCREEN_W - originW.value) * progress.value,
+  );
+  const frameH = useDerivedValue(
+    () => originH.value + (SCREEN_H - originH.value) * progress.value,
+  );
+  /**
+   * Content is laid out at screen width but the window is card width while
+   * collapsed. Left-anchored content already lines up with the card (the window
+   * origin is the card origin); right-anchored content shifts left by the
+   * window's missing width so it lands on the card's right padding.
+   */
+  const rightShift = useDerivedValue(() => frameW.value - SCREEN_W);
+  /** Hold the meta row on the window's bottom edge until the hero fits. */
+  const contentShift = useDerivedValue(() =>
+    Math.min(0, frameH.value - DETAIL_HERO_HEIGHT),
   );
 
   useLayoutEffect(() => {
@@ -190,15 +230,25 @@ export function SessionDetailScreen({ navigation }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Hide the source only after the sheet has started covering it.
+  // Source card handoff, both directions, entirely on the UI thread.
   useAnimatedReaction(
     () => progress.value,
     (p) => {
-      if (p > SOURCE_HIDE_PROGRESS && sourceHiddenSV.value === 0) {
-        sourceHiddenSV.value = 1;
-        // Resting layout under opacity 0 so close can remasure accurately.
+      if (collapsing.value === 0) {
+        if (p > SOURCE_HIDE_PROGRESS && sourceHiddenSV.value === 0) {
+          sourceHiddenSV.value = 1;
+          // Resting layout under opacity 0 so close can remeasure accurately.
+          cardScaleSV.value = 1;
+          runOnJS(setSourceHidden)(true);
+        }
+        return;
+      }
+      if (p < SOURCE_REVEAL_PROGRESS && sourceHiddenSV.value === 1) {
+        // Card is already at resting scale under the overlay, and the overlay is
+        // collapsing onto that exact frame — so this is a pure opacity swap.
         cardScaleSV.value = 1;
-        runOnJS(setSourceHidden)(true);
+        sourceHiddenSV.value = 0;
+        runOnJS(setSourceHidden)(false);
       }
     },
     [setSourceHidden],
@@ -218,14 +268,19 @@ export function SessionDetailScreen({ navigation }: Props) {
         return;
       }
       setRestingOrigin(resting);
-      // Collapse to the tap/pressed frame (centred scale of the live resting card),
-      // then the list card bounces back to resting after handoff.
-      const pressedW = resting.width * PRESS_SCALE;
-      const pressedH = resting.height * PRESS_SCALE;
-      originX.value = resting.x + (resting.width - pressedW) / 2;
-      originY.value = resting.y + (resting.height - pressedH) / 2;
-      originW.value = pressedW;
-      originH.value = pressedH;
+      /**
+       * Collapse onto the card's resting frame, not the tap-scaled one. The
+       * overlay renders its content at scale 1; landing on a 0.97 frame meant
+       * handing off to a card whose type and photo were 3% smaller, which read
+       * as the title and image jumping. Exact frame = exact handoff. The cost
+       * is the old press-scale bounce on close, which cannot survive a
+       * pixel-accurate landing.
+       */
+      originX.value = resting.x;
+      originY.value = resting.y;
+      originW.value = resting.width;
+      originH.value = resting.height;
+      collapsing.value = 1;
       animateTo(0, finishClose);
     };
 
@@ -238,6 +293,7 @@ export function SessionDetailScreen({ navigation }: Props) {
   }, [
     animateTo,
     closing,
+    collapsing,
     finishClose,
     measureResting,
     originH,
@@ -256,15 +312,61 @@ export function SessionDetailScreen({ navigation }: Props) {
     return () => sub.remove();
   }, [onClose]);
 
-  const backdropBlurProps = useAnimatedProps(() => ({
-    // Blur ramps with the expand — not via parent opacity (that kills the effect).
-    intensity: interpolate(
+  const backdropBlurProps = useAnimatedProps(() => {
+    const raw = interpolate(
       progress.value,
       [0, 0.35, 1],
       [0, BACKDROP_BLUR_INTENSITY * 0.7, BACKDROP_BLUR_INTENSITY],
       Extrapolation.CLAMP,
-    ),
-  }));
+    );
+    // Snapped — an unchanged value is diffed away and never reaches the view.
+    return { intensity: Math.round(raw / BLUR_STEP) * BLUR_STEP };
+  });
+
+  /**
+   * Intrinsic pixel size of the hero photo, needed to reproduce `cover` by hand.
+   * Local `require()` assets resolve synchronously.
+   */
+  const heroImage = useMemo(() => {
+    if (!session) {
+      return null;
+    }
+    const resolved = Image.resolveAssetSource(session.image as ImageSourcePropType);
+    return resolved && resolved.width > 0 && resolved.height > 0
+      ? { w: resolved.width, h: resolved.height }
+      : null;
+  }, [session]);
+
+  /**
+   * `cover` fits the photo to whichever box it is laid out in, so the detail
+   * hero (screen width × DETAIL_HERO_HEIGHT) and the list card crop the same
+   * photo at different scales and centres — that mismatch is what made the
+   * image jump at handoff.
+   *
+   * This re-derives cover for the live clip window and expresses the delta as a
+   * transform: scale the element by targetCoverScale / laidOutCoverScale, then
+   * recentre it on the window. At progress 0 that reproduces the card's crop
+   * exactly; at progress 1 it resolves to identity.
+   */
+  const heroImageStyle = useAnimatedStyle(() => {
+    if (!heroImage) {
+      return { transform: [{ translateX: 0 }, { translateY: 0 }, { scale: 1 }] };
+    }
+    const windowW = frameW.value;
+    const windowH = Math.min(frameH.value, DETAIL_HERO_HEIGHT);
+    const target = Math.max(windowW / heroImage.w, windowH / heroImage.h);
+    const laidOut = Math.max(
+      SCREEN_W / heroImage.w,
+      DETAIL_HERO_HEIGHT / heroImage.h,
+    );
+    return {
+      transform: [
+        { translateX: (windowW - SCREEN_W) / 2 },
+        { translateY: (windowH - DETAIL_HERO_HEIGHT) / 2 },
+        { scale: laidOut > 0 ? target / laidOut : 1 },
+      ],
+    };
+  });
 
   const backdropDimStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
@@ -275,123 +377,51 @@ export function SessionDetailScreen({ navigation }: Props) {
     ),
   }));
 
+  // The one node that resizes. Its children are fixed-size, so this is a single
+  // cheap layout pass rather than a re-layout of the whole detail view.
   const sheetStyle = useAnimatedStyle(() => {
     const p = progress.value;
-    // Close screen insets in lockstep: remainingLeft/originX === remainingTop/originY.
-    // That makes left/right and top/bottom edges meet the screen at the same progress.
-    const flushLeft = originX.value * (1 - p);
-    const flushTop = originY.value * (1 - p);
-    const flushW = originW.value + (SCREEN_W - originW.value) * p;
-    const flushH = originH.value + (SCREEN_H - originH.value) * p;
-    // Radius bleed only after the flush rect has nearly filled the screen.
-    const bleed =
-      edgeBleed * interpolate(p, [BLEED_START, 1], [0, 1], Extrapolation.CLAMP);
     return {
-      position: 'absolute' as const,
-      left: flushLeft - bleed,
-      top: flushTop - bleed,
-      width: flushW + bleed * 2,
-      height: flushH + bleed * 2,
+      left: originX.value * (1 - p),
+      top: originY.value * (1 - p),
+      width: frameW.value,
+      height: frameH.value,
+      // Non-layout prop: updates without dirtying Yoga.
+      borderRadius:
+        cardRadius +
+        (screenRadius - cardRadius) *
+          interpolate(p, [0.45, 1], [0, 1], Extrapolation.CLAMP),
     };
   });
 
-  // Static chrome — not inside useAnimatedStyle, so Reanimated cannot tween it.
-  const sheetChromeStyle = {
-    borderRadius: cardRadius,
-    borderCurve: 'continuous' as const,
-    overflow: 'hidden' as const,
-    backgroundColor: todayTheme.pageBackground,
-  };
-
-  const heroHeightStyle = useAnimatedStyle(() => {
-    const p = progress.value;
-    const bleed =
-      edgeBleed * interpolate(p, [BLEED_START, 1], [0, 1], Extrapolation.CLAMP);
-    return {
-      height:
-        originH.value + (DETAIL_HERO_HEIGHT - originH.value) * p + bleed,
-      width: '100%' as const,
-      overflow: 'hidden' as const,
-    };
-  });
-
-  const detailChromeStyle = useAnimatedStyle(() => {
-    const p = progress.value;
-    const bleed =
-      edgeBleed * interpolate(p, [BLEED_START, 1], [0, 1], Extrapolation.CLAMP);
-    return {
-      position: 'absolute' as const,
-      top: topBarOffset + bleed,
-      left: horizontalInset + bleed,
-      right: horizontalInset + bleed,
-      height: HEADER_BAR_BUTTON_SIZE,
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'flex-end' as const,
-      zIndex: 10,
-      opacity: interpolate(p, [0.55, 0.9], [0, 1], Extrapolation.CLAMP),
-    };
-  });
-
-  const bodyStyle = useAnimatedStyle(() => {
-    const p = progress.value;
-    const bleed =
-      edgeBleed * interpolate(p, [BLEED_START, 1], [0, 1], Extrapolation.CLAMP);
-    return {
-      paddingTop: 16,
-      paddingHorizontal: horizontalInset + bleed,
-      gap: theme.spacing.lg,
-      backgroundColor: todayTheme.pageBackground,
-      minHeight: SCREEN_H - DETAIL_HERO_HEIGHT * 0.45,
-    };
-  });
+  const detailChromeStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      progress.value,
+      [0.55, 0.9],
+      [0, 1],
+      Extrapolation.CLAMP,
+    ),
+    transform: [{ translateX: rightShift.value }],
+  }));
 
   // Fade out the card CTA; do not replace it with Prof in the detail hero.
   const cardActionsOpacityStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.3, 0.5], [1, 0.35, 0], Extrapolation.CLAMP),
+    opacity: interpolate(
+      progress.value,
+      [0, 0.3, 0.5],
+      [1, 0.35, 0],
+      Extrapolation.CLAMP,
+    ),
   }));
 
   if (!session || !pressedOrigin || !restingOrigin) {
     return <View style={styles.root} />;
   }
 
-  const body = (
-    <>
-      <Animated.View style={heroHeightStyle}>
-        <SessionHero
-          session={session}
-          fillContainer
-          showStatusBadge
-          showActions
-          actionsInteractive={false}
-          cardActionsStyle={cardActionsOpacityStyle}
-          contentInset={edgeBleed}
-          contentInsetProgress={progress}
-          contentInsetBleedStart={BLEED_START}
-          chromeTop={topBarOffset}
-          chromeHorizontal={horizontalInset}
-          style={{ width: '100%' }}
-        />
-      </Animated.View>
-
-      {/*
-        Always opaque — the expanding sheet is a window that clips this
-        surface into view; do not fade or slide the detail body in.
-      */}
-      <Animated.View style={bodyStyle}>
-        <Text variant="heading3">Class details</Text>
-        <Text variant="body" color="secondary">
-          {session.courseCode} · {session.title}. Ends at {session.ends} in{' '}
-          {session.room} with {session.professor}.
-        </Text>
-      </Animated.View>
-    </>
-  );
-
   return (
     <View style={styles.root}>
       {/*
-        Backdrop frost: intensity fades up with expand progress.
+        Backdrop frost: intensity steps up with expand progress.
         Dim is a sibling — never put opacity on the BlurView’s parent.
       */}
       <View
@@ -415,22 +445,66 @@ export function SessionDetailScreen({ navigation }: Props) {
         />
       </View>
 
-      <Animated.View style={[sheetStyle, sheetChromeStyle]}>
+      <Animated.View style={[styles.sheet, sheetStyle]}>
+        {/*
+          Fixed screen-sized scroller. Pinning width/height means the resizing
+          window above never changes this subtree's constraints, so its content
+          size and text metrics are measured once for the whole interaction.
+        */}
         <Animated.ScrollView
           ref={scrollRef}
+          style={styles.scroller}
           scrollEnabled={scrollEnabled && !closing}
           bounces={scrollEnabled && !closing}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom: tabBarInset + theme.spacing.xl + edgeBleed,
+            paddingBottom: tabBarInset + theme.spacing.xl,
           }}
         >
-          {body}
+          <SessionHero
+            session={session}
+            height={DETAIL_HERO_HEIGHT}
+            showStatusBadge
+            showActions
+            actionsInteractive={false}
+            cardActionsStyle={cardActionsOpacityStyle}
+            imageStyle={heroImageStyle}
+            morphProgress={progress}
+            rightShift={rightShift}
+            contentShift={contentShift}
+            chromeTop={topBarOffset}
+            chromeHorizontal={horizontalInset}
+            style={styles.hero}
+          />
+
+          {/*
+            Always opaque — the expanding sheet is a window that clips this
+            surface into view; do not fade or slide the detail body in.
+          */}
+          <View
+            style={{
+              paddingTop: 16,
+              paddingHorizontal: horizontalInset,
+              gap: theme.spacing.lg,
+              backgroundColor: todayTheme.pageBackground,
+              minHeight: SCREEN_H - DETAIL_HERO_HEIGHT * 0.45,
+            }}
+          >
+            <Text variant="heading3">Class details</Text>
+            <Text variant="body" color="secondary">
+              {session.courseCode} · {session.title}. Ends at {session.ends} in{' '}
+              {session.room} with {session.professor}.
+            </Text>
+          </View>
         </Animated.ScrollView>
 
         <Animated.View
           pointerEvents={scrollEnabled && !closing ? 'box-none' : 'none'}
-          style={detailChromeStyle}
+          style={[
+            styles.chrome,
+            { top: topBarOffset, paddingRight: horizontalInset },
+            detailChromeStyle,
+          ]}
         >
           <GlassActionButton
             onPress={onClose}
@@ -457,5 +531,33 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: 'hidden',
     backgroundColor: 'transparent',
+  },
+  sheet: {
+    position: 'absolute',
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    backgroundColor: todayTheme.pageBackground,
+  },
+  // Screen-sized and screen-anchored so the clip window slides over it.
+  scroller: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: SCREEN_W,
+    height: SCREEN_H,
+  },
+  hero: {
+    width: SCREEN_W,
+  },
+  // Fixed width so the resizing parent never re-lays this row (or its blur) out.
+  chrome: {
+    position: 'absolute',
+    left: 0,
+    width: SCREEN_W,
+    height: HEADER_BAR_BUTTON_SIZE,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    zIndex: 10,
   },
 });
