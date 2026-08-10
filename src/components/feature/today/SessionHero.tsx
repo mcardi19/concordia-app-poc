@@ -116,6 +116,8 @@ export function SessionHero({
     <Image
       source={session.image}
       resizeMode="cover"
+      // Avoid Android’s default Image fade-in (reads as a photo flash on expand).
+      fadeDuration={0}
       style={
         fillContainer
           ? {

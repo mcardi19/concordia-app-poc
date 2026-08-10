@@ -29,6 +29,13 @@ export default {
         monochromeImage: './assets/android-icon-monochrome.png',
       },
       predictiveBackGestureEnabled: false,
+      config: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
+        ? {
+            googleMaps: {
+              apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+            },
+          }
+        : undefined,
     },
     web: { favicon: './assets/favicon.png' },
     plugins: ['expo-dev-client'],
@@ -40,6 +47,7 @@ export default {
       EXPO_PUBLIC_OIDC_ISSUER: process.env.EXPO_PUBLIC_OIDC_ISSUER,
       EXPO_PUBLIC_OIDC_CLIENT_ID: process.env.EXPO_PUBLIC_OIDC_CLIENT_ID,
       EXPO_PUBLIC_OIDC_REDIRECT_URI: process.env.EXPO_PUBLIC_OIDC_REDIRECT_URI,
+      EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
       /** Concordia Open Data (@see docs/CONCORDIA_OPEN_DATA.md) — from root .env, not EXPO_PUBLIC_ */
       concordiaOpenDataUser: process.env.CONCORDIA_OPENDATA_USER,
       concordiaOpenDataApiKey: process.env.CONCORDIA_OPENDATA_API_KEY,

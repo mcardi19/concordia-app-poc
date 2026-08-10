@@ -5,5 +5,6 @@ export { useSchedule } from './useSchedule';
 export { useGrades } from './useGrades';
 export { useAccountBalance } from './useAccountBalance';
 export { useServicesSearch } from './useServicesSearch';
+export { useBuildings } from './useBuildings';
 export { useFeaturedEvents } from './useFeaturedEvents';
 export { useShuttleTracker } from './useShuttleTracker';

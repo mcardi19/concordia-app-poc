@@ -1,6 +1,5 @@
 import React from 'react';
 import { Platform, View, type StyleProp, type ViewStyle } from 'react-native';
-import MaskedView from '@react-native-masked-view/masked-view';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -11,7 +10,7 @@ export type ProgressiveImageTreatmentProps = {
    * @default 0.48
    */
   blurStart?: number;
-  /** BlurView intensity at full strength. @default 80 */
+  /** BlurView intensity at full strength. @default 0 (disabled while tuning expand perf). */
   blurIntensity?: number;
   /** Scales warm tint / contrast overlay alpha. @default 1 */
   overlayOpacity?: number;
@@ -36,45 +35,37 @@ function rgba(r: number, g: number, b: number, a: number): string {
 
 type SoftBlurProps = {
   intensity: number;
-  /** Mask alpha stops — transparent = no blur, black = full blur. */
-  colors: [string, string, ...string[]];
-  locations: [number, number, ...number[]];
+  /** Fraction of parent height where this blur band begins (0–1). */
+  start: number;
 };
 
 /**
- * Single BlurView softly revealed by a vertical gradient mask.
- * Avoids hard-clipped BlurBand stacks that read as visible stripes.
+ * Blur band from `start` to the bottom.
+ * Uses clipped BlurViews instead of RNCMaskedView (broken under New Architecture).
  */
-function SoftBlur({ intensity, colors, locations }: SoftBlurProps) {
+function SoftBlur({ intensity, start }: SoftBlurProps) {
+  const topPercent = `${Math.round(Math.max(0, Math.min(1, start)) * 100)}%`;
+
   return (
-    <MaskedView
-      style={absoluteFill}
-      maskElement={
-        <LinearGradient
-          colors={colors}
-          locations={locations}
-          style={absoluteFill}
-        />
-      }
-    >
+    <View pointerEvents="none" style={[absoluteFill, { top: topPercent }]}>
       <BlurView
         intensity={intensity}
         tint="default"
         experimentalBlurMethod={androidBlurMethod}
         style={absoluteFill}
       />
-    </MaskedView>
+    </View>
   );
 }
 
 /**
  * Absolute overlay stack for photo cards:
- * soft progressive blur → warm vertical tint → diagonal accent → soft contrast.
+ * progressive blur → warm vertical tint → diagonal accent → soft contrast.
  * Does not affect layout; place above an image and below content.
  */
 export function ProgressiveImageTreatment({
   blurStart = 0.48,
-  blurIntensity = 80,
+  blurIntensity = 0,
   overlayOpacity = 1,
   style,
 }: ProgressiveImageTreatmentProps) {
@@ -82,34 +73,34 @@ export function ProgressiveImageTreatment({
   const strength = Math.max(0, overlayOpacity);
   const useBlur = blurIntensity > 0;
   const range = Math.max(0.05, 1 - start);
-  const mid = Math.min(1, start + range * 0.4);
-  const deep = Math.min(1, start + range * 0.72);
+  const mid = Math.min(1, start + range * 0.35);
+  const deep = Math.min(1, start + range * 0.65);
 
   return (
     <View pointerEvents="none" style={[absoluteFill, style]}>
       {useBlur ? (
         <>
-          {/* Light haze that eases in from blurStart */}
           <SoftBlur
-            intensity={Math.round(blurIntensity * 0.55)}
-            colors={['transparent', 'rgba(0,0,0,0.45)', '#000000']}
-            locations={[start, mid, 1]}
+            intensity={Math.round(blurIntensity * 0.5)}
+            start={start}
           />
-          {/* Stronger blur only in the lower third */}
+          <SoftBlur
+            intensity={Math.round(blurIntensity * 0.75)}
+            start={mid}
+          />
           <SoftBlur
             intensity={Math.min(100, blurIntensity)}
-            colors={['transparent', 'rgba(0,0,0,0.55)', '#000000']}
-            locations={[mid, deep, 1]}
+            start={deep}
           />
         </>
       ) : null}
 
-      {/* Softens the blur ramp while tinting the lower image */}
+      {/* Softens band edges while tinting the lower image */}
       <LinearGradient
         colors={[
           'transparent',
-          rgba(168, 132, 98, 0.2 * strength),
-          rgba(198, 102, 52, 0.4 * strength),
+          rgba(168, 132, 98, 0.22 * strength),
+          rgba(198, 102, 52, 0.42 * strength),
         ]}
         locations={[0.32, 0.66, 1]}
         style={absoluteFill}
@@ -118,9 +109,9 @@ export function ProgressiveImageTreatment({
       {/* Diagonal: orange/red bottom-left → clear centre → yellow/olive bottom-right */}
       <LinearGradient
         colors={[
-          rgba(214, 74, 42, 0.3 * strength),
+          rgba(214, 74, 42, 0.32 * strength),
           'transparent',
-          rgba(168, 148, 58, 0.26 * strength),
+          rgba(168, 148, 58, 0.28 * strength),
         ]}
         locations={[0, 0.5, 1]}
         start={{ x: 0, y: 1 }}
@@ -128,12 +119,12 @@ export function ProgressiveImageTreatment({
         style={absoluteFill}
       />
 
-      {/* Soft warm contrast for white type — keeps image faintly visible */}
+      {/* Soft warm contrast for white type */}
       <LinearGradient
         colors={[
           'transparent',
-          rgba(42, 26, 18, 0.16 * strength),
-          rgba(26, 14, 10, 0.36 * strength),
+          rgba(42, 26, 18, 0.18 * strength),
+          rgba(26, 14, 10, 0.4 * strength),
         ]}
         locations={[0.38, 0.7, 1]}
         style={absoluteFill}
