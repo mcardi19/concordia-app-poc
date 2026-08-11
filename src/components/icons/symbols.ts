@@ -16,6 +16,7 @@ import { msSchedule } from '@material-symbols-react-native/rounded-400/msSchedul
 import { msDirectionsBus } from '@material-symbols-react-native/rounded-400/msDirectionsBus';
 import { msEvent } from '@material-symbols-react-native/rounded-400/msEvent';
 import { msSearch } from '@material-symbols-react-native/rounded-400/msSearch';
+import { msChevronLeft } from '@material-symbols-react-native/rounded-400/msChevronLeft';
 import { msChevronRight } from '@material-symbols-react-native/rounded-400/msChevronRight';
 import { msChevronRight as msChevronRightSemibold } from '@material-symbols-react-native/rounded-600/msChevronRight';
 import { msWbSunny } from '@material-symbols-react-native/rounded-400/msWbSunny';
@@ -34,6 +35,9 @@ import { msLocalParking } from '@material-symbols-react-native/rounded-400/msLoc
 import { msLock } from '@material-symbols-react-native/rounded-400/msLock';
 import { msBookmark } from '@material-symbols-react-native/rounded-400/msBookmark';
 import { msBookmarkFill } from '@material-symbols-react-native/rounded-400/msBookmarkFill';
+import { msExpandMore } from '@material-symbols-react-native/rounded-400/msExpandMore';
+import { msCheck } from '@material-symbols-react-native/rounded-400/msCheck';
+import { msAdd } from '@material-symbols-react-native/rounded-400/msAdd';
 
 export type TabSymbolPair = {
   outline: MsIconDefinition;
@@ -72,6 +76,7 @@ export const featureSymbols: Record<FeatureSymbolKey, MsIconDefinition> = {
 };
 
 export {
+  msChevronLeft,
   msChevronRight,
   msChevronRightSemibold,
   msWbSunny,
@@ -92,6 +97,11 @@ export {
   msLock,
   msBookmark,
   msBookmarkFill,
+  msExpandMore,
+  msCheck,
+  msAdd,
+  msCalendarMonth,
+  msEvent,
 };
 
 /** Icon per "My accounts" tile kind. */

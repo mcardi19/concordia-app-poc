@@ -3,6 +3,7 @@ export {
   tabSymbols,
   featureSymbols,
   meAccountSymbols,
+  msChevronLeft,
   msChevronRight,
   msChevronRightSemibold,
   msWbSunny,
@@ -20,5 +21,10 @@ export {
   msLock,
   msBookmark,
   msBookmarkFill,
+  msExpandMore,
+  msCheck,
+  msAdd,
+  msCalendarMonth,
+  msEvent,
 } from './symbols';
 export type { TabSymbolPair, FeatureSymbolKey } from './symbols';

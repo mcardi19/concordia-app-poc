@@ -1,0 +1,49 @@
+/**
+ * Schedule tab palette (design: "Timetable flow · Schedule views").
+ * Literal values from the design source — the neutral ramp is warmer and
+ * lower-contrast than the CDS roles, and rounding to tokens flattens the
+ * timeline hierarchy.
+ */
+export const scheduleTheme = {
+  pageBackground: '#FFFFFF',
+  cardBackground: '#FFFFFF',
+  cardBorder: 'rgba(0, 0, 0, 0.06)',
+
+  /** Hour labels and hairlines on the time rail. */
+  railLabel: '#A8A8AA',
+  railLine: 'rgba(0, 0, 0, 0.05)',
+
+  headingText: '#0F0F10',
+  bodyText: '#1A1216',
+  metaText: '#9A9A9C',
+  timeText: '#2A2226',
+  timeSubText: '#8A8A8C',
+  dividerText: '#3A3236',
+  dividerMuted: '#B0AEB0',
+
+  /** Agenda rails: class vs study block. */
+  agendaRail: '#E4DEE0',
+  agendaRailStudy: '#D8D2D4',
+  studyLabel: '#9A9A9C',
+
+  /** All-day banner: front card, stacked card behind it. */
+  allDayFill: '#F6EEF0',
+  allDayStackFill: '#FBF4F6',
+
+  /** Floating add button. */
+  fabFill: '#F4E7EA',
+
+  /** Neutral tints for non-class blocks. */
+  tintStudy: '#7A7A7C',
+  tintMutedBlock: '#C8C8CA',
+} as const;
+
+/** Timeline geometry, shared so the rail and the blocks cannot drift. */
+export const DAY_HOUR_START = 8;
+export const DAY_HOUR_END = 21;
+/** Row height per hour in the single-day timeline. */
+export const DAY_HOUR_HEIGHT = 44;
+/** Tighter rows in the 3-day planner, where columns are narrow. */
+export const PLANNER_HOUR_HEIGHT = 36;
+/** Width of the left-hand hour label gutter. */
+export const RAIL_WIDTH = 46;

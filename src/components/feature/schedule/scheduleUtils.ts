@@ -171,3 +171,64 @@ export function getNowLineTop(now: Date): number | null {
 export function dayHasEvents(events: ScheduleEvent[], date: Date): boolean {
   return events.some((e) => e.dayKey === getDayKey(date));
 }
+
+/**
+ * Monday-first ordering for the agenda and planner. Distinct from the
+ * Sunday-first DAY_KEYS above, which exists to index Date.getDay().
+ */
+export const WEEK_ORDER_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+
+const WEEKDAY_LABELS: Record<string, string> = {
+  mon: 'Monday',
+  tue: 'Tuesday',
+  wed: 'Wednesday',
+  thu: 'Thursday',
+  fri: 'Friday',
+  sat: 'Saturday',
+  sun: 'Sunday',
+};
+
+/**
+ * Clock label for the agenda rail. Start times carry the meridiem, end times
+ * drop it — the design leans on that asymmetry to keep the rail scannable.
+ */
+export function formatClock(minutes: number, withMeridiem = false): string {
+  const h24 = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  const time = `${h12}:${String(m).padStart(2, '0')}`;
+  return withMeridiem ? `${time} ${h24 >= 12 ? 'PM' : 'AM'}` : time;
+}
+
+export type ScheduleDayGroup = {
+  dayKey: string;
+  weekdayLabel: string;
+  /** e.g. "Apr 17" */
+  dateLabel: string;
+  events: ScheduleEvent[];
+};
+
+/**
+ * Groups events into day sections for the agenda, in week order and sorted by
+ * start time. Days with nothing on them are dropped — the agenda is a
+ * chronological list, not a calendar.
+ */
+export function groupEventsByDay(
+  events: ScheduleEvent[],
+  weekDates?: Date[]
+): ScheduleDayGroup[] {
+  return WEEK_ORDER_KEYS.map((dayKey, index) => {
+    const dayEvents = events
+      .filter((e) => e.dayKey === dayKey)
+      .sort((a, b) => a.startMinutes - b.startMinutes);
+    const date = weekDates?.[index];
+    return {
+      dayKey,
+      weekdayLabel: WEEKDAY_LABELS[dayKey] ?? dayKey,
+      dateLabel: date
+        ? date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
+        : '',
+      events: dayEvents,
+    };
+  }).filter((group) => group.events.length > 0);
+}

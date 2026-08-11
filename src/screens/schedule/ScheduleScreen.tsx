@@ -1,85 +1,217 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView } from 'react-native';
-import { Screen } from '@/components/design-system';
+import React, { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { GlassView } from 'expo-glass-effect';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
+import { MaterialSymbol, msAdd } from '@/components/icons';
 import {
+  ScheduleAgendaView,
+  ScheduleAllDayBanner,
   ScheduleDayTimeline,
   ScheduleHeader,
+  ScheduleThreeDayView,
   ScheduleWeekStrip,
-  ScheduleWeekView,
-  filterEventsForDay,
-  getWeekDates,
+  scheduleTheme,
+  type PlannerDay,
   type ScheduleViewMode,
 } from '@/components/feature/schedule';
-import { EmptyState } from '@/components/feature';
-import { MOCK_SCHEDULE_EVENTS } from '@/components/feature/schedule/scheduleMockData';
-import { getDayKey, isSameDay } from '@/components/feature/schedule/scheduleUtils';
-import type { ScheduleEvent } from '@/components/feature/schedule/scheduleTypes';
+import {
+  MOCK_ALL_DAY_ITEMS,
+  MOCK_NOW_MINUTES,
+  MOCK_WEEK_EVENTS,
+} from '@/components/feature/schedule/scheduleMockData';
+import { getWeekDates, WEEK_ORDER_KEYS } from '@/components/feature/schedule/scheduleUtils';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
-import { useTabBarScrollInset } from '@/navigation/tabBarInset';
+import { useTabBarContentPadding } from '@/navigation/tabBarInset';
+import { useTheme } from '@/design-system/theme';
 import { formatWeekMonday } from '@/api/schedule';
 
-function getMockEventsForDate(date: Date): ScheduleEvent[] {
-  const dayKey = getDayKey(date);
-  return MOCK_SCHEDULE_EVENTS.map((event, index) => ({
-    ...event,
-    id: `mock-${dayKey}-${index}`,
-    dayKey,
-  }));
-}
+/** Friday is "today" in the design data. */
+const TODAY_KEY = 'fri';
+/** The 3-day planner shows today plus the next two days. */
+const PLANNER_SPAN = 3;
 
 export function ScheduleScreen() {
-  const tabBarInset = useTabBarScrollInset();
+  const theme = useTheme();
+  const tabBarPadding = useTabBarContentPadding();
   const onTabBarMinimizeScroll = useTabBarMinimizeScrollHandler();
+  const glass = useMemo(() => canUseLiquidGlass(), []);
+  const insets = useSafeAreaInsets();
+
   const [weekMonday] = useState(() => formatWeekMonday(new Date()));
   const weekDates = useMemo(() => getWeekDates(weekMonday), [weekMonday]);
-  const [selectedDate, setSelectedDate] = useState(() => weekDates[4]);
   const [viewMode, setViewMode] = useState<ScheduleViewMode>('day');
 
-  useEffect(() => {
-    const inWeek = weekDates.some((d) => isSameDay(d, selectedDate));
-    if (!inWeek) {
-      setSelectedDate(weekDates[4]);
-    }
-  }, [weekDates, selectedDate]);
-
-  const allEvents = useMemo(() => getMockEventsForDate(selectedDate), [selectedDate]);
+  const todayIndex = WEEK_ORDER_KEYS.indexOf(TODAY_KEY);
+  const [selectedIndex, setSelectedIndex] = useState(todayIndex);
+  const selectedDate = weekDates[selectedIndex] ?? weekDates[0];
+  const selectedKey = WEEK_ORDER_KEYS[selectedIndex] ?? TODAY_KEY;
 
   const dayEvents = useMemo(
-    () => filterEventsForDay(allEvents, selectedDate),
-    [allEvents, selectedDate]
+    () =>
+      MOCK_WEEK_EVENTS.filter((e) => e.dayKey === selectedKey).sort(
+        (a, b) => a.startMinutes - b.startMinutes,
+      ),
+    [selectedKey],
   );
 
+  /** Planner window starts at the selected day and runs forward. */
+  const plannerDays: PlannerDay[] = useMemo(() => {
+    const start = Math.min(selectedIndex, WEEK_ORDER_KEYS.length - PLANNER_SPAN);
+    return WEEK_ORDER_KEYS.slice(start, start + PLANNER_SPAN).map((dayKey, offset) => {
+      const date = weekDates[start + offset];
+      return {
+        dayKey,
+        letter: date
+          ? date.toLocaleDateString('en-CA', { weekday: 'narrow' })
+          : dayKey[0].toUpperCase(),
+        dateLabel: date ? String(date.getDate()) : '',
+        isToday: dayKey === TODAY_KEY,
+      };
+    });
+  }, [selectedIndex, weekDates]);
+
+  const plannerEvents = useMemo(() => {
+    const keys = new Set(plannerDays.map((d) => d.dayKey));
+    return MOCK_WEEK_EVENTS.filter((e) => keys.has(e.dayKey));
+  }, [plannerDays]);
+
+  const showsAllDayBanner = viewMode === 'day' && selectedKey === TODAY_KEY;
+
   return (
-    <Screen edges={['top']}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: tabBarInset }}
-        scrollEventThrottle={16}
-        onScroll={onTabBarMinimizeScroll}
-      >
+    <View style={styles.root}>
+      {/*
+        Header + date strip are pinned: the design marks the masthead
+        `position: sticky`, and the view switcher has to stay reachable
+        however far the timetable is scrolled.
+      */}
+      <View style={[styles.pinned, { paddingTop: insets.top + 6 }]}>
         <ScheduleHeader
           selectedDate={selectedDate}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />
-
         <ScheduleWeekStrip
           weekDates={weekDates}
           selectedDate={selectedDate}
-          events={allEvents}
-          onSelectDate={setSelectedDate}
+          events={MOCK_WEEK_EVENTS}
+          onSelectDate={(date) => {
+            const index = weekDates.findIndex(
+              (d) => d.toDateString() === date.toDateString(),
+            );
+            if (index >= 0) {
+              setSelectedIndex(index);
+            }
+          }}
         />
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: tabBarPadding }}
+        scrollEventThrottle={16}
+        onScroll={onTabBarMinimizeScroll}
+        contentInsetAdjustmentBehavior="never"
+      >
+        {viewMode === 'agenda' ? (
+          <ScheduleAgendaView
+            events={dayEvents}
+            weekDates={weekDates}
+            allDayItems={selectedKey === TODAY_KEY ? MOCK_ALL_DAY_ITEMS : []}
+            todayKey={TODAY_KEY}
+          />
+        ) : null}
 
         {viewMode === 'day' ? (
-          dayEvents.length === 0 ? (
-            <EmptyState message="No classes scheduled for this day." />
-          ) : (
-            <ScheduleDayTimeline events={dayEvents} selectedDate={selectedDate} />
-          )
-        ) : (
-          <ScheduleWeekView weekMondayYmd={weekMonday} events={allEvents} />
-        )}
+          <>
+            {showsAllDayBanner ? (
+              <View style={styles.allDayWrap}>
+                <ScheduleAllDayBanner items={MOCK_ALL_DAY_ITEMS} />
+              </View>
+            ) : null}
+            <ScheduleDayTimeline
+              events={dayEvents}
+              nowMinutes={selectedKey === TODAY_KEY ? MOCK_NOW_MINUTES : undefined}
+            />
+          </>
+        ) : null}
+
+        {viewMode === 'week' ? (
+          <ScheduleThreeDayView days={plannerDays} events={plannerEvents} />
+        ) : null}
       </ScrollView>
-    </Screen>
+
+      {/* Add event — present on agenda and day, not on the planner. */}
+      {viewMode !== 'week' ? (
+        <View style={[styles.fabWrap, { bottom: tabBarPadding - 8 }]}>
+          {glass ? (
+            <GlassView
+              isInteractive
+              glassEffectStyle="regular"
+              colorScheme="light"
+              style={styles.fab}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add event"
+                style={styles.fabFill}
+              >
+                <MaterialSymbol icon={msAdd} size={24} color={theme.color.primary} />
+              </Pressable>
+            </GlassView>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Add event"
+              style={[styles.fab, styles.fabFallback, { shadowColor: theme.color.primary }]}
+            >
+              <MaterialSymbol icon={msAdd} size={24} color={theme.color.primary} />
+            </Pressable>
+          )}
+        </View>
+      ) : null}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: scheduleTheme.pageBackground,
+  },
+  pinned: {
+    backgroundColor: scheduleTheme.pageBackground,
+    zIndex: 10,
+  },
+  allDayWrap: {
+    paddingHorizontal: 22,
+    paddingTop: 14,
+  },
+  fabWrap: {
+    position: 'absolute',
+    right: 22,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabFill: {
+    flex: 1,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  /** Only applied when liquid glass is unavailable. */
+  fabFallback: {
+    backgroundColor: scheduleTheme.fabFill,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.13,
+    shadowRadius: 18,
+    elevation: 4,
+  },
+});
