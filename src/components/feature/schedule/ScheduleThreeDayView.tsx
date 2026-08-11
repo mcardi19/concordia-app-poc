@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
+import { semanticSpacing } from '@/design-system/tokens';
 import {
   DAY_HOUR_END,
   DAY_HOUR_START,
@@ -34,8 +35,8 @@ const topFor = (minutes: number) =>
   (minutes / 60 - DAY_HOUR_START) * PLANNER_HOUR_HEIGHT;
 
 function hourLabel(hour: number): string {
-  const h = hour > 12 ? hour - 12 : hour;
-  return `${h} ${hour >= 12 ? 'PM' : 'AM'}`;
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h12} ${hour >= 12 ? 'PM' : 'AM'}`;
 }
 
 /**
@@ -137,7 +138,6 @@ export function ScheduleThreeDayView({ days, events, onSelectEvent }: Props) {
                   {dayEvents.map((event) => {
                     const top = topFor(event.startMinutes);
                     const height = topFor(event.endMinutes) - top;
-                    const isMuted = event.kind === 'study';
                     return (
                       <Pressable
                         key={event.id}
@@ -149,13 +149,8 @@ export function ScheduleThreeDayView({ days, events, onSelectEvent }: Props) {
                           {
                             top: top + 1,
                             height: Math.max(0, height - 2),
-                            borderColor: isMuted
-                              ? 'rgba(0,0,0,0.08)'
-                              : scheduleTheme.cardBorder,
-                            borderLeftColor: isMuted
-                              ? scheduleTheme.tintMutedBlock
-                              : theme.color.primary,
-                            opacity: isMuted ? 0.85 : 1,
+                            borderColor: `${theme.color.primary}26`,
+                            borderLeftColor: theme.color.primary,
                           },
                         ]}
                       >
@@ -167,7 +162,7 @@ export function ScheduleThreeDayView({ days, events, onSelectEvent }: Props) {
                             fontWeight: '700',
                             letterSpacing: 0.2,
                             lineHeight: 10,
-                            color: isMuted ? '#3A3A3C' : scheduleTheme.headingText,
+                            color: theme.color.primary,
                           }}
                         >
                           {event.courseCode}
@@ -242,7 +237,7 @@ export function ScheduleThreeDayView({ days, events, onSelectEvent }: Props) {
 const styles = StyleSheet.create({
   gridWrap: {
     paddingTop: 14,
-    paddingRight: 12,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
   },
   headRow: {
     flexDirection: 'row',
@@ -265,9 +260,9 @@ const styles = StyleSheet.create({
   hourLabel: {
     position: 'absolute',
     right: 6,
-    width: 40,
+    width: 42,
     textAlign: 'right',
-    fontSize: 9,
+    fontSize: 11,
   },
   columns: {
     flex: 1,
@@ -295,7 +290,7 @@ const styles = StyleSheet.create({
     right: 1,
     paddingHorizontal: 4,
     paddingVertical: 3,
-    backgroundColor: scheduleTheme.cardBackground,
+    backgroundColor: scheduleTheme.allDayFill,
     borderRadius: 4,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
@@ -303,7 +298,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   summaryWrap: {
-    paddingHorizontal: 22,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 20,
   },
   summary: {

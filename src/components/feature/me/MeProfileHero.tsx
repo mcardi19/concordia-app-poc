@@ -42,8 +42,8 @@ type ChromeAction = {
 /** Same metrics as the Home tab bar-button chrome. */
 const CHROME_SIZE = HEADER_BAR_BUTTON_SIZE;
 const AVATAR_SIZE = 76;
-/** Hero body inset — independent of chrome so search can match Home's trailing edge. */
-const HERO_CONTENT_INSET = 22;
+/** Page content inset — matches Home `screenHorizontal` and header chrome. */
+const CONTENT_INSET = HEADER_CHROME_HORIZONTAL_INSET;
 /** Gap between hits inside the notifications + settings pill. */
 const CHROME_PAIR_GAP = 6;
 /**
@@ -255,7 +255,7 @@ export function MeProfileHero({
         <ChromeButton icon={msSearch} label="Search" onPress={onSearchPress} />
       </View>
 
-      <View style={[styles.identity, { paddingHorizontal: HERO_CONTENT_INSET }]}>
+      <View style={[styles.identity, { paddingHorizontal: CONTENT_INSET }]}>
         <Avatar name={profile.displayName} />
 
         <View style={styles.nameRow}>
@@ -296,7 +296,7 @@ export function MeProfileHero({
         </Text>
       </View>
 
-      <View style={[styles.statsRow, { paddingHorizontal: HERO_CONTENT_INSET }]}>
+      <View style={[styles.statsRow, { paddingHorizontal: CONTENT_INSET }]}>
         {stats.map((stat, index) => (
           <React.Fragment key={stat.id}>
             {index > 0 ? <View style={styles.statDivider} /> : null}

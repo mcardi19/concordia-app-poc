@@ -1,9 +1,10 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Keyboard } from 'react-native';
-import MapView, { Marker, type Region } from 'react-native-maps';
+import MapView, { type MapMarker, type Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen, Text } from '@/components/design-system';
 import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
+import { BuildingMapPin } from '@/components/feature/campus/BuildingMapPin';
 import { CampusSearchBar } from '@/components/feature/campus/CampusSearchBar';
 import { useTheme } from '@/design-system/theme';
 import { useBuildings } from '@/hooks/useBuildings';
@@ -30,6 +31,7 @@ export function CampusHomeScreen({}: Props) {
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarScrollInset();
   const mapRef = useRef<MapView>(null);
+  const markerRefs = useRef<Record<string, MapMarker | null>>({});
   const [query, setQuery] = useState('');
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingSummary | null>(
     null
@@ -60,9 +62,14 @@ export function CampusHomeScreen({}: Props) {
     mapRef.current?.animateToRegion(regionForBuilding(building), 400);
   }, []);
 
-  const closeDrawer = useCallback(() => {
+  /** Drawer close / map tap: drop native selection so the pin scales down and can be tapped again. */
+  const clearSelection = useCallback(() => {
+    const selectedId = selectedBuilding?.id;
+    if (selectedId) {
+      markerRefs.current[selectedId]?.hideCallout();
+    }
     setSelectedBuilding(null);
-  }, []);
+  }, [selectedBuilding?.id]);
 
   const showLoadingChip = isFetching && isPlaceholderData;
 
@@ -78,20 +85,18 @@ export function CampusHomeScreen({}: Props) {
           followsUserLocation={false}
           toolbarEnabled={false}
           moveOnMarkerPress={false}
-          onPress={closeDrawer}
+          onPress={clearSelection}
         >
           {visibleBuildings.map((building) => (
-            <Marker
+            <BuildingMapPin
               key={building.id}
-              coordinate={{ latitude: building.lat, longitude: building.lng }}
-              identifier={building.id}
-              pinColor={
-                selectedBuilding?.id === building.id
-                  ? theme.color.primary
-                  : theme.color.info
-              }
-              onPress={(event) => {
-                event.stopPropagation();
+              building={building}
+              color={theme.color.primary}
+              selected={selectedBuilding?.id === building.id}
+              markerRef={(ref) => {
+                markerRefs.current[building.id] = ref;
+              }}
+              onPress={() => {
                 selectBuilding(building);
               }}
             />
@@ -156,7 +161,7 @@ export function CampusHomeScreen({}: Props) {
           ) : null}
         </View>
 
-        <BuildingDrawer building={selectedBuilding} onClose={closeDrawer} />
+        <BuildingDrawer building={selectedBuilding} onClose={clearSelection} />
       </View>
     </Screen>
   );

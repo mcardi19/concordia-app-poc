@@ -1,6 +1,7 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
+import { semanticSpacing } from '@/design-system/tokens';
 import { meTheme } from '@/screens/me/meTheme';
 import type { MeStatusCard } from '@/types/profile';
 
@@ -66,7 +67,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 22,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 24,
   },
   card: {

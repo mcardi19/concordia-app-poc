@@ -4,8 +4,8 @@ import type { ScheduleEvent, ScheduleEventStatus } from './scheduleTypes';
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
 
-export const TIMELINE_START_HOUR = 8;
-export const TIMELINE_END_HOUR = 19;
+export const TIMELINE_START_HOUR = 0;
+export const TIMELINE_END_HOUR = 24;
 export const HOUR_ROW_HEIGHT = 72;
 
 export function parseYmd(ymd: string): Date {
@@ -23,10 +23,13 @@ export function toYmd(date: Date): string {
 }
 
 export function getWeekDates(weekMondayYmd: string): Date[] {
+  // SIS weeks are keyed by Monday; the calendar strip is Sunday–Saturday.
   const monday = parseYmd(weekMondayYmd);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() - 1);
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
+    const d = new Date(sunday);
+    d.setDate(sunday.getDate() + i);
     return d;
   });
 }
@@ -173,10 +176,10 @@ export function dayHasEvents(events: ScheduleEvent[], date: Date): boolean {
 }
 
 /**
- * Monday-first ordering for the agenda and planner. Distinct from the
- * Sunday-first DAY_KEYS above, which exists to index Date.getDay().
+ * Sunday-first ordering for the week strip, agenda, and planner — matches a
+ * typical North American calendar. SIS week keys remain Monday-based.
  */
-export const WEEK_ORDER_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+export const WEEK_ORDER_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 const WEEKDAY_LABELS: Record<string, string> = {
   mon: 'Monday',

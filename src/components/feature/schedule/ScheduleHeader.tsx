@@ -5,21 +5,27 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
-  msCalendarMonth,
   msCheck,
   msExpandMore,
   msSearch,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
+import {
+  HEADER_BAR_BUTTON_SIZE,
+  HEADER_ICON_SIZE,
+} from '@/navigation/HeaderIconButton';
+import { semanticSpacing } from '@/design-system/tokens';
 import { scheduleTheme } from './scheduleTheme';
 import type { ScheduleViewMode } from './scheduleTypes';
 
 type Props = {
   selectedDate: Date;
+  /** Day shown on the “jump to today” control next to the view picker. */
+  todayDate?: Date;
   viewMode: ScheduleViewMode;
   onViewModeChange: (mode: ScheduleViewMode) => void;
   onSearchPress?: () => void;
-  onCalendarPress?: () => void;
+  onTodayPress?: () => void;
 };
 
 const VIEW_LABELS: Record<ScheduleViewMode, string> = {
@@ -72,19 +78,63 @@ function GlassGroup({ children }: { children: React.ReactNode }) {
 
 /**
  * Shared masthead for all three schedule views: month title, a joined
- * view-switcher / calendar control, and search.
+ * view-switcher / today control, and search.
  */
 export function ScheduleHeader({
   selectedDate,
+  todayDate,
   viewMode,
   onViewModeChange,
   onSearchPress,
-  onCalendarPress,
+  onTodayPress,
 }: Props) {
   const theme = useTheme();
+  const glass = useMemo(() => canUseLiquidGlass(), []);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const month = selectedDate.toLocaleDateString('en-CA', { month: 'long' });
+  const todayDay = (todayDate ?? new Date()).getDate();
+  const todayLabel = (todayDate ?? new Date()).toLocaleDateString('en-CA', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const menuRows = VIEW_ORDER.map((mode) => {
+    const active = mode === viewMode;
+    return (
+      <Pressable
+        key={mode}
+        onPress={() => {
+          onViewModeChange(mode);
+          setMenuOpen(false);
+        }}
+        accessibilityRole="menuitem"
+        accessibilityState={{ selected: active }}
+        style={({ pressed }) => [
+          styles.menuRow,
+          active ? { backgroundColor: `${theme.color.primary}14` } : null,
+          pressed ? { opacity: 0.7 } : null,
+        ]}
+      >
+        <Text
+          variant="bodySmall"
+          style={{
+            fontSize: 15,
+            fontWeight: active ? '600' : '500',
+            color: active ? theme.color.primary : scheduleTheme.headingText,
+          }}
+        >
+          {VIEW_LABELS[mode]}
+        </Text>
+        {active ? (
+          <MaterialSymbol icon={msCheck} size={18} color={theme.color.primary} />
+        ) : (
+          <View style={styles.menuCheckSpacer} />
+        )}
+      </Pressable>
+    );
+  });
 
   return (
     <View style={styles.root}>
@@ -104,7 +154,7 @@ export function ScheduleHeader({
         </Pressable>
 
         <View style={styles.controls}>
-          {/* Joined pill: view switcher | calendar — fused by GlassContainer. */}
+          {/* Joined pill: view switcher | today — fused by GlassContainer. */}
           <GlassGroup>
             <GlassSurface style={styles.pillSegment}>
               <Pressable
@@ -126,12 +176,21 @@ export function ScheduleHeader({
 
             <GlassSurface style={styles.pillIconSegment}>
               <Pressable
-                onPress={onCalendarPress}
+                onPress={onTodayPress}
                 accessibilityRole="button"
-                accessibilityLabel="Pick a date"
-                style={styles.segmentFill}
+                accessibilityLabel={`Go to today, ${todayLabel}`}
+                style={styles.iconFill}
               >
-                <MaterialSymbol icon={msCalendarMonth} size={19} color={theme.color.primary} />
+                <Text
+                  variant="bodySmall"
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: theme.color.primary,
+                  }}
+                >
+                  {todayDay}
+                </Text>
               </Pressable>
             </GlassSurface>
           </GlassGroup>
@@ -141,47 +200,29 @@ export function ScheduleHeader({
               onPress={onSearchPress}
               accessibilityRole="button"
               accessibilityLabel="Search schedule"
-              style={styles.segmentFill}
+              style={styles.iconFill}
             >
-              <MaterialSymbol icon={msSearch} size={18} color={theme.color.primary} />
+              <MaterialSymbol
+                icon={msSearch}
+                size={HEADER_ICON_SIZE}
+                color={theme.color.primary}
+              />
             </Pressable>
           </GlassSurface>
 
           {menuOpen ? (
-            <View style={styles.menu}>
-              {VIEW_ORDER.map((mode) => {
-                const active = mode === viewMode;
-                return (
-                  <Pressable
-                    key={mode}
-                    onPress={() => {
-                      onViewModeChange(mode);
-                      setMenuOpen(false);
-                    }}
-                    accessibilityRole="menuitem"
-                    accessibilityState={{ selected: active }}
-                    style={[
-                      styles.menuRow,
-                      active ? { backgroundColor: `${theme.color.primary}0F` } : null,
-                    ]}
-                  >
-                    <Text
-                      variant="bodySmall"
-                      style={{
-                        fontSize: 13.5,
-                        fontWeight: active ? '700' : '500',
-                        color: active ? theme.color.primary : '#2A2226',
-                      }}
-                    >
-                      {VIEW_LABELS[mode]}
-                    </Text>
-                    {active ? (
-                      <MaterialSymbol icon={msCheck} size={15} color={theme.color.primary} />
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
+            glass ? (
+              <GlassView
+                isInteractive
+                glassEffectStyle="regular"
+                colorScheme="light"
+                style={styles.menu}
+              >
+                {menuRows}
+              </GlassView>
+            ) : (
+              <View style={[styles.menu, styles.menuFallback]}>{menuRows}</View>
+            )
           ) : null}
         </View>
       </View>
@@ -198,7 +239,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 22,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
   },
   title: {
     flexDirection: 'row',
@@ -209,6 +250,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    zIndex: 20,
   },
   joinedPill: {
     flexDirection: 'row',
@@ -217,22 +259,22 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   pillSegment: {
-    height: 34,
-    borderRadius: 17,
+    height: HEADER_BAR_BUTTON_SIZE,
+    borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
   pillIconSegment: {
-    width: 40,
-    height: 34,
-    borderRadius: 17,
+    width: HEADER_BAR_BUTTON_SIZE,
+    height: HEADER_BAR_BUTTON_SIZE,
+    borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
   roundButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: HEADER_BAR_BUTTON_SIZE,
+    height: HEADER_BAR_BUTTON_SIZE,
+    borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -242,7 +284,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
+  },
+  iconFill: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   /** Only applied when liquid glass is unavailable. */
   fallbackSurface: {
@@ -255,16 +302,19 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: 'absolute',
-    top: 40,
+    top: HEADER_BAR_BUTTON_SIZE + 8,
     right: 0,
-    minWidth: 128,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    minWidth: 168,
+    borderRadius: 16,
     borderCurve: 'continuous',
+    overflow: 'hidden',
+    padding: 6,
+    zIndex: 30,
+  },
+  menuFallback: {
+    backgroundColor: 'rgba(255,255,255,0.94)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(0,0,0,0.08)',
-    padding: 5,
-    zIndex: 20,
     shadowColor: '#140C10',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.16,
@@ -275,9 +325,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderRadius: 10,
     borderCurve: 'continuous',
+    gap: 16,
+  },
+  menuCheckSpacer: {
+    width: 18,
+    height: 18,
   },
 });

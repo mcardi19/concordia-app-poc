@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { semanticSpacing } from '@/design-system/tokens';
 import type { MeCommunity, MeFavouriteService } from '@/types/profile';
 import { MeCollectionCard } from './MeCollectionCard';
 import { MeSectionLabel } from './MeSectionLabel';
@@ -49,7 +50,7 @@ export function MeCommunitySection({
 
 const styles = StyleSheet.create({
   section: {
-    paddingHorizontal: 22,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 40,
   },
   cards: {

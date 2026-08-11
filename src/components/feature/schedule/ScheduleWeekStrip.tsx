@@ -6,6 +6,7 @@ import { useTheme } from '@/design-system/theme';
 import { scheduleTheme } from './scheduleTheme';
 import { getDayLetter, isSameDay } from './scheduleUtils';
 import type { ScheduleEvent } from './scheduleTypes';
+import { semanticSpacing } from '@/design-system/tokens';
 
 type Props = {
   weekDates: Date[];
@@ -16,12 +17,12 @@ type Props = {
   onNextWeek?: () => void;
 };
 
-const CIRCLE = 30;
+const CIRCLE = 36;
 /** A day at or above this many events gets the solid density dot. */
 const BUSY_THRESHOLD = 3;
 
 /**
- * Week date picker. The selected day is a 30pt circle around the number only —
+ * Week date picker. The selected day is a circle around the number only —
  * the weekday letter stays outside it, which is what keeps the row reading as a
  * calendar strip rather than a segmented control.
  */
@@ -70,7 +71,7 @@ export function ScheduleWeekStrip({
               <Text
                 variant="caption"
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: '600',
                   letterSpacing: 0.2,
                   color: scheduleTheme.timeSubText,
@@ -88,7 +89,7 @@ export function ScheduleWeekStrip({
                 <Text
                   variant="bodySmall"
                   style={{
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: selected ? '700' : '500',
                     color: selected
                       ? theme.color.text.inverse
@@ -139,10 +140,10 @@ const styles = StyleSheet.create({
   root: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
+    borderBottomColor: scheduleTheme.mastheadBorder,
   },
   arrow: {
     width: 24,

@@ -3,6 +3,7 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, msBadge, msChevronRight } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
+import { semanticSpacing } from '@/design-system/tokens';
 import { meTheme } from '@/screens/me/meTheme';
 import type { StudentProfile } from '@/types/profile';
 
@@ -90,7 +91,7 @@ function formatStudentId(id: string): string {
 
 const styles = StyleSheet.create({
   wrapper: {
-    paddingHorizontal: 22,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
     // Above the hero gradient it overlaps.
     zIndex: 2,
   },

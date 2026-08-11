@@ -3,11 +3,15 @@
  * Literal values from the design source — the neutral ramp is warmer and
  * lower-contrast than the CDS roles, and rounding to tokens flattens the
  * timeline hierarchy.
+ *
+ * Type uses the shared `Text` component (SF Pro / System on iOS) — never Inter.
  */
 export const scheduleTheme = {
   pageBackground: '#FFFFFF',
   cardBackground: '#FFFFFF',
   cardBorder: 'rgba(0, 0, 0, 0.06)',
+  /** Rule under the week strip and all-day banner. */
+  mastheadBorder: 'rgba(0, 0, 0, 0.16)',
 
   /** Hour labels and hairlines on the time rail. */
   railLabel: '#A8A8AA',
@@ -39,8 +43,9 @@ export const scheduleTheme = {
 } as const;
 
 /** Timeline geometry, shared so the rail and the blocks cannot drift. */
-export const DAY_HOUR_START = 8;
-export const DAY_HOUR_END = 21;
+/** Full calendar day — 12 AM through 11 PM. */
+export const DAY_HOUR_START = 0;
+export const DAY_HOUR_END = 23;
 /** Row height per hour in the single-day timeline. */
 export const DAY_HOUR_HEIGHT = 44;
 /** Tighter rows in the 3-day planner, where columns are narrow. */

@@ -11,6 +11,7 @@ import {
 } from './scheduleTheme';
 import type { ScheduleEvent } from './scheduleTypes';
 import { formatClock } from './scheduleUtils';
+import { semanticSpacing } from '@/design-system/tokens';
 
 type Props = {
   events: ScheduleEvent[];
@@ -28,8 +29,8 @@ const topFor = (minutes: number) =>
   (minutes / 60 - DAY_HOUR_START) * DAY_HOUR_HEIGHT;
 
 function hourLabel(hour: number): string {
-  const h = hour > 12 ? hour - 12 : hour;
-  return `${h} ${hour >= 12 ? 'PM' : 'AM'}`;
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h12} ${hour >= 12 ? 'PM' : 'AM'}`;
 }
 
 /**
@@ -44,7 +45,7 @@ export function ScheduleDayTimeline({ events, nowMinutes, onSelectEvent }: Props
 
   return (
     <View style={styles.root}>
-      <View style={styles.rail}>
+      <View style={[styles.rail, { height: gridHeight }]}>
         {HOURS.map((hour, index) => (
           <Text
             key={hour}
@@ -82,7 +83,7 @@ export function ScheduleDayTimeline({ events, nowMinutes, onSelectEvent }: Props
                     top,
                     height,
                     opacity: event.done ? 0.55 : 1,
-                    borderColor: isNow ? `${theme.color.primary}40` : scheduleTheme.cardBorder,
+                    borderColor: `${theme.color.primary}26`,
                     justifyContent: height > 60 ? 'flex-start' : 'center',
                     zIndex: isNow ? 2 : 1,
                   },
@@ -100,7 +101,7 @@ export function ScheduleDayTimeline({ events, nowMinutes, onSelectEvent }: Props
                 <View
                   style={[
                     styles.blockRail,
-                    { backgroundColor: isNow ? theme.color.primary : event.tint },
+                    { backgroundColor: theme.color.primary },
                   ]}
                 />
 
@@ -112,8 +113,8 @@ export function ScheduleDayTimeline({ events, nowMinutes, onSelectEvent }: Props
                       fontSize: 10,
                       fontWeight: '600',
                       letterSpacing: 0.2,
-                      color: isNow ? theme.color.primary : scheduleTheme.headingText,
-                      opacity: isNow ? 1 : 0.7,
+                      color: theme.color.primary,
+                      opacity: isNow ? 1 : 0.85,
                       flex: 1,
                     }}
                   >
@@ -200,8 +201,10 @@ export function ScheduleDayTimeline({ events, nowMinutes, onSelectEvent }: Props
 
 const styles = StyleSheet.create({
   root: {
-    paddingHorizontal: 22,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 18,
+    // Last hour label sits on the bottom edge of the rail.
+    paddingBottom: 24,
   },
   rail: {
     position: 'relative',
@@ -210,9 +213,9 @@ const styles = StyleSheet.create({
   hourLabel: {
     position: 'absolute',
     left: 0,
-    width: 38,
+    width: 42,
     textAlign: 'right',
-    fontSize: 10,
+    fontSize: 12,
     letterSpacing: 0.2,
   },
   hourLine: {
@@ -234,7 +237,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     paddingLeft: 16,
     paddingRight: 12,
-    backgroundColor: scheduleTheme.cardBackground,
+    backgroundColor: scheduleTheme.allDayFill,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,

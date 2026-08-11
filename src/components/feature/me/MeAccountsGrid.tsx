@@ -3,6 +3,7 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, meAccountSymbols } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
+import { semanticSpacing } from '@/design-system/tokens';
 import { meTheme } from '@/screens/me/meTheme';
 import type { MeAccountTile } from '@/types/profile';
 import { MeSectionLabel } from './MeSectionLabel';
@@ -76,7 +77,7 @@ export function MeAccountsGrid({ tiles, onTilePress }: Props) {
 
 const styles = StyleSheet.create({
   section: {
-    paddingHorizontal: 22,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 48,
   },
   grid: {

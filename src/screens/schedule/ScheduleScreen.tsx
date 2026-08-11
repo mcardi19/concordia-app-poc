@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { GlassView } from 'expo-glass-effect';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +20,12 @@ import {
   MOCK_NOW_MINUTES,
   MOCK_WEEK_EVENTS,
 } from '@/components/feature/schedule/scheduleMockData';
+import {
+  DAY_HOUR_HEIGHT,
+  PLANNER_HOUR_HEIGHT,
+} from '@/components/feature/schedule/scheduleTheme';
 import { getWeekDates, WEEK_ORDER_KEYS } from '@/components/feature/schedule/scheduleUtils';
+import { semanticSpacing } from '@/design-system/tokens';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { useTheme } from '@/design-system/theme';
@@ -30,6 +35,8 @@ import { formatWeekMonday } from '@/api/schedule';
 const TODAY_KEY = 'fri';
 /** The 3-day planner shows today plus the next two days. */
 const PLANNER_SPAN = 3;
+/** Hour the day/planner grids open on — full day still scrolls above/below. */
+const FOCUS_HOUR = 8;
 
 export function ScheduleScreen() {
   const theme = useTheme();
@@ -37,6 +44,7 @@ export function ScheduleScreen() {
   const onTabBarMinimizeScroll = useTabBarMinimizeScrollHandler();
   const glass = useMemo(() => canUseLiquidGlass(), []);
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
 
   const [weekMonday] = useState(() => formatWeekMonday(new Date()));
   const weekDates = useMemo(() => getWeekDates(weekMonday), [weekMonday]);
@@ -78,6 +86,20 @@ export function ScheduleScreen() {
 
   const showsAllDayBanner = viewMode === 'day' && selectedKey === TODAY_KEY;
 
+  // Full-day grids start at midnight; land on the morning so classes are in view.
+  useEffect(() => {
+    if (viewMode !== 'day' && viewMode !== 'week') {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+      return;
+    }
+    const hourHeight = viewMode === 'day' ? DAY_HOUR_HEIGHT : PLANNER_HOUR_HEIGHT;
+    const y = FOCUS_HOUR * hourHeight;
+    const id = requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y, animated: false });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [viewMode, selectedIndex]);
+
   return (
     <View style={styles.root}>
       {/*
@@ -88,8 +110,10 @@ export function ScheduleScreen() {
       <View style={[styles.pinned, { paddingTop: insets.top + 6 }]}>
         <ScheduleHeader
           selectedDate={selectedDate}
+          todayDate={weekDates[todayIndex]}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          onTodayPress={() => setSelectedIndex(todayIndex)}
         />
         <ScheduleWeekStrip
           weekDates={weekDates}
@@ -104,9 +128,17 @@ export function ScheduleScreen() {
             }
           }}
         />
+        {/* All-day stays under the strip so the timetable can scroll beneath it. */}
+        {showsAllDayBanner ? (
+          <View style={styles.allDayWrap}>
+            <ScheduleAllDayBanner items={MOCK_ALL_DAY_ITEMS} />
+          </View>
+        ) : null}
       </View>
 
       <ScrollView
+        ref={scrollRef}
+        style={styles.scroller}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: tabBarPadding }}
         scrollEventThrottle={16}
@@ -123,17 +155,10 @@ export function ScheduleScreen() {
         ) : null}
 
         {viewMode === 'day' ? (
-          <>
-            {showsAllDayBanner ? (
-              <View style={styles.allDayWrap}>
-                <ScheduleAllDayBanner items={MOCK_ALL_DAY_ITEMS} />
-              </View>
-            ) : null}
-            <ScheduleDayTimeline
-              events={dayEvents}
-              nowMinutes={selectedKey === TODAY_KEY ? MOCK_NOW_MINUTES : undefined}
-            />
-          </>
+          <ScheduleDayTimeline
+            events={dayEvents}
+            nowMinutes={selectedKey === TODAY_KEY ? MOCK_NOW_MINUTES : undefined}
+          />
         ) : null}
 
         {viewMode === 'week' ? (
@@ -143,7 +168,13 @@ export function ScheduleScreen() {
 
       {/* Add event — present on agenda and day, not on the planner. */}
       {viewMode !== 'week' ? (
-        <View style={[styles.fabWrap, { bottom: tabBarPadding - 8 }]}>
+        <View
+          style={[
+            styles.fabWrap,
+            styles.fabShadow,
+            { bottom: tabBarPadding - 8, shadowColor: theme.color.primary },
+          ]}
+        >
           {glass ? (
             <GlassView
               isInteractive
@@ -163,7 +194,7 @@ export function ScheduleScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Add event"
-              style={[styles.fab, styles.fabFallback, { shadowColor: theme.color.primary }]}
+              style={[styles.fab, styles.fabFallback]}
             >
               <MaterialSymbol icon={msAdd} size={24} color={theme.color.primary} />
             </Pressable>
@@ -183,13 +214,29 @@ const styles = StyleSheet.create({
     backgroundColor: scheduleTheme.pageBackground,
     zIndex: 10,
   },
+  /** Bounded height so the day/week grids can scroll past the first hours. */
+  scroller: {
+    flex: 1,
+  },
   allDayWrap: {
-    paddingHorizontal: 22,
-    paddingTop: 14,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: scheduleTheme.mastheadBorder,
   },
   fabWrap: {
     position: 'absolute',
-    right: 22,
+    right: semanticSpacing.screenHorizontal,
+  },
+  /** Outer wrapper so the shadow isn't clipped by the glass `overflow: hidden`. */
+  fabShadow: {
+    borderRadius: 28,
+    borderCurve: 'continuous',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.28,
+    shadowRadius: 24,
+    elevation: 10,
   },
   fab: {
     width: 56,
@@ -209,9 +256,5 @@ const styles = StyleSheet.create({
   /** Only applied when liquid glass is unavailable. */
   fabFallback: {
     backgroundColor: scheduleTheme.fabFill,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.13,
-    shadowRadius: 18,
-    elevation: 4,
   },
 });

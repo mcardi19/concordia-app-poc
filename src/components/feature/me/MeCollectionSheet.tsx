@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, msBookmark, msBookmarkFill } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
+import { semanticSpacing } from '@/design-system/tokens';
 import { meTheme } from '@/screens/me/meTheme';
 
 /** A row in the collection sheet. */
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     borderCurve: 'continuous',
-    paddingHorizontal: 22,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 10,
   },
   handleRow: {

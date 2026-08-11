@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
@@ -29,25 +29,37 @@ export function BuildingDrawer({ building, onClose }: Props) {
   const translateY = useSharedValue(400);
   const backdrop = useSharedValue(0);
   const dragStartY = useSharedValue(0);
+  /**
+   * Keep a local snapshot so we can call `onClose` immediately (map pin clears)
+   * while the sheet still animates out.
+   */
+  const [displayed, setDisplayed] = useState<BuildingSummary | null>(building);
+
+  const finishHide = useCallback(() => {
+    setDisplayed(null);
+  }, []);
 
   useEffect(() => {
     if (building) {
+      setDisplayed(building);
       translateY.value = withSpring(0, SPRING);
       backdrop.value = withTiming(1, { duration: 220 });
-    } else {
-      translateY.value = withTiming(420, { duration: 200 });
-      backdrop.value = withTiming(0, { duration: 180 });
+      return;
     }
-  }, [building, backdrop, translateY]);
+    if (displayed) {
+      translateY.value = withTiming(420, { duration: 200 });
+      backdrop.value = withTiming(0, { duration: 180 }, (finished) => {
+        if (finished) {
+          runOnJS(finishHide)();
+        }
+      });
+    }
+  }, [building, backdrop, displayed, finishHide, translateY]);
 
   const dismiss = useCallback(() => {
-    translateY.value = withTiming(420, { duration: 200 });
-    backdrop.value = withTiming(0, { duration: 180 }, (finished) => {
-      if (finished) {
-        runOnJS(onClose)();
-      }
-    });
-  }, [backdrop, onClose, translateY]);
+    // Clear parent selection immediately so the map pin deselects now.
+    onClose();
+  }, [onClose]);
 
   const pan = Gesture.Pan()
     .onBegin(() => {
@@ -61,12 +73,7 @@ export function BuildingDrawer({ building, onClose }: Props) {
       const shouldDismiss =
         translateY.value > DISMISS_DISTANCE || event.velocityY > 900;
       if (shouldDismiss) {
-        translateY.value = withTiming(420, { duration: 200 });
-        backdrop.value = withTiming(0, { duration: 180 }, (finished) => {
-          if (finished) {
-            runOnJS(onClose)();
-          }
-        });
+        runOnJS(onClose)();
       } else {
         translateY.value = withSpring(0, SPRING);
       }
@@ -80,11 +87,11 @@ export function BuildingDrawer({ building, onClose }: Props) {
     opacity: backdrop.value * 0.28,
   }));
 
-  if (!building) {
+  if (!displayed) {
     return null;
   }
 
-  const campusName = CAMPUS_MAP_DEFAULTS[building.campusId].name;
+  const campusName = CAMPUS_MAP_DEFAULTS[displayed.campusId].name;
   const bottomPad = insets.bottom + theme.spacing.md;
 
   return (
@@ -136,20 +143,20 @@ export function BuildingDrawer({ building, onClose }: Props) {
             <View style={styles.headerRow}>
               <View style={styles.headerText}>
                 <Text variant="caption" color="brand" style={{ marginBottom: 2 }}>
-                  {building.code}
+                  {displayed.code}
                   {' · '}
                   {campusName}
                 </Text>
                 <Text variant="heading2" color="primary">
-                  {building.name}
+                  {displayed.name}
                 </Text>
-                {building.longName && building.longName !== building.name ? (
+                {displayed.longName && displayed.longName !== displayed.name ? (
                   <Text
                     variant="bodySmall"
                     color="secondary"
                     style={{ marginTop: theme.spacing.xs }}
                   >
-                    {building.longName}
+                    {displayed.longName}
                   </Text>
                 ) : null}
               </View>
@@ -174,24 +181,24 @@ export function BuildingDrawer({ building, onClose }: Props) {
               </Pressable>
             </View>
 
-            {building.address ? (
+            {displayed.address ? (
               <Text
                 variant="body"
                 color="secondary"
                 style={{ marginTop: theme.spacing.md }}
               >
-                {building.address}
+                {displayed.address}
               </Text>
             ) : null}
 
-            {building.amenities.length > 0 ? (
+            {displayed.amenities.length > 0 ? (
               <View
                 style={[
                   styles.amenityRow,
                   { marginTop: theme.spacing.md, gap: theme.spacing.xs },
                 ]}
               >
-                {building.amenities.map((amenity) => (
+                {displayed.amenities.map((amenity) => (
                   <View
                     key={amenity}
                     style={[

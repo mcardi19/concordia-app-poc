@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
+import { semanticSpacing } from '@/design-system/tokens';
 import { ScheduleAllDayBanner } from './ScheduleAllDayBanner';
 import { scheduleTheme } from './scheduleTheme';
 import type { ScheduleAllDayItem, ScheduleEvent } from './scheduleTypes';
@@ -135,7 +136,6 @@ function AgendaRow({
   onPress?: () => void;
 }) {
   const theme = useTheme();
-  const isStudy = event.kind === 'study';
 
   return (
     <Pressable
@@ -150,11 +150,7 @@ function AgendaRow({
           style={[
             styles.rail,
             styles.railPlain,
-            {
-              backgroundColor: isStudy
-                ? scheduleTheme.agendaRailStudy
-                : scheduleTheme.agendaRail,
-            },
+            { backgroundColor: theme.color.primary },
           ]}
         />
         <Text
@@ -163,10 +159,10 @@ function AgendaRow({
             fontSize: 11,
             fontWeight: '600',
             letterSpacing: 0.2,
-            color: isStudy ? scheduleTheme.studyLabel : theme.color.primary,
+            color: theme.color.primary,
           }}
         >
-          {isStudy ? 'Study group' : event.courseCode}
+          {event.kind === 'study' ? 'Study group' : event.courseCode}
         </Text>
         <Text
           variant="bodySmall"
@@ -259,7 +255,7 @@ export function ScheduleAgendaView({
 
 const styles = StyleSheet.create({
   root: {
-    paddingHorizontal: 22,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
   },
   dayDivider: {
     flexDirection: 'row',
@@ -287,9 +283,11 @@ const styles = StyleSheet.create({
   nowCard: {
     flex: 1,
     minWidth: 0,
-    backgroundColor: scheduleTheme.cardBackground,
+    backgroundColor: scheduleTheme.allDayFill,
     borderRadius: 8,
     borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(145, 35, 56, 0.15)',
     padding: 15,
     paddingLeft: 24,
     marginTop: -2,
@@ -303,9 +301,14 @@ const styles = StyleSheet.create({
   plainBody: {
     flex: 1,
     minWidth: 0,
+    backgroundColor: scheduleTheme.allDayFill,
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(145, 35, 56, 0.15)',
     paddingLeft: 18,
     paddingRight: 15,
-    paddingTop: 1,
+    paddingTop: 8,
     paddingBottom: 9,
   },
   rail: {

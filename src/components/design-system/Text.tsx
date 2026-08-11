@@ -1,5 +1,11 @@
 import React from 'react';
-import { Text as RNText, TextProps as RNTextProps, StyleSheet, type TextStyle } from 'react-native';
+import {
+  Platform,
+  Text as RNText,
+  TextProps as RNTextProps,
+  StyleSheet,
+  type TextStyle,
+} from 'react-native';
 import { useTheme } from '@/design-system/theme';
 
 export type TextVariant = 'heading1' | 'heading2' | 'heading3' | 'body' | 'bodySmall' | 'caption';
@@ -9,6 +15,16 @@ export interface TextProps extends RNTextProps {
   color?: 'primary' | 'secondary' | 'subtle' | 'inverse' | 'brand' | 'link';
   allowFontScaling?: boolean;
 }
+
+/**
+ * Platform UI face only — SF Pro on iOS (`System`), Roboto on Android.
+ * Never Inter, Gill Sans Nova, or other loaded families.
+ */
+const PLATFORM_UI_FONT = Platform.select({
+  ios: 'System',
+  android: 'sans-serif',
+  default: undefined,
+});
 
 export function Text({
   variant = 'body',
@@ -33,26 +49,20 @@ export function Text({
               : theme.color.text.inverse;
 
   const baseStyle: TextStyle = {
+    fontFamily: PLATFORM_UI_FONT,
     fontSize: typography.fontSize,
     lineHeight: typography.fontSize * typography.lineHeight,
     letterSpacing: typography.letterSpacing,
     color: colorValue,
   };
 
-  // Platform UI font only (SF Pro / Roboto). Ignore token/style fontFamily for now.
   if ('fontWeight' in typography && typography.fontWeight) {
     baseStyle.fontWeight = typography.fontWeight;
   }
 
   const flattened = StyleSheet.flatten([baseStyle, style]) as TextStyle;
-  if (flattened.fontFamily != null) {
-    const { fontFamily: _ignored, ...withoutFamily } = flattened;
-    return (
-      <RNText allowFontScaling={allowFontScaling} style={withoutFamily} {...rest} />
-    );
-  }
+  // Callers may pass a fontFamily (brand tokens, Figma Inter leftovers) — discard it.
+  flattened.fontFamily = PLATFORM_UI_FONT;
 
-  return (
-    <RNText allowFontScaling={allowFontScaling} style={[baseStyle, style]} {...rest} />
-  );
+  return <RNText allowFontScaling={allowFontScaling} style={flattened} {...rest} />;
 }
