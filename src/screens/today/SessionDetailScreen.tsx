@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, {
+  Easing,
   Extrapolation,
   interpolate,
   runOnJS,
@@ -64,8 +65,20 @@ const DETAIL_HERO_HEIGHT = Math.max(
  * spring decelerates into the frame the way the App Store expand does.
  * `dampingRatio: 1` = fastest settle with no overshoot.
  */
-const OPEN_SPRING = { duration: 520, dampingRatio: 1 } as const;
-const CLOSE_SPRING = { duration: 420, dampingRatio: 1 } as const;
+const OPEN_SPRING = { duration: 520, dampingRatio: 1, overshootClamping: true } as const;
+/**
+ * The close is a timing curve, not a spring. Even critically damped, a spring
+ * approaches its target asymptotically and only reports finished at the end of
+ * its duration — so the sheet crawls the last few percent onto the card and
+ * then dismisses, which reads as a soft rebound. An ease-out arrives.
+ */
+const CLOSE_MS = 280;
+/**
+ * Quadratic, not cubic. A cubic ease-out reaches 99% of the distance at ~78%
+ * of its duration, so the remainder is a long crawl; quad reaches the same
+ * point at ~89%, which leaves far less tail to either sit through or cut off.
+ */
+const CLOSE_EASING = Easing.out(Easing.quad);
 
 /** Hide the list card once the sheet has started covering it. */
 const SOURCE_HIDE_PROGRESS = 0.04;
@@ -81,6 +94,22 @@ const BACKDROP_BLUR_INTENSITY = 100;
 const BLUR_STEP = 12;
 /** Catch-up fade for the frost once the overlay owns the hero. */
 const BACKDROP_FADE_MS = 160;
+/**
+ * Last-resort escape hatch for an onLoad that never arrives — NOT a timing
+ * knob. Revealing the sheet before the photo has painted shows the opaque page
+ * fill with no image, which is the white flash. The asset is already decoded by
+ * the list card, so onLoad normally lands within a frame and this never fires;
+ * keeping it generous costs nothing in the normal path.
+ */
+const PAINT_FALLBACK_MS = 250;
+/**
+ * Dismiss once the sheet is within this much of the card rather than waiting
+ * for the curve to complete. An ease-out spends its last stretch of time
+ * covering almost no distance, so waiting for `finished` parks a
+ * visually-landed sheet on screen — which reads as a hold, then a snap.
+ * At ~1% the remaining gap is under a pixel of width.
+ */
+const CLOSE_DISMISS_PROGRESS = 0.008;
 /** Close control's blur at rest, and its quantisation step. */
 const CLOSE_BLUR_INTENSITY = 55;
 const CLOSE_BLUR_STEP = 5;
@@ -135,12 +164,16 @@ export function SessionDetailScreen({ navigation }: Props) {
    * cannot make the frost pop.
    */
   const backdropGate = useSharedValue(0);
+  /** 1 once the collapse has handed off; keeps the dismiss idempotent. */
+  const dismissed = useSharedValue(0);
   const [closing, setClosing] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const scrollRef = React.useRef<Animated.ScrollView>(null);
-  /** Open runs once, whichever of onLoad / the safety timer gets there first. */
-  const startedRef = React.useRef(false);
+  /** Reveal runs once, whichever of onLoad / the safety timer gets there first. */
+  const paintedRef = React.useRef(false);
+  /** Dismiss runs once, whichever of the threshold / the curve gets there first. */
+  const closedRef = React.useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -169,15 +202,23 @@ export function SessionDetailScreen({ navigation }: Props) {
         });
         return;
       }
-      progress.value = withSpring(
-        to,
-        to === 1 ? OPEN_SPRING : CLOSE_SPRING,
-        (finished) => {
-          if (finished && onDone) {
-            runOnJS(onDone)();
-          }
-        },
-      );
+      if (to === 0) {
+        progress.value = withTiming(
+          to,
+          { duration: CLOSE_MS, easing: CLOSE_EASING },
+          (finished) => {
+            if (finished && onDone) {
+              runOnJS(onDone)();
+            }
+          },
+        );
+        return;
+      }
+      progress.value = withSpring(to, OPEN_SPRING, (finished) => {
+        if (finished && onDone) {
+          runOnJS(onDone)();
+        }
+      });
     },
     [progress, reduceMotion],
   );
@@ -187,36 +228,44 @@ export function SessionDetailScreen({ navigation }: Props) {
   }, []);
 
   /**
-   * Begin the expand at the moment the overlay can actually represent the card:
-   * photo painted, sheet opaque, frost released. Starting earlier means the
-   * sheet grows while still invisible, and then pops into view at whatever size
-   * the morph had already reached. The asset is already decoded by the list
-   * card, so in practice this costs a frame.
+   * Reveal (not start) the overlay once its photo has painted.
+   *
+   * Motion and visibility are deliberately decoupled. Gating the *start* on
+   * paint meant the tap produced no movement at all until onLoad landed, which
+   * read as the list card sticking at its pressed scale. The morph now begins
+   * immediately and the sheet un-parks a frame or two in, at whatever progress
+   * it has reached — a few percent of size, invisible in motion, versus a
+   * stall you can feel.
    */
-  const startExpand = useCallback(() => {
-    if (startedRef.current) {
+  const onHeroPainted = useCallback(() => {
+    if (paintedRef.current) {
       return;
     }
-    startedRef.current = true;
+    paintedRef.current = true;
     heroPainted.value = 1;
     backdropGate.value = withTiming(1, { duration: BACKDROP_FADE_MS });
-    animateTo(1, onOpenSettled);
-  }, [animateTo, backdropGate, heroPainted, onOpenSettled]);
+  }, [backdropGate, heroPainted]);
 
-  // Safety net: never strand the open if onLoad does not arrive.
+  // Safety net: never leave the sheet parked if onLoad does not arrive.
   useEffect(() => {
-    const timer = setTimeout(startExpand, 200);
+    const timer = setTimeout(onHeroPainted, PAINT_FALLBACK_MS);
     return () => clearTimeout(timer);
-  }, [startExpand]);
+  }, [onHeroPainted]);
 
   const finishClose = useCallback(() => {
-    // The list card was already revealed at SOURCE_REVEAL_PROGRESS and has had
-    // real frames to paint, so dismiss immediately — no rAF chain. The old
-    // triple-rAF wait froze the last ~50ms of every close.
-    progress.value = 0;
+    if (closedRef.current) {
+      return;
+    }
+    closedRef.current = true;
+    /**
+     * Deliberately does NOT snap progress to 0. The card underneath was already
+     * revealed, and the running curve keeps easing the last fraction while the
+     * modal unmounts — zeroing it here put a hard jump on top of an already
+     * truncated tail, which is what read as a snap.
+     */
     cardScaleSV.value = 1;
     navigation.goBack();
-  }, [navigation, progress]);
+  }, [navigation]);
 
   useEffect(() => {
     return () => {
@@ -268,12 +317,17 @@ export function SessionDetailScreen({ navigation }: Props) {
       navigation.goBack();
       return;
     }
-    originX.value = pressedOrigin.x;
-    originY.value = pressedOrigin.y;
-    originW.value = pressedOrigin.width;
-    originH.value = pressedOrigin.height;
-    // Seed geometry only. The expand itself starts from startExpand, once the
-    // hero photo has painted and the overlay can stand in for the list card.
+    /**
+     * Open from the card's resting frame, matching the close. The card springs
+     * back to scale 1 on release, so anchoring here makes the two coincide
+     * exactly — and it drops the 3% type-size mismatch the pressed frame used
+     * to leave at the handoff.
+     */
+    originX.value = restingOrigin.x;
+    originY.value = restingOrigin.y;
+    originW.value = restingOrigin.width;
+    originH.value = restingOrigin.height;
+    animateTo(1, onOpenSettled);
     // Mount-only handoff.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -300,6 +354,11 @@ export function SessionDetailScreen({ navigation }: Props) {
         }
         return;
       }
+      if (p < CLOSE_DISMISS_PROGRESS && dismissed.value === 0) {
+        // Visually landed — hand off now instead of riding out the tail.
+        dismissed.value = 1;
+        runOnJS(finishClose)();
+      }
       if (p < SOURCE_REVEAL_PROGRESS && sourceHiddenSV.value === 1) {
         // Card is already at resting scale under the overlay, and the overlay is
         // collapsing onto that exact frame — so this is a pure opacity swap.
@@ -308,7 +367,7 @@ export function SessionDetailScreen({ navigation }: Props) {
         runOnJS(setSourceHidden)(false);
       }
     },
-    [setSourceHidden],
+    [finishClose, setSourceHidden],
   );
 
   const onClose = useCallback(() => {
@@ -499,7 +558,11 @@ export function SessionDetailScreen({ navigation }: Props) {
     opacity: interpolate(progress.value, [0.62, 0.98], [0, 1], Extrapolation.CLAMP),
   }));
 
-  // Fade out the card CTA; do not replace it with Prof in the detail hero.
+  /**
+   * Fade out the card CTA; do not replace it with Prof in the detail hero.
+   * Safe as opacity again now that the control is flat rather than liquid
+   * glass — a visual effect view here could not survive partial alpha.
+   */
   const cardActionsOpacityStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       progress.value,
@@ -564,7 +627,7 @@ export function SessionDetailScreen({ navigation }: Props) {
             actionsInteractive={false}
             cardActionsStyle={cardActionsOpacityStyle}
             imageStyle={heroImageStyle}
-            onImageLoad={startExpand}
+            onImageLoad={onHeroPainted}
             morphProgress={progress}
             rightShift={rightShift}
             contentShift={contentShift}

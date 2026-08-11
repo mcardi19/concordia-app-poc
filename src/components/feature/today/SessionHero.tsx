@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Pressable,
   StyleSheet,
   View,
   type ImageStyle,
@@ -11,7 +12,6 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import {
-  GlassActionButton,
   ProgressiveImageTreatment,
   Text,
   type ProgressiveImageTreatmentProps,
@@ -393,9 +393,15 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Always renders the same control, interactive or not. Branching to a plain
- * View for the non-interactive copy made the expand overlay show a flat fill
- * where the list card shows liquid glass — a visible colour pop at handoff.
+ * A flat control, deliberately NOT liquid glass.
+ *
+ * The expand has to hide this button (it scales away as the card opens) and
+ * hide the sheet that contains it (parked until the hero photo paints). Every
+ * mechanism for that — alpha, offscreen parking, zero scale — leaves a
+ * UIVisualEffectView with no backdrop to sample, so it renders flat and only
+ * corrects once the overlay is torn down. That read as the CTA flashing a
+ * pressed state on close. A flat fill cannot degrade, and the two copies stay
+ * identical through the whole morph.
  */
 export function SessionHeroActions({
   interactive = true,
@@ -413,34 +419,48 @@ export function SessionHeroActions({
 }) {
   const theme = useTheme();
 
-  return (
-    <GlassActionButton
-      onPress={interactive ? onViewDetails : undefined}
-      onPressIn={interactive ? onViewDetailsPressIn : undefined}
-      onPressOut={interactive ? onViewDetailsPressOut : undefined}
-      pressScaleEnabled={false}
-      accessibilityLabel="View details"
+  const label = (
+    <Text
+      variant="body"
       style={{
-        height: SESSION_ACTIONS_ROW_HEIGHT,
-        paddingHorizontal: 18,
-        borderRadius: 10,
-        borderCurve: 'continuous',
-        overflow: 'hidden',
+        fontWeight: '600',
+        color: theme.color.text.inverse,
+        fontSize: 16,
+        lineHeight: 16 * 1.2,
       }}
-      fallbackBackgroundColor={todayTheme.sessionButton}
     >
-      <Text
-        variant="body"
-        style={{
-          fontWeight: '600',
-          color: theme.color.text.inverse,
-          fontSize: 16,
-          lineHeight: 16 * 1.2,
-        }}
-      >
-        View details
-      </Text>
-    </GlassActionButton>
+      View details
+    </Text>
+  );
+
+  // One style object, shared by both branches — the list card and the expand
+  // overlay must be identical by construction, not by coincidence.
+  const surface = {
+    height: SESSION_ACTIONS_ROW_HEIGHT,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    borderCurve: 'continuous' as const,
+    overflow: 'hidden' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: todayTheme.sessionButton,
+  };
+
+  if (!interactive) {
+    return <View style={surface}>{label}</View>;
+  }
+
+  return (
+    <Pressable
+      onPress={onViewDetails}
+      onPressIn={onViewDetailsPressIn}
+      onPressOut={onViewDetailsPressOut}
+      accessibilityRole="button"
+      accessibilityLabel="View details"
+      style={surface}
+    >
+      {label}
+    </Pressable>
   );
 }
 

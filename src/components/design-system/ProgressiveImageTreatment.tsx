@@ -38,7 +38,16 @@ export type ProgressiveImageTreatmentProps = {
    * @default 0.48
    */
   blurStart?: number;
-  /** Blur strength at the bottom of the ramp. 0 disables. @default 42 */
+  /**
+   * Blur strength at the bottom of the ramp. 0 disables.
+   *
+   * Currently defaults OFF. The gradient-masked sharp overlay below does not
+   * render on this stack — react-native-svg draws nothing for the <Mask> +
+   * <Image href={require(...)}> combination, so the full-coverage BlurView is
+   * left blurring the entire photo instead of just the lower ramp. Until that
+   * is resolved, shipping sharp beats shipping a smeared hero.
+   * @default 0
+   */
   blurIntensity?: number;
   /** Scales warm tint / contrast overlay alpha. @default 1 */
   overlayOpacity?: number;
@@ -91,7 +100,8 @@ function SharpOverlay({ source, imageStyle, start }: SharpOverlayProps) {
       // Transform only; ImageStyle and ViewStyle agree on that.
       style={[absoluteFill, imageStyle as StyleProp<ViewStyle>]}
     >
-      <Svg style={StyleSheet.absoluteFill}>
+      {/* Explicit dimensions: react-native-svg needs a viewport, style alone gives none. */}
+      <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
         <Defs>
           <SvgLinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
             {/* White keeps the copy; black reveals the blurred base beneath. */}
@@ -127,7 +137,7 @@ export function ProgressiveImageTreatment({
   source,
   imageStyle,
   blurStart = 0.48,
-  blurIntensity = 42,
+  blurIntensity = 0,
   overlayOpacity = 1,
   style,
 }: ProgressiveImageTreatmentProps) {
