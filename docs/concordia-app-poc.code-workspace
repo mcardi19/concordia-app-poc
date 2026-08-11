@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../wcms-aem"
+		},
+		{
+			"path": "../../greenhouse"
+		},
+		{
+			"path": "../../../Code repos/mobile-app-main"
+		}
+	],
+	"settings": {}
+}
