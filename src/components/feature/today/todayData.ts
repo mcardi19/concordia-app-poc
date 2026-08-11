@@ -7,6 +7,10 @@ import { msMenuBookFill } from '@material-symbols-react-native/rounded-400/msMen
 import { msSchoolFill } from '@material-symbols-react-native/rounded-400/msSchoolFill';
 import { msAssignment } from '@material-symbols-react-native/rounded-400/msAssignment';
 import { msPayments } from '@material-symbols-react-native/rounded-400/msPayments';
+import { msCalendarMonthFill } from '@material-symbols-react-native/rounded-400/msCalendarMonthFill';
+import { msAccountBalanceWalletFill } from '@material-symbols-react-native/rounded-400/msAccountBalanceWalletFill';
+import { msEventFill } from '@material-symbols-react-native/rounded-400/msEventFill';
+import { msRestaurantFill } from '@material-symbols-react-native/rounded-400/msRestaurantFill';
 
 /* eslint-disable @typescript-eslint/no-require-imports -- Metro static image assets */
 export const sessionHeroImage = require('../../../../assets/today/session-hero.png') as ImageSourcePropType;
@@ -81,6 +85,15 @@ export const PINNED_CHIPS: PinnedChip[] = [
     tab: 'Campus',
     campusRoute: 'ShuttleSchedule',
   },
+];
+
+/** Full set of pin-able shortcuts shown in the Add drawer. */
+export const PINNED_CHIP_CATALOG: PinnedChip[] = [
+  ...PINNED_CHIPS,
+  { id: 'schedule', label: 'Schedule', icon: msCalendarMonthFill, iconColor: '#DA3A16', tab: 'Schedule' },
+  { id: 'wallet', label: 'Wallet', icon: msAccountBalanceWalletFill, iconColor: '#573996', tab: 'Me' },
+  { id: 'events', label: 'Events', icon: msEventFill, iconColor: '#057D78', tab: 'Campus' },
+  { id: 'dining', label: 'Dining', icon: msRestaurantFill, iconColor: '#E5A712', tab: 'Campus' },
 ];
 
 export const ATTENTION_ITEMS: AttentionItem[] = [

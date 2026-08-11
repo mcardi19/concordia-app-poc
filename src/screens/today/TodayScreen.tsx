@@ -1,5 +1,6 @@
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Platform,
   View,
@@ -14,10 +15,12 @@ import {
   ATTENTION_ITEMS,
   CAMPUS_TODAY,
   LATEST_UPDATES,
+  PINNED_CHIP_CATALOG,
   PINNED_CHIPS,
   TODAY_SESSION,
   TodayAttentionList,
   TodayCampusCarousel,
+  TodayPinnedAddDrawer,
   TodayPinnedChips,
   TodaySectionHeader,
   TodaySessionCard,
@@ -31,7 +34,7 @@ import {
   nextTopBaseline,
   scrollDistanceFromTop,
 } from '@/navigation/homeScrollTitle';
-import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
+import { HEADER_BAR_BUTTON_SIZE, HEADER_CHROME_TOP_GAP } from '@/navigation/HeaderIconButton';
 import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
 import { useTabBarScrollInset } from '@/navigation/tabBarInset';
 import type { TodayStackScreenProps } from '@/navigation/types';
@@ -56,6 +59,9 @@ export function TodayScreen({ navigation }: Props) {
   const insetTopRef = useRef(0);
   const topBaselineRef = useRef<number | null>(null);
   const [largeHomeOpacity, setLargeHomeOpacity] = useState(1);
+  const [isPinnedEditing, setIsPinnedEditing] = useState(false);
+  const [pinnedChips, setPinnedChips] = useState(PINNED_CHIPS);
+  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
 
   const gradientOpacity = useMemo(
     () =>
@@ -67,7 +73,7 @@ export function TodayScreen({ navigation }: Props) {
     [scrollY],
   );
 
-  const gradientHeight = insets.top + HEADER_BAR_BUTTON_SIZE + MASTHEAD_OVERLAP;
+  const gradientHeight = insets.top + HEADER_CHROME_TOP_GAP + HEADER_BAR_BUTTON_SIZE + MASTHEAD_OVERLAP;
 
   useLayoutEffect(() => {
     if (Platform.OS !== 'ios') return;
@@ -140,6 +146,37 @@ export function TodayScreen({ navigation }: Props) {
     [navigation],
   );
 
+  const handleChipDelete = useCallback((chip: PinnedChip) => {
+    Alert.alert(
+      'Remove pin?',
+      `Remove ${chip.label} from Pinned?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            setPinnedChips((current) => current.filter((item) => item.id !== chip.id));
+          },
+        },
+      ],
+    );
+  }, []);
+
+  const addableChips = useMemo(() => {
+    const pinnedIds = new Set(pinnedChips.map((chip) => chip.id));
+    return PINNED_CHIP_CATALOG.filter((chip) => !pinnedIds.has(chip.id));
+  }, [pinnedChips]);
+
+  const handleAddChip = useCallback((chip: PinnedChip) => {
+    setPinnedChips((current) => {
+      if (current.some((item) => item.id === chip.id)) {
+        return current;
+      }
+      return [...current, chip];
+    });
+  }, []);
+
   return (
     <Screen
       edges={[]}
@@ -163,8 +200,18 @@ export function TodayScreen({ navigation }: Props) {
           </View>
 
           <View style={{ paddingHorizontal: inset }}>
-            <TodaySectionHeader title="Pinned" actionLabel="Edit" />
-            <TodayPinnedChips chips={PINNED_CHIPS} onChipPress={handleChipPress} />
+            <TodaySectionHeader
+              title="Pinned"
+              actionLabel={isPinnedEditing ? 'Done' : 'Edit'}
+              onActionPress={() => setIsPinnedEditing((current) => !current)}
+            />
+            <TodayPinnedChips
+              chips={pinnedChips}
+              isEditing={isPinnedEditing}
+              onChipPress={handleChipPress}
+              onChipDelete={handleChipDelete}
+              onAddPress={() => setIsAddDrawerOpen(true)}
+            />
           </View>
 
           <View style={{ paddingHorizontal: inset }}>
@@ -219,7 +266,7 @@ export function TodayScreen({ navigation }: Props) {
             pointerEvents="none"
             style={{
               position: 'absolute',
-              top: insets.top,
+              top: insets.top + HEADER_CHROME_TOP_GAP,
               left: inset,
               right: inset,
               zIndex: 12,
@@ -235,6 +282,13 @@ export function TodayScreen({ navigation }: Props) {
           </View>
         ) : null}
       </View>
+
+      <TodayPinnedAddDrawer
+        visible={isAddDrawerOpen}
+        options={addableChips}
+        onSelect={handleAddChip}
+        onClose={() => setIsAddDrawerOpen(false)}
+      />
     </Screen>
   );
 }

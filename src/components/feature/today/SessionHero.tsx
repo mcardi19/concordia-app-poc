@@ -58,6 +58,11 @@ type Props = {
    */
   imageStyle?: StyleProp<ImageStyle>;
   /**
+   * Fires once the photo has actually painted. The expand overlay uses this to
+   * know when it is safe to cover (and then hide) the list card underneath.
+   */
+  onImageLoad?: () => void;
+  /**
    * 0–1 expand progress. Drives the overlay morph with transforms only — the
    * overlay's own layout is fixed so no frame of the expand dirties Yoga.
    */
@@ -107,6 +112,7 @@ export function SessionHero({
   cardActionsStyle,
   profStyle,
   imageStyle,
+  onImageLoad,
   morphProgress,
   rightShift,
   contentShift,
@@ -130,6 +136,7 @@ export function SessionHero({
       resizeMode="cover"
       // Avoid Android’s default Image fade-in (reads as a photo flash on expand).
       fadeDuration={0}
+      onLoad={onImageLoad}
       style={[
         fillContainer
           ? {
@@ -181,7 +188,11 @@ export function SessionHero({
         style={rootStyle}
       >
         {image}
-        <ProgressiveImageTreatment {...treatment} />
+        <ProgressiveImageTreatment
+        source={session.image}
+        imageStyle={imageStyle}
+        {...treatment}
+      />
         {overlay}
       </Animated.View>
     );
@@ -190,7 +201,11 @@ export function SessionHero({
   return (
     <View style={rootStyle}>
       {image}
-      <ProgressiveImageTreatment {...treatment} />
+      <ProgressiveImageTreatment
+        source={session.image}
+        imageStyle={imageStyle}
+        {...treatment}
+      />
       {overlay}
     </View>
   );
@@ -295,7 +310,7 @@ function SessionHeroOverlay({
             style={{
               color: theme.color.text.inverse,
               fontSize: 32,
-              lineHeight: 32 * 0.94,
+              lineHeight: 32 * 1.15,
             }}
           >
             {session.title}
@@ -360,7 +375,7 @@ const styles = StyleSheet.create({
   },
   title: {
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 24,
     paddingHorizontal: SESSION_HERO_CONTENT_PAD,
   },
   meta: {

@@ -3,8 +3,8 @@ import { Platform } from 'react-native';
 import { useTheme } from '@/design-system/theme';
 import { primitiveFontWeight } from '@/design-system/tokens/primitive';
 
-/** Inactive tab / secondary chrome (Figma Tab Navigation). */
-export const NAV_TAB_INACTIVE = '#8A8070';
+/** Inactive tab label / icon chrome — matches iOS unselected tab label (~secondaryLabel). */
+export const NAV_TAB_INACTIVE = '#3B3B3C';
 
 export function useStackContentStyle() {
   const theme = useTheme();

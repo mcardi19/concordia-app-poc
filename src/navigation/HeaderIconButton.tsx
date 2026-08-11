@@ -6,7 +6,18 @@ import { useTheme } from '@/design-system/theme';
 
 /** Matches UIKit bar-button hit area so liquid-glass capsules center the glyph. */
 export const HEADER_BAR_BUTTON_SIZE = 44;
-const HEADER_ICON_SIZE = 22;
+export const HEADER_ICON_SIZE = 22;
+/**
+ * Distance from the safe-area top to the top of header action chrome.
+ * Matches native UINavigationBar bar-button placement on the Home tab —
+ * custom chrome (Me, session detail) must use the same offset.
+ */
+export const HEADER_CHROME_TOP_GAP = 0;
+/**
+ * Trailing/leading inset for header action chrome.
+ * Matches Home's native bar-button margin and `theme.spacing.screenHorizontal`.
+ */
+export const HEADER_CHROME_HORIZONTAL_INSET = 16;
 
 type Props = {
   icon: MsIconDefinition;

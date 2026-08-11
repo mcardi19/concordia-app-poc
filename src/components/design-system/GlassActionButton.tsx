@@ -6,11 +6,8 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import {
-  GlassView,
-  isGlassEffectAPIAvailable,
-  isLiquidGlassAvailable,
-} from 'expo-glass-effect';
+import { GlassView } from 'expo-glass-effect';
+import { canUseLiquidGlass } from './liquidGlass';
 
 export type GlassActionButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   children: React.ReactNode;
@@ -25,14 +22,6 @@ export type GlassActionButtonProps = Omit<PressableProps, 'children' | 'style'> 
   /** When false, skip the press scale (avoids a pop during expand handoff). */
   pressScaleEnabled?: boolean;
 };
-
-function canUseLiquidGlass(): boolean {
-  try {
-    return isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Circular or pill action control with native iOS liquid glass when available.

@@ -19,6 +19,10 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'ca.concordia.app',
+      infoPlist: {
+        NSLocationWhenInUseUsageDescription:
+          'Concordia uses your location to show where you are on the campus map.',
+      },
     },
     android: {
       package: 'ca.concordia.app',
@@ -29,6 +33,7 @@ export default {
         monochromeImage: './assets/android-icon-monochrome.png',
       },
       predictiveBackGestureEnabled: false,
+      permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
       config: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
         ? {
             googleMaps: {
@@ -38,7 +43,16 @@ export default {
         : undefined,
     },
     web: { favicon: './assets/favicon.png' },
-    plugins: ['expo-dev-client'],
+    plugins: [
+      'expo-dev-client',
+      [
+        'expo-location',
+        {
+          locationWhenInUsePermission:
+            'Concordia uses your location to show where you are on the campus map.',
+        },
+      ],
+    ],
     extra: {
       EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
       EXPO_PUBLIC_SIS_API_URL: process.env.EXPO_PUBLIC_SIS_API_URL,

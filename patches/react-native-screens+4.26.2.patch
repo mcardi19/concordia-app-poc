@@ -86,20 +86,47 @@ index 5fa1be3..ef8e980 100644
  
  #pragma mark - RCTComponentViewProtocol
 diff --git a/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm b/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm
-index fee81a8..dcdc7b6 100644
+index fee81a8..e30a58f 100644
 --- a/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm
 +++ b/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm
-@@ -47,8 +47,23 @@ - (void)configureTabBarItemForTabScreenController:(nonnull RNSTabsScreenViewCont
+@@ -30,6 +30,26 @@ - (void)updateAppearanceOfTabBar:(nullable UITabBar *)tabBar
+     return;
+   }
+ 
++  // iOS 26+ liquid glass: we often clear UITabBarAppearance (see below), which drops
++  // per-item iconColor. Apply unselectedItemTintColor from the first screen's normal
++  // appearance so inactive icons/labels still honour tabBarInactiveTintColor.
++  UIColor *unselectedTint = nil;
++  for (RNSTabsScreenViewController *tabScreenCtrl in tabScreenCtrls) {
++    if (tabScreenCtrl == nil) {
++      continue;
++    }
++    UITabBarAppearance *appearance = tabScreenCtrl.tabScreenComponentView.standardAppearance;
++    UIColor *iconColor = appearance.stackedLayoutAppearance.normal.iconColor;
++    if (iconColor == nil) {
++      iconColor = appearance.stackedLayoutAppearance.normal.titleTextAttributes[NSForegroundColorAttributeName];
++    }
++    if (iconColor != nil) {
++      unselectedTint = iconColor;
++      break;
++    }
++  }
++  tabBar.unselectedItemTintColor = unselectedTint;
++
+   // Step 2 - configure screen-specific appearance
+   for (RNSTabsScreenViewController *tabScreenCtrl in tabScreenCtrls) {
+     if (tabScreenCtrl == nil) {
+@@ -46,9 +66,53 @@ - (void)configureTabBarItemForTabScreenController:(nonnull RNSTabsScreenViewCont
+                                       imageLoader:(nullable RCTImageLoader *)imageLoader
  {
    UITabBarItem *tabBarItem = tabScreenCtrl.tabBarItem;
- 
--  tabBarItem.standardAppearance = tabScreenCtrl.tabScreenComponentView.standardAppearance;
--  tabBarItem.scrollEdgeAppearance = tabScreenCtrl.tabScreenComponentView.scrollEdgeAppearance;
-+  // iOS 26+ Liquid Glass is disabled when a custom UITabBarAppearance is applied
-+  // (Apple: UIBarAppearance / backgroundColor interfere with the glass material).
-+  // Keep system appearance unless an explicit opaque background was requested.
++  UITabBarAppearance *requested = tabScreenCtrl.tabScreenComponentView.standardAppearance;
++
++  // iOS 26+ Liquid Glass is disabled when an opaque UITabBarAppearance background
++  // is applied. Keep system appearance (nil) unless an explicit background was set —
++  // icon colours are baked into assets; label colours use setTitleTextAttributes below
++  // because UITabBarAppearance title colours are ignored under liquid glass.
 +  if (@available(iOS 26.0, *)) {
-+    UITabBarAppearance *requested = tabScreenCtrl.tabScreenComponentView.standardAppearance;
 +    BOOL hasExplicitBackground = requested != nil && requested.backgroundColor != nil;
 +    if (hasExplicitBackground) {
 +      tabBarItem.standardAppearance = requested;
@@ -109,8 +136,38 @@ index fee81a8..dcdc7b6 100644
 +      tabBarItem.scrollEdgeAppearance = nil;
 +    }
 +  } else {
-+    tabBarItem.standardAppearance = tabScreenCtrl.tabScreenComponentView.standardAppearance;
++    tabBarItem.standardAppearance = requested;
 +    tabBarItem.scrollEdgeAppearance = tabScreenCtrl.tabScreenComponentView.scrollEdgeAppearance;
++  }
+ 
+-  tabBarItem.standardAppearance = tabScreenCtrl.tabScreenComponentView.standardAppearance;
+-  tabBarItem.scrollEdgeAppearance = tabScreenCtrl.tabScreenComponentView.scrollEdgeAppearance;
++  // Force inactive/active label colours. On iOS 26 liquid glass, appearance-based
++  // titleTextAttributes and often unselectedItemTintColor alone do not tint titles.
++  NSDictionary *normalAttrs = requested.stackedLayoutAppearance.normal.titleTextAttributes;
++  UIColor *inactiveTitleColor = normalAttrs[NSForegroundColorAttributeName];
++  if (inactiveTitleColor == nil) {
++    inactiveTitleColor = requested.stackedLayoutAppearance.normal.iconColor;
++  }
++  if (inactiveTitleColor != nil) {
++    NSMutableDictionary *attrs = normalAttrs != nil ? [normalAttrs mutableCopy] : [NSMutableDictionary new];
++    attrs[NSForegroundColorAttributeName] = inactiveTitleColor;
++    [tabBarItem setTitleTextAttributes:attrs forState:UIControlStateNormal];
++  }
++
++  UIColor *activeTitleColor = tabBarItem.standardAppearance != nil
++                                  ? requested.stackedLayoutAppearance.selected.titleTextAttributes[NSForegroundColorAttributeName]
++                                  : nil;
++  if (activeTitleColor == nil) {
++    activeTitleColor = tabScreenCtrl.tabBarController.tabBar.tintColor;
++  }
++  if (activeTitleColor != nil) {
++    NSMutableDictionary *selectedAttrs = [NSMutableDictionary new];
++    if (normalAttrs != nil && normalAttrs[NSFontAttributeName] != nil) {
++      selectedAttrs[NSFontAttributeName] = normalAttrs[NSFontAttributeName];
++    }
++    selectedAttrs[NSForegroundColorAttributeName] = activeTitleColor;
++    [tabBarItem setTitleTextAttributes:selectedAttrs forState:UIControlStateSelected];
 +  }
  
    [self setIconsForTabBarItem:tabBarItem

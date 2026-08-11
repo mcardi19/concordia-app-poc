@@ -1,16 +1,44 @@
 import React from 'react';
-import { Platform, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  View,
+  type ImageSourcePropType,
+  type ImageStyle,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import Animated from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, {
+  Defs,
+  Image as SvgImage,
+  LinearGradient as SvgLinearGradient,
+  Mask,
+  Rect,
+  Stop,
+} from 'react-native-svg';
 
 export type ProgressiveImageTreatmentProps = {
   /**
-   * Fraction of card height where the progressive blur begins (0–1).
-   * Upper image stays sharp above this line.
+   * The image underneath. Required for the blur: the sharp top of the ramp is
+   * a second, gradient-masked copy of this drawn over a fully blurred base.
+   * Without it only the tint stack renders.
+   */
+  source?: ImageSourcePropType;
+  /**
+   * Transform applied to the underlying image, if any. The masked copy must
+   * carry the identical transform or the two will ghost apart.
+   */
+  imageStyle?: StyleProp<ImageStyle>;
+  /**
+   * Fraction of card height where the image starts going soft (0–1).
+   * Everything above this stays fully sharp.
    * @default 0.48
    */
   blurStart?: number;
-  /** BlurView intensity at full strength. @default 0 (disabled while tuning expand perf). */
+  /** Blur strength at the bottom of the ramp. 0 disables. @default 42 */
   blurIntensity?: number;
   /** Scales warm tint / contrast overlay alpha. @default 1 */
   overlayOpacity?: number;
@@ -33,28 +61,60 @@ function rgba(r: number, g: number, b: number, a: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-type SoftBlurProps = {
-  intensity: number;
-  /** Fraction of parent height where this blur band begins (0–1). */
+type SharpOverlayProps = {
+  source: ImageSourcePropType;
+  imageStyle?: StyleProp<ImageStyle>;
+  /** Where the fade to blurred begins (0–1). */
   start: number;
 };
 
 /**
- * Blur band from `start` to the bottom.
- * Uses clipped BlurViews instead of RNCMaskedView (broken under New Architecture).
+ * A sharp copy of the image, faded out downward by an SVG gradient mask.
+ *
+ * This is what makes the ramp continuous. Stacking clipped BlurViews — the
+ * obvious approach without a masking library — steps the blur radius at each
+ * band's rectangular edge, and those edges read as visible bands no matter how
+ * many you add. Masking a sharp copy over a uniformly blurred base has no
+ * edges at all, and costs one BlurView instead of N.
+ *
+ * `@react-native-masked-view` would be the usual tool, but it is not installed
+ * and this app runs the New Architecture; react-native-svg handles the mask.
  */
-function SoftBlur({ intensity, start }: SoftBlurProps) {
-  const topPercent = `${Math.round(Math.max(0, Math.min(1, start)) * 100)}%`;
+function SharpOverlay({ source, imageStyle, start }: SharpOverlayProps) {
+  // Scoped per instance — the card and the expand overlay both mount one.
+  const maskId = `pit-mask-${React.useId()}`;
+  const gradientId = `pit-fade-${React.useId()}`;
 
   return (
-    <View pointerEvents="none" style={[absoluteFill, { top: topPercent }]}>
-      <BlurView
-        intensity={intensity}
-        tint="default"
-        experimentalBlurMethod={androidBlurMethod}
-        style={absoluteFill}
-      />
-    </View>
+    <Animated.View
+      pointerEvents="none"
+      // Transform only; ImageStyle and ViewStyle agree on that.
+      style={[absoluteFill, imageStyle as StyleProp<ViewStyle>]}
+    >
+      <Svg style={StyleSheet.absoluteFill}>
+        <Defs>
+          <SvgLinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            {/* White keeps the copy; black reveals the blurred base beneath. */}
+            <Stop offset="0" stopColor="#fff" stopOpacity="1" />
+            <Stop offset={start} stopColor="#fff" stopOpacity="1" />
+            <Stop offset="1" stopColor="#fff" stopOpacity="0" />
+          </SvgLinearGradient>
+          <Mask id={maskId}>
+            <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${gradientId})`} />
+          </Mask>
+        </Defs>
+        <SvgImage
+          href={source}
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          // Equivalent to resizeMode="cover" on the base image.
+          preserveAspectRatio="xMidYMid slice"
+          mask={`url(#${maskId})`}
+        />
+      </Svg>
+    </Animated.View>
   );
 }
 
@@ -64,34 +124,29 @@ function SoftBlur({ intensity, start }: SoftBlurProps) {
  * Does not affect layout; place above an image and below content.
  */
 export function ProgressiveImageTreatment({
+  source,
+  imageStyle,
   blurStart = 0.48,
-  blurIntensity = 0,
+  blurIntensity = 42,
   overlayOpacity = 1,
   style,
 }: ProgressiveImageTreatmentProps) {
   const start = Math.max(0, Math.min(0.85, blurStart));
   const strength = Math.max(0, overlayOpacity);
-  const useBlur = blurIntensity > 0;
-  const range = Math.max(0.05, 1 - start);
-  const mid = Math.min(1, start + range * 0.35);
-  const deep = Math.min(1, start + range * 0.65);
+  const useBlur = blurIntensity > 0 && source != null;
 
   return (
     <View pointerEvents="none" style={[absoluteFill, style]}>
       {useBlur ? (
         <>
-          <SoftBlur
-            intensity={Math.round(blurIntensity * 0.5)}
-            start={start}
-          />
-          <SoftBlur
-            intensity={Math.round(blurIntensity * 0.75)}
-            start={mid}
-          />
-          <SoftBlur
+          {/* Blurs the whole image; the masked copy restores the sharp top. */}
+          <BlurView
             intensity={Math.min(100, blurIntensity)}
-            start={deep}
+            tint="default"
+            experimentalBlurMethod={androidBlurMethod}
+            style={absoluteFill}
           />
+          <SharpOverlay source={source} imageStyle={imageStyle} start={start} />
         </>
       ) : null}
 

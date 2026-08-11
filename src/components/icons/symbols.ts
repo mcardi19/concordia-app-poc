@@ -25,6 +25,15 @@ import { msBookmarks } from '@material-symbols-react-native/rounded-400/msBookma
 import { msSecurity } from '@material-symbols-react-native/rounded-400/msSecurity';
 import { msLocationOn } from '@material-symbols-react-native/rounded-400/msLocationOn';
 import { msClose } from '@material-symbols-react-native/rounded-400/msClose';
+import { msNotifications } from '@material-symbols-react-native/rounded-400/msNotifications';
+import { msSettings } from '@material-symbols-react-native/rounded-400/msSettings';
+import { msBadge } from '@material-symbols-react-native/rounded-400/msBadge';
+import { msRestaurant } from '@material-symbols-react-native/rounded-400/msRestaurant';
+import { msPrint } from '@material-symbols-react-native/rounded-400/msPrint';
+import { msLocalParking } from '@material-symbols-react-native/rounded-400/msLocalParking';
+import { msLock } from '@material-symbols-react-native/rounded-400/msLock';
+import { msBookmark } from '@material-symbols-react-native/rounded-400/msBookmark';
+import { msBookmarkFill } from '@material-symbols-react-native/rounded-400/msBookmarkFill';
 
 export type TabSymbolPair = {
   outline: MsIconDefinition;
@@ -74,4 +83,21 @@ export {
   msSearch,
   msLocationOn,
   msClose,
+  msNotifications,
+  msSettings,
+  msBadge,
+  msRestaurant,
+  msPrint,
+  msLocalParking,
+  msLock,
+  msBookmark,
+  msBookmarkFill,
 };
+
+/** Icon per "My accounts" tile kind. */
+export const meAccountSymbols = {
+  mealPlan: msRestaurant,
+  print: msPrint,
+  parking: msLocalParking,
+  locker: msLock,
+} as const;

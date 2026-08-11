@@ -11,6 +11,7 @@ import {
   Dimensions,
   Image,
   Platform,
+  Pressable,
   StyleSheet,
   View,
   type ImageSourcePropType,
@@ -29,7 +30,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassActionButton, Text } from '@/components/design-system';
+import { Text } from '@/components/design-system';
 import { MaterialSymbol, msClose } from '@/components/icons';
 import {
   SESSION_HERO_MIN_HEIGHT,
@@ -41,7 +42,10 @@ import {
   sourceHiddenSV,
 } from '@/components/feature/today/sessionExpansionShared';
 import { useTheme } from '@/design-system/theme';
-import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
+import {
+  HEADER_BAR_BUTTON_SIZE,
+  HEADER_CHROME_TOP_GAP,
+} from '@/navigation/HeaderIconButton';
 import { useTabBarScrollInset } from '@/navigation/tabBarInset';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { todayTheme } from './todayTheme';
@@ -75,6 +79,11 @@ const BACKDROP_BLUR_INTENSITY = 100;
  * it costs ~9 and looks identical in motion.
  */
 const BLUR_STEP = 12;
+/** Catch-up fade for the frost once the overlay owns the hero. */
+const BACKDROP_FADE_MS = 160;
+/** Close control's blur at rest, and its quantisation step. */
+const CLOSE_BLUR_INTENSITY = 55;
+const CLOSE_BLUR_STEP = 5;
 const androidBlurMethod =
   Platform.OS === 'android' ? ('dimezisBlurView' as const) : undefined;
 
@@ -98,7 +107,7 @@ export function SessionDetailScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarScrollInset();
   const horizontalInset = theme.spacing.screenHorizontal;
-  const topBarOffset = insets.top + 6;
+  const topBarOffset = insets.top + HEADER_CHROME_TOP_GAP;
 
   const session = useSessionExpansionStore((s) => s.session);
   const pressedOrigin = useSessionExpansionStore((s) => s.pressedOrigin);
@@ -111,10 +120,27 @@ export function SessionDetailScreen({ navigation }: Props) {
   const progress = useSharedValue(0);
   /** UI-thread close flag — the source reveal reaction must not lag a commit. */
   const collapsing = useSharedValue(0);
+  /**
+   * 1 once the overlay's hero photo has painted. A freshly mounted image view
+   * needs a frame or two even for an already-decoded local asset, and until
+   * then the sheet's opaque page fill would flash near-white over the list
+   * card. Shared value rather than state so this costs no re-render.
+   */
+  const heroPainted = useSharedValue(0);
+  /**
+   * Gates the backdrop frost. The BlurView blurs everything behind it, and the
+   * Today screen sits behind this transparent modal — so ramping frost before
+   * the overlay owns the hero blurs the list card's own photo. That read as the
+   * image dissolving and snapping back. Eased in on paint so a slow decode
+   * cannot make the frost pop.
+   */
+  const backdropGate = useSharedValue(0);
   const [closing, setClosing] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const scrollRef = React.useRef<Animated.ScrollView>(null);
+  /** Open runs once, whichever of onLoad / the safety timer gets there first. */
+  const startedRef = React.useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -159,6 +185,29 @@ export function SessionDetailScreen({ navigation }: Props) {
   const onOpenSettled = useCallback(() => {
     setScrollEnabled(true);
   }, []);
+
+  /**
+   * Begin the expand at the moment the overlay can actually represent the card:
+   * photo painted, sheet opaque, frost released. Starting earlier means the
+   * sheet grows while still invisible, and then pops into view at whatever size
+   * the morph had already reached. The asset is already decoded by the list
+   * card, so in practice this costs a frame.
+   */
+  const startExpand = useCallback(() => {
+    if (startedRef.current) {
+      return;
+    }
+    startedRef.current = true;
+    heroPainted.value = 1;
+    backdropGate.value = withTiming(1, { duration: BACKDROP_FADE_MS });
+    animateTo(1, onOpenSettled);
+  }, [animateTo, backdropGate, heroPainted, onOpenSettled]);
+
+  // Safety net: never strand the open if onLoad does not arrive.
+  useEffect(() => {
+    const timer = setTimeout(startExpand, 200);
+    return () => clearTimeout(timer);
+  }, [startExpand]);
 
   const finishClose = useCallback(() => {
     // The list card was already revealed at SOURCE_REVEAL_PROGRESS and has had
@@ -223,17 +272,25 @@ export function SessionDetailScreen({ navigation }: Props) {
     originY.value = pressedOrigin.y;
     originW.value = pressedOrigin.width;
     originH.value = pressedOrigin.height;
-    // Keep the list card visible under the overlay until expand has covered it —
-    // hiding earlier flashes the homepage behind a not-yet-painted sheet image.
-    animateTo(1, onOpenSettled);
+    // Seed geometry only. The expand itself starts from startExpand, once the
+    // hero photo has painted and the overlay can stand in for the list card.
     // Mount-only handoff.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Source card handoff, both directions, entirely on the UI thread.
+  /**
+   * Source card handoff, both directions, entirely on the UI thread.
+   * Reports -1 while the hero photo has not painted, so the list card keeps
+   * showing through the (still transparent) sheet instead of being hidden
+   * behind an empty one. Folding both inputs into one number means the
+   * reaction also fires on the paint, not only on progress.
+   */
   useAnimatedReaction(
-    () => progress.value,
+    () => (heroPainted.value === 1 ? progress.value : -1),
     (p) => {
+      if (p < 0) {
+        return;
+      }
       if (collapsing.value === 0) {
         if (p > SOURCE_HIDE_PROGRESS && sourceHiddenSV.value === 0) {
           sourceHiddenSV.value = 1;
@@ -313,12 +370,13 @@ export function SessionDetailScreen({ navigation }: Props) {
   }, [onClose]);
 
   const backdropBlurProps = useAnimatedProps(() => {
-    const raw = interpolate(
-      progress.value,
-      [0, 0.35, 1],
-      [0, BACKDROP_BLUR_INTENSITY * 0.7, BACKDROP_BLUR_INTENSITY],
-      Extrapolation.CLAMP,
-    );
+    const raw =
+      interpolate(
+        progress.value,
+        [0, 0.35, 1],
+        [0, BACKDROP_BLUR_INTENSITY * 0.7, BACKDROP_BLUR_INTENSITY],
+        Extrapolation.CLAMP,
+      ) * backdropGate.value;
     // Snapped — an unchanged value is diffed away and never reaches the view.
     return { intensity: Math.round(raw / BLUR_STEP) * BLUR_STEP };
   });
@@ -369,12 +427,13 @@ export function SessionDetailScreen({ navigation }: Props) {
   });
 
   const backdropDimStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      progress.value,
-      [0, 0.35, 1],
-      [0, 0.22, 0.4],
-      Extrapolation.CLAMP,
-    ),
+    opacity:
+      interpolate(
+        progress.value,
+        [0, 0.35, 1],
+        [0, 0.22, 0.4],
+        Extrapolation.CLAMP,
+      ) * backdropGate.value,
   }));
 
   // The one node that resizes. Its children are fixed-size, so this is a single
@@ -382,6 +441,19 @@ export function SessionDetailScreen({ navigation }: Props) {
   const sheetStyle = useAnimatedStyle(() => {
     const p = progress.value;
     return {
+      /**
+       * Parked offscreen until the photo lands, so nothing in here — page fill,
+       * hero gradient, title, meta — paints over the list card while the
+       * overlay cannot yet stand in for it.
+       *
+       * Deliberately a transform and NOT opacity. Alpha below 1 puts the whole
+       * sheet in a transparency layer, and the close button's UIGlassEffect is
+       * constructed inside it — a visual effect view born in that state never
+       * starts sampling its backdrop, so the liquid glass renders flat for the
+       * lifetime of the screen. The subtree still lays out here, which is what
+       * lets the hero image load and fire onLoad.
+       */
+      transform: [{ translateX: heroPainted.value === 1 ? 0 : SCREEN_W * 2 }],
       left: originX.value * (1 - p),
       top: originY.value * (1 - p),
       width: frameW.value,
@@ -394,14 +466,37 @@ export function SessionDetailScreen({ navigation }: Props) {
     };
   });
 
+  // Chrome row only tracks the window's right edge; the reveal is the blur itself.
   const detailChromeStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      progress.value,
-      [0.55, 0.9],
-      [0, 1],
-      Extrapolation.CLAMP,
-    ),
     transform: [{ translateX: rightShift.value }],
+  }));
+
+  /**
+   * The close control blurs into view rather than fading or sliding.
+   *
+   * A UIVisualEffectView cannot be alpha-faded — Apple's guidance is to avoid
+   * alpha < 1 on it, because that forces an offscreen composite and the effect
+   * renders wrong for the whole transition. Animating `intensity` is the
+   * supported way to dissolve a blur in and out, so the control is built from
+   * an expo-blur BlurView instead of a GlassView; the tint and the glyph fade
+   * on their own sibling layers, never on the blur.
+   */
+  const closeBlurProps = useAnimatedProps(() => {
+    const raw = interpolate(
+      progress.value,
+      [0.5, 0.95],
+      [0, CLOSE_BLUR_INTENSITY],
+      Extrapolation.CLAMP,
+    );
+    return { intensity: Math.round(raw / CLOSE_BLUR_STEP) * CLOSE_BLUR_STEP };
+  });
+
+  const closeTintStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0.5, 0.95], [0, 1], Extrapolation.CLAMP),
+  }));
+
+  const closeGlyphStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0.62, 0.98], [0, 1], Extrapolation.CLAMP),
   }));
 
   // Fade out the card CTA; do not replace it with Prof in the detail hero.
@@ -469,6 +564,7 @@ export function SessionDetailScreen({ navigation }: Props) {
             actionsInteractive={false}
             cardActionsStyle={cardActionsOpacityStyle}
             imageStyle={heroImageStyle}
+            onImageLoad={startExpand}
             morphProgress={progress}
             rightShift={rightShift}
             contentShift={contentShift}
@@ -506,20 +602,33 @@ export function SessionDetailScreen({ navigation }: Props) {
             detailChromeStyle,
           ]}
         >
-          <GlassActionButton
+          <Pressable
             onPress={onClose}
+            accessibilityRole="button"
             accessibilityLabel="Close"
-            style={{
-              width: HEADER_BAR_BUTTON_SIZE,
-              height: HEADER_BAR_BUTTON_SIZE,
-              borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
-              borderCurve: 'continuous',
-              overflow: 'hidden',
-            }}
-            fallbackBackgroundColor="rgba(0,0,0,0.35)"
+            hitSlop={8}
+            style={styles.closeButton}
           >
-            <MaterialSymbol icon={msClose} size={22} color={theme.color.primary} />
-          </GlassActionButton>
+            {/* Blur, tint and glyph are siblings — alpha never touches the blur. */}
+            <AnimatedBlurView
+              animatedProps={closeBlurProps}
+              intensity={0}
+              tint="dark"
+              experimentalBlurMethod={androidBlurMethod}
+              style={StyleSheet.absoluteFill}
+            />
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: 'rgba(0,0,0,0.18)' },
+                closeTintStyle,
+              ]}
+            />
+            <Animated.View style={closeGlyphStyle}>
+              <MaterialSymbol icon={msClose} size={22} color={theme.color.text.inverse} />
+            </Animated.View>
+          </Pressable>
         </Animated.View>
       </Animated.View>
     </View>
@@ -548,6 +657,15 @@ const styles = StyleSheet.create({
   },
   hero: {
     width: SCREEN_W,
+  },
+  closeButton: {
+    width: HEADER_BAR_BUTTON_SIZE,
+    height: HEADER_BAR_BUTTON_SIZE,
+    borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Fixed width so the resizing parent never re-lays this row (or its blur) out.
   chrome: {

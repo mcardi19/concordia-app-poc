@@ -14,11 +14,13 @@ export {
 export { SessionStatusBadge, SessionStatusBadgeOnLight } from './SessionStatusBadge';
 export { TodaySectionHeader } from './TodaySectionHeader';
 export { TodayPinnedChips } from './TodayPinnedChips';
+export { TodayPinnedAddDrawer } from './TodayPinnedAddDrawer';
 export { TodayAttentionList } from './TodayAttentionList';
 export { TodayUpdatesCarousel, TodayCampusCarousel } from './TodayCarousels';
 export {
   TODAY_SESSION,
   PINNED_CHIPS,
+  PINNED_CHIP_CATALOG,
   ATTENTION_ITEMS,
   LATEST_UPDATES,
   CAMPUS_TODAY,

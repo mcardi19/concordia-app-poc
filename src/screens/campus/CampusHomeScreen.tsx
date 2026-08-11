@@ -3,9 +3,11 @@ import { View, StyleSheet, Keyboard } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen, Text } from '@/components/design-system';
+import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
 import { CampusSearchBar } from '@/components/feature/campus/CampusSearchBar';
 import { useTheme } from '@/design-system/theme';
 import { useBuildings } from '@/hooks/useBuildings';
+import { useCampusUserLocation } from '@/hooks/useCampusUserLocation';
 import { useTabBarScrollInset } from '@/navigation/tabBarInset';
 import type { CampusStackScreenProps } from '@/navigation/types';
 import { CAMPUS_MAP_DEFAULTS, type BuildingSummary } from '@/types/campus';
@@ -29,8 +31,12 @@ export function CampusHomeScreen({}: Props) {
   const tabBarInset = useTabBarScrollInset();
   const mapRef = useRef<MapView>(null);
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { data: buildings = [], isFetching, isError, isPlaceholderData } = useBuildings();
+  const [selectedBuilding, setSelectedBuilding] = useState<BuildingSummary | null>(
+    null
+  );
+  const { data: buildings = [], isFetching, isError, isPlaceholderData } =
+    useBuildings();
+  const { permissionGranted } = useCampusUserLocation();
 
   const initialRegion = useMemo<Region>(
     () => ({
@@ -47,11 +53,15 @@ export function CampusHomeScreen({}: Props) {
     [buildings]
   );
 
-  const focusBuilding = useCallback((building: BuildingSummary) => {
-    setSelectedId(building.id);
+  const selectBuilding = useCallback((building: BuildingSummary) => {
+    setSelectedBuilding(building);
     setQuery('');
     Keyboard.dismiss();
     mapRef.current?.animateToRegion(regionForBuilding(building), 400);
+  }, []);
+
+  const closeDrawer = useCallback(() => {
+    setSelectedBuilding(null);
   }, []);
 
   const showLoadingChip = isFetching && isPlaceholderData;
@@ -63,24 +73,27 @@ export function CampusHomeScreen({}: Props) {
           ref={mapRef}
           style={StyleSheet.absoluteFill}
           initialRegion={initialRegion}
-          showsUserLocation={false}
+          showsUserLocation={permissionGranted}
           showsMyLocationButton={false}
+          followsUserLocation={false}
           toolbarEnabled={false}
           moveOnMarkerPress={false}
+          onPress={closeDrawer}
         >
           {visibleBuildings.map((building) => (
             <Marker
               key={building.id}
               coordinate={{ latitude: building.lat, longitude: building.lng }}
-              title={building.code}
-              description={building.name}
               identifier={building.id}
               pinColor={
-                selectedId === building.id
+                selectedBuilding?.id === building.id
                   ? theme.color.primary
                   : theme.color.info
               }
-              onPress={() => setSelectedId(building.id)}
+              onPress={(event) => {
+                event.stopPropagation();
+                selectBuilding(building);
+              }}
             />
           ))}
         </MapView>
@@ -101,7 +114,7 @@ export function CampusHomeScreen({}: Props) {
             onChangeQuery={setQuery}
             buildings={buildings}
             campusId="sgw"
-            onSelectBuilding={focusBuilding}
+            onSelectBuilding={selectBuilding}
           />
           {showLoadingChip ? (
             <Text
@@ -142,6 +155,8 @@ export function CampusHomeScreen({}: Props) {
             </Text>
           ) : null}
         </View>
+
+        <BuildingDrawer building={selectedBuilding} onClose={closeDrawer} />
       </View>
     </Screen>
   );
