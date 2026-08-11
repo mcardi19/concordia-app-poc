@@ -22,8 +22,13 @@ export const SPRING_PRESS = {
   dampingRatio: 1,
   overshootClamping: true,
 } as const;
+/**
+ * Short on purpose. At 260ms the release read as its own beat — the card
+ * visibly returned to full size, and only then did the expand appear — so the
+ * two steps have to overlap rather than queue.
+ */
 export const SPRING_RELEASE = {
-  duration: 260,
+  duration: 140,
   dampingRatio: 1,
   overshootClamping: true,
 } as const;

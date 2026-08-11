@@ -40,6 +40,13 @@ export function TodaySessionCard({ session }: Props) {
   const navigation = useNavigation();
   const cardRef = useRef<View>(null);
   const openingRef = useRef(false);
+  /**
+   * Frame captured at press-in. cardRef sits outside the scale transform, so
+   * this is the resting layout frame and cannot change between touch-down and
+   * touch-up — which lets the tap navigate without waiting on a measureInWindow
+   * round trip first. That round trip was pure latency in front of the expand.
+   */
+  const restingFrameRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
   const sourceHidden = useSessionExpansionStore((s) => s.sourceHidden);
   const open = useSessionExpansionStore((s) => s.open);
   const setMeasureResting = useSessionExpansionStore((s) => s.setMeasureResting);
@@ -83,6 +90,11 @@ export function TodaySessionCard({ session }: Props) {
   const onPressIn = useCallback(() => {
     openingRef.current = false;
     cardScaleSV.value = withSpring(PRESS_SCALE, SPRING_PRESS);
+    cardRef.current?.measureInWindow((x, y, width, height) => {
+      if (width > 0 && height > 0) {
+        restingFrameRef.current = { x, y, width, height };
+      }
+    });
   }, []);
 
   const onPressOut = useCallback(() => {
@@ -97,18 +109,10 @@ export function TodaySessionCard({ session }: Props) {
 
   const onPress = useCallback(() => {
     openingRef.current = true;
-    cardRef.current?.measureInWindow((x, y, width, height) => {
-      if (width <= 0 || height <= 0) {
-        openingRef.current = false;
-        cardScaleSV.value = withSpring(1, SPRING_RELEASE);
-        return;
-      }
-      const radius = theme.radius.xl;
-      /**
-       * cardRef now sits outside the scale transform, so this is already the
-       * resting layout frame — no dividing PRESS_SCALE back out. The pressed
-       * frame is derived from it instead, centred like the scale is.
-       */
+    const radius = theme.radius.xl;
+
+    const present = (frame: { x: number; y: number; width: number; height: number }) => {
+      const { x, y, width, height } = frame;
       const restingOrigin = { x, y, width, height, borderRadius: radius };
       const pressedW = width * PRESS_SCALE;
       const pressedH = height * PRESS_SCALE;
@@ -121,6 +125,23 @@ export function TodaySessionCard({ session }: Props) {
       };
       open(session, pressedOrigin, restingOrigin);
       navigation.dispatch(CommonActions.navigate({ name: 'SessionDetail' }));
+    };
+
+    // Cached from press-in — present synchronously rather than paying for a
+    // second native measure before anything can move.
+    const cached = restingFrameRef.current;
+    if (cached) {
+      present(cached);
+      return;
+    }
+
+    cardRef.current?.measureInWindow((x, y, width, height) => {
+      if (width <= 0 || height <= 0) {
+        openingRef.current = false;
+        cardScaleSV.value = withSpring(1, SPRING_RELEASE);
+        return;
+      }
+      present({ x, y, width, height });
     });
   }, [navigation, open, session, theme.radius.xl]);
 
