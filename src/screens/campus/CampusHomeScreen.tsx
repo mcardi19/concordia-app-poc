@@ -1,10 +1,9 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, Keyboard } from 'react-native';
-import MapView, { type MapMarker, type Region } from 'react-native-maps';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, StyleSheet, Keyboard, Platform } from 'react-native';
+import MapView, { Marker, type Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen, Text } from '@/components/design-system';
 import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
-import { BuildingMapPin } from '@/components/feature/campus/BuildingMapPin';
 import { CampusSearchBar } from '@/components/feature/campus/CampusSearchBar';
 import { useTheme } from '@/design-system/theme';
 import { useBuildings } from '@/hooks/useBuildings';
@@ -26,12 +25,24 @@ function regionForBuilding(building: BuildingSummary): Region {
   };
 }
 
-export function CampusHomeScreen({}: Props) {
+/** Matches MainTabs default so liquid glass is restored after a temporary hide. */
+function defaultTabBarStyle(backgroundColor: string) {
+  return Platform.select({
+    ios: undefined,
+    android: { backgroundColor },
+  });
+}
+
+export function CampusHomeScreen({ navigation }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarScrollInset();
   const mapRef = useRef<MapView>(null);
-  const markerRefs = useRef<Record<string, MapMarker | null>>({});
+  /**
+   * Apple Maps fires MapView `onPress` for marker taps too. Defer + swallow so
+   * we don't clear selection in the same gesture (which kills the pin scale).
+   */
+  const swallowNextMapPressRef = useRef(false);
   const [query, setQuery] = useState('');
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingSummary | null>(
     null
@@ -55,21 +66,50 @@ export function CampusHomeScreen({}: Props) {
     [buildings]
   );
 
+  /**
+   * Hide the native tab bar while the drawer is open so the in-screen sheet can
+   * cover that edge without a Modal (which would drop Apple Maps pin selection).
+   */
+  useEffect(() => {
+    const tabNavigation = navigation.getParent();
+    if (!tabNavigation) {
+      return;
+    }
+    tabNavigation.setOptions({
+      tabBarStyle: selectedBuilding
+        ? { display: 'none' }
+        : defaultTabBarStyle(theme.color.background),
+    });
+    return () => {
+      tabNavigation.setOptions({
+        tabBarStyle: defaultTabBarStyle(theme.color.background),
+      });
+    };
+  }, [navigation, selectedBuilding, theme.color.background]);
+
   const selectBuilding = useCallback((building: BuildingSummary) => {
+    swallowNextMapPressRef.current = true;
     setSelectedBuilding(building);
     setQuery('');
     Keyboard.dismiss();
     mapRef.current?.animateToRegion(regionForBuilding(building), 400);
   }, []);
 
-  /** Drawer close / map tap: drop native selection so the pin scales down and can be tapped again. */
+  /** Empty-map tap / drawer close — `isPreselected` drives the pin scale down. */
   const clearSelection = useCallback(() => {
-    const selectedId = selectedBuilding?.id;
-    if (selectedId) {
-      markerRefs.current[selectedId]?.hideCallout();
-    }
     setSelectedBuilding(null);
-  }, [selectedBuilding?.id]);
+  }, []);
+
+  const onMapPress = useCallback(() => {
+    // Marker `onPress` and map `onPress` both fire; wait a tick for the swallow flag.
+    setTimeout(() => {
+      if (swallowNextMapPressRef.current) {
+        swallowNextMapPressRef.current = false;
+        return;
+      }
+      clearSelection();
+    }, 0);
+  }, [clearSelection]);
 
   const showLoadingChip = isFetching && isPlaceholderData;
 
@@ -85,22 +125,24 @@ export function CampusHomeScreen({}: Props) {
           followsUserLocation={false}
           toolbarEnabled={false}
           moveOnMarkerPress={false}
-          onPress={clearSelection}
+          onPress={onMapPress}
         >
-          {visibleBuildings.map((building) => (
-            <BuildingMapPin
-              key={building.id}
-              building={building}
-              color={theme.color.primary}
-              selected={selectedBuilding?.id === building.id}
-              markerRef={(ref) => {
-                markerRefs.current[building.id] = ref;
-              }}
-              onPress={() => {
-                selectBuilding(building);
-              }}
-            />
-          ))}
+          {visibleBuildings.map((building) => {
+            const selected = selectedBuilding?.id === building.id;
+            return (
+              <Marker
+                key={building.id}
+                coordinate={{ latitude: building.lat, longitude: building.lng }}
+                identifier={building.id}
+                pinColor={theme.color.primary}
+                isPreselected={selected}
+                stopPropagation
+                onPress={() => {
+                  selectBuilding(building);
+                }}
+              />
+            );
+          })}
         </MapView>
 
         <View
