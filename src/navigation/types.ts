@@ -8,15 +8,28 @@ export type RootStackParamList = {
   Login: undefined;
 };
 
-export type TodayStackParamList = {
+/**
+ * Me is no longer a tab — the header profile button pushes it into whichever
+ * stack the user is already in, so every tab stack registers these routes.
+ * Keeping them in one map is what stops the five copies drifting apart.
+ */
+export type MeRoutes = {
+  MeHome: undefined;
+  Settings: undefined;
+  Profile: undefined;
+  Grades: undefined;
+  Balance: undefined;
+};
+
+export type TodayStackParamList = MeRoutes & {
   Today: undefined;
 };
 
-export type ScheduleStackParamList = {
+export type ScheduleStackParamList = MeRoutes & {
   Schedule: undefined;
 };
 
-export type CampusStackParamList = {
+export type CampusStackParamList = MeRoutes & {
   CampusHome: undefined;
   ShuttleSchedule: undefined;
   ShuttleTracker: undefined;
@@ -28,12 +41,8 @@ export type LibraryStackParamList = {
   Library: undefined;
 };
 
-export type MeStackParamList = {
-  MeHome: undefined;
-  Settings: undefined;
-  Profile: undefined;
-  Grades: undefined;
-  Balance: undefined;
+export type SearchStackParamList = {
+  Search: undefined;
 };
 
 export type MainTabParamList = {
@@ -41,7 +50,7 @@ export type MainTabParamList = {
   Schedule: undefined;
   Campus: undefined;
   Library: undefined;
-  Me: undefined;
+  Search: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<
@@ -70,9 +79,18 @@ export type LibraryStackScreenProps<T extends keyof LibraryStackParamList> = Com
   MainTabScreenProps<'Library'>
 >;
 
-export type MeStackScreenProps<T extends keyof MeStackParamList> = CompositeScreenProps<
-  NativeStackScreenProps<MeStackParamList, T>,
-  MainTabScreenProps<'Me'>
+export type SearchStackScreenProps<T extends keyof SearchStackParamList> = CompositeScreenProps<
+  NativeStackScreenProps<SearchStackParamList, T>,
+  MainTabScreenProps<'Search'>
+>;
+
+/**
+ * Me screens render inside whichever tab stack pushed them, so they are typed
+ * against the shared route map rather than one owning stack.
+ */
+export type MeStackScreenProps<T extends keyof MeRoutes> = CompositeScreenProps<
+  NativeStackScreenProps<MeRoutes, T>,
+  MainTabScreenProps<keyof MainTabParamList>
 >;
 
 export type MainTabScreenProps<T extends keyof MainTabParamList> = CompositeScreenProps<

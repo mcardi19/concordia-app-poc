@@ -10,8 +10,8 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
+  msChevronLeft,
   msNotifications,
-  msSearch,
   msSettings,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
@@ -46,7 +46,12 @@ type HeaderChromeProps = {
   notificationCount?: number;
   onNotificationsPress?: () => void;
   onSettingsPress?: () => void;
-  onSearchPress?: () => void;
+  /**
+   * Me is pushed into whichever tab stack opened it and renders with
+   * `headerShown: false`, so this chrome carries the only visible way back —
+   * without it the edge-swipe is the sole exit.
+   */
+  onBackPress?: () => void;
 };
 
 type ChromeAction = {
@@ -141,13 +146,18 @@ function ChromeHit({ icon, label, badge, onPress }: ChromeAction) {
   );
 }
 
-/** Circular glass control. Falls back to a translucent fill off iOS 26. */
-function ChromeButton(props: ChromeAction) {
+/** Dark glass wrapper for a single chrome control, with the flat fallback. */
+function ChromeGlass({
+  style,
+  children,
+}: {
+  style: object;
+  children: React.ReactNode;
+}) {
   const glass = React.useMemo(() => canUseLiquidGlass(), []);
-  const content = <ChromeHit {...props} />;
 
   if (!glass) {
-    return <View style={[styles.chrome, styles.chromeFallback]}>{content}</View>;
+    return <View style={[style, styles.chromeFallback]}>{children}</View>;
   }
 
   return (
@@ -156,9 +166,9 @@ function ChromeButton(props: ChromeAction) {
       glassEffectStyle="regular"
       colorScheme={CHROME_GLASS_SCHEME}
       tintColor={CHROME_GLASS_TINT}
-      style={styles.chrome}
+      style={style}
     >
-      {content}
+      {children}
     </GlassView>
   );
 }
@@ -244,14 +254,14 @@ function Avatar({ name }: { name: string }) {
 }
 
 /**
- * Notifications + settings + search. Rendered as a fixed overlay on Me home so
+ * Notifications + settings. Rendered as a fixed overlay on Me home so
  * the actions stay pinned while the masthead scrolls underneath.
  */
 export function MeHeaderChrome({
   notificationCount = 0,
   onNotificationsPress,
   onSettingsPress,
-  onSearchPress,
+  onBackPress,
 }: HeaderChromeProps) {
   const insets = useSafeAreaInsets();
 
@@ -266,7 +276,16 @@ export function MeHeaderChrome({
         },
       ]}
     >
-      {/* Notifications + settings share one dark pill; search stays its own. */}
+      {onBackPress ? (
+        <ChromeGlass style={styles.chromeRound}>
+          <ChromeHit icon={msChevronLeft} label="Back" onPress={onBackPress} />
+        </ChromeGlass>
+      ) : null}
+
+      {/* Pushes the trailing pair right when there is no back control. */}
+      <View style={styles.chromeSpring} />
+
+      {/* Notifications + settings share one dark pill. */}
       <ChromePair
         left={{
           icon: msNotifications,
@@ -281,7 +300,6 @@ export function MeHeaderChrome({
         }}
       />
 
-      <ChromeButton icon={msSearch} label="Search" onPress={onSearchPress} />
     </View>
   );
 }
@@ -445,24 +463,26 @@ const styles = StyleSheet.create({
     zIndex: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
     gap: 16,
   },
   chromeSpacer: {
     height: CHROME_SIZE,
-  },
-  chrome: {
-    width: CHROME_SIZE,
-    height: CHROME_SIZE,
-    borderRadius: CHROME_SIZE / 2,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
   },
   chromePair: {
     height: CHROME_SIZE,
     borderRadius: CHROME_SIZE / 2,
     borderCurve: 'continuous',
     overflow: 'hidden',
+  },
+  chromeRound: {
+    width: CHROME_SIZE,
+    height: CHROME_SIZE,
+    borderRadius: CHROME_SIZE / 2,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  chromeSpring: {
+    flex: 1,
   },
   chromePairRow: {
     flexDirection: 'row',

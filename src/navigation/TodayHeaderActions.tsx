@@ -1,15 +1,18 @@
 import React from 'react';
 import { View } from 'react-native';
-import { msSearch, msSecurity } from '@/components/icons';
+import { msSecurity } from '@/components/icons';
 import { HeaderIconButton } from './HeaderIconButton';
+import { HeaderProfileButton } from './HeaderProfileButton';
 
 type Props = {
   onSecurityPress?: () => void;
-  onSearchPress?: () => void;
 };
 
-/** Header trailing actions for Today (Security + Search). */
-export function TodayHeaderActions({ onSecurityPress, onSearchPress }: Props) {
+/**
+ * Header trailing actions for Today (Security + Profile). Search left this row
+ * when it became its own tab; the profile disc took its slot.
+ */
+export function TodayHeaderActions({ onSecurityPress }: Props) {
   return (
     <View
       style={{
@@ -23,7 +26,7 @@ export function TodayHeaderActions({ onSecurityPress, onSearchPress }: Props) {
         accessibilityLabel="Security"
         onPress={onSecurityPress}
       />
-      <HeaderIconButton icon={msSearch} accessibilityLabel="Search" onPress={onSearchPress} />
+      <HeaderProfileButton />
     </View>
   );
 }

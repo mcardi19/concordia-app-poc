@@ -1,49 +1,16 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import type { NativeStackHeaderItem } from '@react-navigation/native-stack';
 import { TodayScreen } from '@/screens/today/TodayScreen';
-import { useTheme } from '@/design-system/theme';
+import { meScreens } from './meRoutes';
 import { useStackScreenOptions } from './screenOptions';
 import { TodayHeaderActions } from './TodayHeaderActions';
 import type { TodayStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<TodayStackParamList>();
 
-/** Material Symbols Rounded 400, exported as template PNGs for native bar buttons. */
-const HEADER_ICONS = {
-  security: require('../../assets/header/security.png'),
-  search: require('../../assets/header/search.png'),
-} as const;
-
 export function TodayStack() {
   const screenOptions = useStackScreenOptions();
-  const theme = useTheme();
-
-  const headerRightItems = useCallback((): NativeStackHeaderItem[] => {
-    // Native buttons + Material Symbol templates keep separate liquid-glass capsules.
-    // (Custom React views cannot set sharesBackground; hidesSharedBackground strips the glass.)
-    return [
-      {
-        type: 'button',
-        label: '',
-        icon: { type: 'image', source: HEADER_ICONS.security, tinted: true },
-        sharesBackground: false,
-        tintColor: theme.color.primary,
-        accessibilityLabel: 'Security',
-        onPress: () => {},
-      },
-      {
-        type: 'button',
-        label: '',
-        icon: { type: 'image', source: HEADER_ICONS.search, tinted: true },
-        sharesBackground: false,
-        tintColor: theme.color.primary,
-        accessibilityLabel: 'Search',
-        onPress: () => {},
-      },
-    ];
-  }, [theme.color.primary]);
 
   return (
     <Stack.Navigator screenOptions={screenOptions}>
@@ -52,6 +19,15 @@ export function TodayStack() {
         component={TodayScreen}
         options={{
           title: '',
+          /*
+            The security + search pair used to be native bar-button items, so
+            each kept its own liquid-glass capsule. The profile action carries
+            live state — the user's initials and the notification badge — which
+            a template PNG cannot express, so this row is now React views on
+            both platforms. Cost of that: no native glass capsule behind these
+            two buttons on iOS.
+          */
+          headerRight: () => <TodayHeaderActions />,
           ...(Platform.OS === 'ios'
             ? {
                 headerTransparent: true,
@@ -59,14 +35,13 @@ export function TodayStack() {
                 headerStyle: undefined,
                 headerLargeTitleEnabled: false,
                 headerTitle: '',
-                unstable_headerRightItems: headerRightItems,
               }
             : {
                 title: 'Home',
-                headerRight: () => <TodayHeaderActions />,
               }),
         }}
       />
+      {meScreens(Stack)}
     </Stack.Navigator>
   );
 }

@@ -7,13 +7,10 @@ import {
   MaterialSymbol,
   msCheck,
   msExpandMore,
-  msSearch,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
-import {
-  HEADER_BAR_BUTTON_SIZE,
-  HEADER_ICON_SIZE,
-} from '@/navigation/HeaderIconButton';
+import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
+import { HeaderProfileButton } from '@/navigation/HeaderProfileButton';
 import { semanticSpacing } from '@/design-system/tokens';
 import { scheduleTheme } from './scheduleTheme';
 import type { ScheduleViewMode } from './scheduleTypes';
@@ -24,7 +21,6 @@ type Props = {
   todayDate?: Date;
   viewMode: ScheduleViewMode;
   onViewModeChange: (mode: ScheduleViewMode) => void;
-  onSearchPress?: () => void;
   onTodayPress?: () => void;
 };
 
@@ -78,14 +74,13 @@ function GlassGroup({ children }: { children: React.ReactNode }) {
 
 /**
  * Shared masthead for all three schedule views: month title, a joined
- * view-switcher / today control, and search.
+ * view-switcher / today control, and the profile action.
  */
 export function ScheduleHeader({
   selectedDate,
   todayDate,
   viewMode,
   onViewModeChange,
-  onSearchPress,
   onTodayPress,
 }: Props) {
   const theme = useTheme();
@@ -195,20 +190,13 @@ export function ScheduleHeader({
             </GlassSurface>
           </GlassGroup>
 
-          <GlassSurface style={styles.roundButton}>
-            <Pressable
-              onPress={onSearchPress}
-              accessibilityRole="button"
-              accessibilityLabel="Search schedule"
-              style={styles.iconFill}
-            >
-              <MaterialSymbol
-                icon={msSearch}
-                size={HEADER_ICON_SIZE}
-                color={theme.color.primary}
-              />
-            </Pressable>
-          </GlassSurface>
+          {/*
+            Was a glass round button holding search, before search became its
+            own tab. Not wrapped in GlassSurface: that capsule sets
+            `overflow: hidden`, which clips the notification badge off the
+            disc's corner.
+          */}
+          <HeaderProfileButton />
 
           {menuOpen ? (
             glass ? (

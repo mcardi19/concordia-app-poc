@@ -4,7 +4,7 @@ import MapView, { Marker, type Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen, Text } from '@/components/design-system';
 import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
-import { CampusSearchBar } from '@/components/feature/campus/CampusSearchBar';
+import { CampusHeaderChrome } from '@/components/feature/campus/CampusHeaderChrome';
 import { useTheme } from '@/design-system/theme';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useCampusUserLocation } from '@/hooks/useCampusUserLocation';
@@ -43,7 +43,6 @@ export function CampusHomeScreen({ navigation }: Props) {
    * we don't clear selection in the same gesture (which kills the pin scale).
    */
   const swallowNextMapPressRef = useRef(false);
-  const [query, setQuery] = useState('');
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingSummary | null>(
     null
   );
@@ -90,7 +89,6 @@ export function CampusHomeScreen({ navigation }: Props) {
   const selectBuilding = useCallback((building: BuildingSummary) => {
     swallowNextMapPressRef.current = true;
     setSelectedBuilding(building);
-    setQuery('');
     Keyboard.dismiss();
     mapRef.current?.animateToRegion(regionForBuilding(building), 400);
   }, []);
@@ -156,12 +154,8 @@ export function CampusHomeScreen({ navigation }: Props) {
             },
           ]}
         >
-          <CampusSearchBar
-            query={query}
-            onChangeQuery={setQuery}
-            buildings={buildings}
-            campusId="sgw"
-            onSelectBuilding={selectBuilding}
+          <CampusHeaderChrome
+            onSearchPress={() => navigation.getParent()?.navigate('Search')}
           />
           {showLoadingChip ? (
             <Text

@@ -6,8 +6,7 @@ import { TodayStack } from './TodayStack';
 import { ScheduleStack } from './ScheduleStack';
 import { CampusStack } from './CampusStack';
 import { LibraryStack } from './LibraryStack';
-import { MeStack } from './MeStack';
-import { meNotificationCount } from '@/screens/me/accountData';
+import { SearchStack } from './SearchStack';
 import { NAV_TAB_INACTIVE } from './screenOptions';
 import { useTabBarMinimizeStore } from './tabBarMinimize';
 import type { MainTabParamList } from './types';
@@ -38,11 +37,16 @@ const TAB_IMAGES = {
     inactive: require('../../assets/tabs/library-inactive.png'),
     active: require('../../assets/tabs/library-active.png'),
   },
-  Me: {
-    inactive: require('../../assets/tabs/me-inactive.png'),
-    active: require('../../assets/tabs/me-active.png'),
-  },
 } as const;
+
+/**
+ * iOS 26 supplies the glyph for the system search item and detaches it from
+ * the group, so only the other platforms need an asset here. There is no
+ * exported search PNG yet — Android falls back to a label-only tab until one
+ * is added alongside the others (Material Symbols Rounded, wght 300, opsz 20,
+ * 34pt, @2x/@3x).
+ */
+const SEARCH_TAB_IMAGES: { inactive: number; active: number } | undefined = undefined;
 
 export function MainTabs() {
   const theme = useTheme();
@@ -52,7 +56,7 @@ export function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => {
         const name = route.name as keyof MainTabParamList;
-        const images = TAB_IMAGES[name];
+        const images = name === 'Search' ? SEARCH_TAB_IMAGES : TAB_IMAGES[name];
         return {
           headerShown: false,
           tabBarLabelVisibilityMode: 'labeled',
@@ -73,11 +77,13 @@ export function MainTabs() {
             android: { backgroundColor: theme.color.background },
           }),
           // Same iconType for inactive + selected (RNScreens requires matching types).
-          tabBarIcon: ({ focused }: { focused: boolean }) => ({
-            type: 'image' as const,
-            source: focused ? images.active : images.inactive,
-            tinted: false,
-          }),
+          tabBarIcon: images
+            ? ({ focused }: { focused: boolean }) => ({
+                type: 'image' as const,
+                source: focused ? images.active : images.inactive,
+                tinted: false,
+              })
+            : undefined,
         };
       }}
     >
@@ -85,13 +91,18 @@ export function MainTabs() {
       <Tab.Screen name="Schedule" component={ScheduleStack} options={{ title: 'Schedule', tabBarLabel: 'Schedule' }} />
       <Tab.Screen name="Campus" component={CampusStack} options={{ title: 'Campus', tabBarLabel: 'Campus' }} />
       <Tab.Screen name="Library" component={LibraryStack} options={{ title: 'Academic', tabBarLabel: 'Academic' }} />
+      {/*
+        `tabBarSystemItem: 'search'` is what splits Search off from the other
+        four on iOS 26 — UIKit floats it beside the group rather than inside
+        it. On other platforms it is an ordinary trailing tab.
+      */}
       <Tab.Screen
-        name="Me"
-        component={MeStack}
+        name="Search"
+        component={SearchStack}
         options={{
-          title: 'Me',
-          tabBarLabel: 'Me',
-          tabBarBadge: meNotificationCount > 0 ? meNotificationCount : undefined,
+          title: 'Search',
+          tabBarLabel: 'Search',
+          tabBarSystemItem: 'search',
         }}
       />
     </Tab.Navigator>

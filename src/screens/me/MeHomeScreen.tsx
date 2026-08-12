@@ -224,6 +224,7 @@ export function MeHomeScreen({ navigation }: Props) {
       <MeHeaderChrome
         notificationCount={meNotificationCount}
         onSettingsPress={() => navigation.navigate('Settings')}
+        onBackPress={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
 
       <MeCollectionSheet
