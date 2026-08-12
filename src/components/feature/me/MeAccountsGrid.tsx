@@ -1,11 +1,12 @@
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, meAccountSymbols } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { meTheme } from '@/screens/me/meTheme';
 import type { MeAccountTile } from '@/types/profile';
+import { MeGlassCard } from './MeGlassCard';
 import { MeSectionLabel } from './MeSectionLabel';
 
 type Props = {
@@ -25,13 +26,12 @@ export function MeAccountsGrid({ tiles, onTilePress }: Props) {
         {tiles.map((tile) => {
           const interactive = tile.route != null;
           return (
-            <Pressable
+            <MeGlassCard
               key={tile.id}
-              disabled={!interactive}
               onPress={interactive ? () => onTilePress?.(tile) : undefined}
-              accessibilityRole={interactive ? 'button' : undefined}
               accessibilityLabel={`${tile.label}: ${tile.value}`}
-              style={({ pressed }) => [styles.tile, { opacity: pressed ? 0.9 : 1 }]}
+              style={styles.tile}
+              contentStyle={styles.tileContent}
             >
               <View
                 style={[
@@ -49,7 +49,7 @@ export function MeAccountsGrid({ tiles, onTilePress }: Props) {
 
               <Text
                 variant="caption"
-                style={{ fontSize: 11.5, fontWeight: '600', color: meTheme.labelText }}
+                style={{ fontSize: 13, fontWeight: '600', color: meTheme.labelText }}
               >
                 {tile.label}
               </Text>
@@ -57,7 +57,7 @@ export function MeAccountsGrid({ tiles, onTilePress }: Props) {
                 variant="bodySmall"
                 numberOfLines={1}
                 style={{
-                  fontSize: 16,
+                  fontSize: 17,
                   lineHeight: 17,
                   fontWeight: '600',
                   letterSpacing: -0.6,
@@ -67,7 +67,7 @@ export function MeAccountsGrid({ tiles, onTilePress }: Props) {
               >
                 {tile.value}
               </Text>
-            </Pressable>
+            </MeGlassCard>
           );
         })}
       </View>
@@ -89,22 +89,10 @@ const styles = StyleSheet.create({
     // Two per row, accounting for the 8pt gap.
     width: '48%',
     flexGrow: 1,
-    backgroundColor: meTheme.cardBackground,
-    borderRadius: 8,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: meTheme.cardBorder,
+  },
+  tileContent: {
     paddingHorizontal: 12,
     paddingVertical: 11,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: { elevation: 2 },
-    }),
   },
   iconTile: {
     width: 34,

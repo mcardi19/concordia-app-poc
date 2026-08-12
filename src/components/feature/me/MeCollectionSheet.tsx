@@ -145,7 +145,7 @@ export function MeCollectionSheet({
             <Text
               variant="heading3"
               style={{
-                fontSize: 18,
+                fontSize: 19,
                 lineHeight: 22,
                 fontWeight: '600',
                 color: meTheme.headingText,
@@ -178,7 +178,7 @@ export function MeCollectionSheet({
                       <Text
                         variant="caption"
                         style={{
-                          fontSize: 12,
+                          fontSize: 13,
                           lineHeight: 15,
                           fontWeight: '700',
                           color: tinted ? theme.color.text.inverse : theme.color.primary,
@@ -193,7 +193,7 @@ export function MeCollectionSheet({
                         variant="bodySmall"
                         numberOfLines={1}
                         style={{
-                          fontSize: 13.5,
+                          fontSize: 15,
                           fontWeight: '600',
                           color: meTheme.headingText,
                         }}
@@ -203,7 +203,7 @@ export function MeCollectionSheet({
                       <Text
                         variant="caption"
                         numberOfLines={1}
-                        style={{ fontSize: 11.5, color: meTheme.metaText, marginTop: 2 }}
+                        style={{ fontSize: 12.5, color: meTheme.metaText, marginTop: 2 }}
                       >
                         {row.subtitle}
                       </Text>

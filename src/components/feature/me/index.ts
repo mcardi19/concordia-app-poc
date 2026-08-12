@@ -5,7 +5,13 @@ export { DegreeProgressSection } from './DegreeProgressSection';
 export { AccountSettingsList } from './AccountSettingsList';
 
 /* Iteration M — Me tab home. */
-export { MeProfileHero } from './MeProfileHero';
+export {
+  MeProfileHero,
+  MeHeaderChrome,
+  heroStretch,
+  ID_CARD_OVERLAP,
+} from './MeProfileHero';
+export { MeGlassCard } from './MeGlassCard';
 export { MeIdCardRow } from './MeIdCardRow';
 export { MeStatusGrid } from './MeStatusGrid';
 export { MeAccountsGrid } from './MeAccountsGrid';

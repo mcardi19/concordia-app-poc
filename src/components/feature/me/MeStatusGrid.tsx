@@ -1,9 +1,10 @@
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { semanticSpacing } from '@/design-system/tokens';
 import { meTheme } from '@/screens/me/meTheme';
 import type { MeStatusCard } from '@/types/profile';
+import { MeGlassCard } from './MeGlassCard';
 
 type Props = {
   cards: MeStatusCard[];
@@ -17,17 +18,17 @@ export function MeStatusGrid({ cards, onCardPress }: Props) {
       {cards.map((card) => {
         const interactive = card.route != null;
         return (
-          <Pressable
+          <MeGlassCard
             key={card.id}
-            disabled={!interactive}
             onPress={interactive ? () => onCardPress?.(card) : undefined}
-            accessibilityRole={interactive ? 'button' : undefined}
             accessibilityLabel={`${card.label}: ${card.stat}, ${card.subtitle}`}
-            style={({ pressed }) => [styles.card, { opacity: pressed ? 0.9 : 1 }]}
+            radius={10}
+            style={styles.card}
+            contentStyle={styles.cardContent}
           >
             <Text
               variant="caption"
-              style={{ fontSize: 11.5, fontWeight: '600', color: meTheme.labelText }}
+              style={{ fontSize: 13, fontWeight: '600', color: meTheme.labelText }}
             >
               {card.label}
             </Text>
@@ -35,8 +36,8 @@ export function MeStatusGrid({ cards, onCardPress }: Props) {
               variant="heading3"
               numberOfLines={1}
               style={{
-                fontSize: 20,
-                lineHeight: 20,
+                fontSize: 22,
+                lineHeight: 26,
                 fontWeight: '700',
                 letterSpacing: -0.5,
                 color: meTheme.headingText,
@@ -48,7 +49,7 @@ export function MeStatusGrid({ cards, onCardPress }: Props) {
             <Text
               variant="caption"
               style={{
-                fontSize: 10,
+                fontSize: 11.5,
                 lineHeight: 13,
                 color: meTheme.metaText,
                 marginTop: 16,
@@ -56,7 +57,7 @@ export function MeStatusGrid({ cards, onCardPress }: Props) {
             >
               {card.subtitle}
             </Text>
-          </Pressable>
+          </MeGlassCard>
         );
       })}
     </View>
@@ -72,21 +73,9 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: meTheme.cardBackground,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: meTheme.cardBorder,
+  },
+  cardContent: {
     paddingHorizontal: 10,
     paddingVertical: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: { elevation: 2 },
-    }),
   },
 });

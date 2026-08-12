@@ -1,7 +1,10 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { GlassView } from 'expo-glass-effect';
+import Animated, {
+  type SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
@@ -24,9 +27,23 @@ import type { MeProfileStat, StudentProfile } from '@/types/profile';
 type Props = {
   profile: StudentProfile;
   stats: MeProfileStat[];
+  onEditPress?: () => void;
+  /**
+   * How far the ID card rides up over the masthead edge. The hero reserves it
+   * below the stats so the card never covers them; the screen measures the
+   * card and passes half its height, putting the edge at the card's midpoint.
+   */
+  idCardOverlap?: number;
+  /**
+   * Scroll offset from Me home. Negative values (top rubber-band) pin the
+   * identity content while the page travels under it.
+   */
+  scrollY: SharedValue<number>;
+};
+
+type HeaderChromeProps = {
   /** Unread count on the bell. Hidden at 0. */
   notificationCount?: number;
-  onEditPress?: () => void;
   onNotificationsPress?: () => void;
   onSettingsPress?: () => void;
   onSearchPress?: () => void;
@@ -46,19 +63,48 @@ const AVATAR_SIZE = 76;
 const CONTENT_INSET = HEADER_CHROME_HORIZONTAL_INSET;
 /** Gap between hits inside the notifications + settings pill. */
 const CHROME_PAIR_GAP = 6;
-/**
- * Tall enough to cover rubber-band overscroll above the hero. The masthead
- * LinearGradient itself extends by this amount so the wash continues with no seam.
- */
-const OVERSCROLL_STRETCH = 400;
-/** Used until onLayout reports the real masthead height. */
-const ESTIMATED_HERO_BODY = 320;
 
 /**
  * App is forced light UI, so liquid glass `auto` resolves light — near-white on
  * burgundy and unreadable with white glyphs. Always pin dark glass here.
  */
 const CHROME_GLASS_SCHEME = 'dark' as const;
+
+/**
+ * The chrome is a fixed overlay, so it outlives the burgundy masthead: once
+ * the page scrolls, clear glass sampled the light grey body and the white
+ * glyphs vanished into it. A dark tint keeps the pills readable over both.
+ */
+const CHROME_GLASS_TINT = 'rgba(63, 15, 26, 0.72)';
+
+/**
+ * Share of the top rubber-band pull the masthead edge travels. The pull is
+ * already damped by iOS, so this is a second, gentler damping on top: the
+ * header grows about half as fast as the page moves, which is what opens the
+ * gap under the ID card. Raise for a more pronounced stretch.
+ */
+export const HERO_STRETCH_RATIO = 0.45;
+
+/** Wash paints 1pt past the edge so no seam shows against the grey body. */
+const HERO_EDGE_BLEED = 1;
+
+/** Masthead fill runs this far above the hero to cover the top bounce gap. */
+const WASH_TOP_EXTENSION = 400;
+
+/**
+ * Starting overlap, used until the ID card reports its real height on first
+ * layout. Close to half the rendered card so the correction is invisible.
+ */
+export const ID_CARD_OVERLAP = 49;
+
+/** Gap between the stats row and the top of the overlapping ID card. */
+const ID_CARD_CLEARANCE = 18;
+
+/** Screen-space distance the masthead edge has grown, given a scroll offset. */
+export function heroStretch(scrollY: number): number {
+  'worklet';
+  return Math.max(0, -scrollY) * HERO_STRETCH_RATIO;
+}
 
 function ChromeHit({ icon, label, badge, onPress }: ChromeAction) {
   const theme = useTheme();
@@ -81,7 +127,7 @@ function ChromeHit({ icon, label, badge, onPress }: ChromeAction) {
           <Text
             variant="caption"
             style={{
-              fontSize: 9,
+              fontSize: 10,
               lineHeight: 11,
               fontWeight: '700',
               color: theme.color.primary,
@@ -109,6 +155,7 @@ function ChromeButton(props: ChromeAction) {
       isInteractive
       glassEffectStyle="regular"
       colorScheme={CHROME_GLASS_SCHEME}
+      tintColor={CHROME_GLASS_TINT}
       style={styles.chrome}
     >
       {content}
@@ -144,6 +191,7 @@ function ChromePair({
       isInteractive
       glassEffectStyle="regular"
       colorScheme={CHROME_GLASS_SCHEME}
+      tintColor={CHROME_GLASS_TINT}
       style={styles.chromePair}
     >
       {content}
@@ -151,9 +199,18 @@ function ChromePair({
   );
 }
 
+/**
+ * Same reasoning as the chrome: forced light UI resolves `auto` glass to
+ * near-white on the burgundy, which would swallow the white initials. Dark
+ * scheme with a light tint keeps the disc reading a touch brighter than the
+ * masthead, the way the flat 16% fill did.
+ */
+const AVATAR_GLASS_TINT = 'rgba(255, 255, 255, 0.18)';
+
 /** Initials fallback — the design's avatar is a photo placeholder. */
 function Avatar({ name }: { name: string }) {
   const theme = useTheme();
+  const glass = React.useMemo(() => canUseLiquidGlass(), []);
   const initials = name
     .split(/\s+/)
     .filter(Boolean)
@@ -161,177 +218,204 @@ function Avatar({ name }: { name: string }) {
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
 
+  const content = (
+    <Text
+      variant="heading2"
+      style={{ fontSize: 30, lineHeight: 34, color: theme.color.text.inverse }}
+    >
+      {initials}
+    </Text>
+  );
+
+  if (!glass) {
+    return <View style={[styles.avatar, styles.avatarFallback]}>{content}</View>;
+  }
+
   return (
-    <View style={styles.avatar}>
-      <Text
-        variant="heading2"
-        style={{ fontSize: 28, lineHeight: 32, color: theme.color.text.inverse }}
-      >
-        {initials}
-      </Text>
+    <GlassView
+      glassEffectStyle="regular"
+      colorScheme={CHROME_GLASS_SCHEME}
+      tintColor={AVATAR_GLASS_TINT}
+      style={styles.avatar}
+    >
+      {content}
+    </GlassView>
+  );
+}
+
+/**
+ * Notifications + settings + search. Rendered as a fixed overlay on Me home so
+ * the actions stay pinned while the masthead scrolls underneath.
+ */
+export function MeHeaderChrome({
+  notificationCount = 0,
+  onNotificationsPress,
+  onSettingsPress,
+  onSearchPress,
+}: HeaderChromeProps) {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View
+      pointerEvents="box-none"
+      style={[
+        styles.chromeOverlay,
+        {
+          top: insets.top + HEADER_CHROME_TOP_GAP,
+          paddingHorizontal: HEADER_CHROME_HORIZONTAL_INSET,
+        },
+      ]}
+    >
+      {/* Notifications + settings share one dark pill; search stays its own. */}
+      <ChromePair
+        left={{
+          icon: msNotifications,
+          label: 'Notifications',
+          badge: notificationCount,
+          onPress: onNotificationsPress,
+        }}
+        right={{
+          icon: msSettings,
+          label: 'Settings',
+          onPress: onSettingsPress,
+        }}
+      />
+
+      <ChromeButton icon={msSearch} label="Search" onPress={onSearchPress} />
     </View>
   );
 }
 
 /**
- * Burgundy gradient masthead: chrome row, avatar, identity, and the academic
- * metadata strip. The ID card overlaps its lower edge by design.
+ * Burgundy gradient masthead: avatar, identity, and the academic metadata
+ * strip. On top rubber-band the wash grows (content stays pinned) so the ID
+ * card and grey body move down with the expanded header edge. Chrome actions
+ * live in `MeHeaderChrome` (fixed overlay).
  */
 export function MeProfileHero({
   profile,
   stats,
-  notificationCount = 0,
   onEditPress,
-  onNotificationsPress,
-  onSettingsPress,
-  onSearchPress,
+  scrollY,
+  idCardOverlap = ID_CARD_OVERLAP,
 }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const [heroHeight, setHeroHeight] = React.useState(0);
 
   /**
-   * Hold the top stop through the overscroll extension so the visible masthead
-   * keeps the same primary → end wash as before the stretch was added.
+   * Counter the rubber-band translate so avatar / name / stats stay fixed on
+   * screen; the growing empty region below them is the stretched container.
    */
-  const primaryHold =
-    OVERSCROLL_STRETCH /
-    (heroHeight > 0 ? heroHeight : OVERSCROLL_STRETCH + ESTIMATED_HERO_BODY);
+  const contentStyle = useAnimatedStyle(() => {
+    const pull = Math.max(0, -scrollY.value);
+    return { transform: [{ translateY: -pull }] };
+  });
 
   return (
-    <LinearGradient
-      colors={[theme.color.primary, theme.color.primary, meTheme.heroGradientEnd]}
-      locations={[0, primaryHold, 1]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      onLayout={(event) => {
-        const next = event.nativeEvent.layout.height;
-        if (next > 0 && next !== heroHeight) {
-          setHeroHeight(next);
-        }
-      }}
+    <View
       style={[
         styles.hero,
         {
-          marginTop: -OVERSCROLL_STRETCH,
-          paddingTop: OVERSCROLL_STRETCH + insets.top + HEADER_CHROME_TOP_GAP,
+          paddingTop: insets.top + HEADER_CHROME_TOP_GAP,
+          // Reserve the strip the card overlaps, so it never covers the stats.
+          paddingBottom: idCardOverlap + ID_CARD_CLEARANCE,
         },
       ]}
     >
       {/*
-        Approximates the design's radial top-left highlight. A true radial needs
-        an SVG gradient; at 10% alpha the diagonal read is indistinguishable.
-        Offset past the overscroll extension so the visible masthead is unchanged.
+        Flat brand masthead. Deliberately static: the visible lower edge is the
+        grey body's top, which the screen drives with a transform, so nothing
+        here has to animate — and animating `top`/`bottom` here re-ran layout
+        every frame, which is what made the header jitter under the finger.
+        The upward extension covers the top rubber-band gap at any pull.
       */}
-      <LinearGradient
+      <View
         pointerEvents="none"
-        colors={['rgba(255,255,255,0.10)', 'rgba(255,255,255,0)']}
-        start={{ x: 0.15, y: 0 }}
-        end={{ x: 0.9, y: 0.75 }}
-        style={[StyleSheet.absoluteFillObject, { top: OVERSCROLL_STRETCH }]}
+        style={[styles.wash, { backgroundColor: theme.color.primary }]}
       />
 
-      <View
-        style={[
-          styles.chromeRow,
-          { paddingHorizontal: HEADER_CHROME_HORIZONTAL_INSET },
-        ]}
-      >
-        {/* Notifications + settings share one dark pill; search stays its own. */}
-        <ChromePair
-          left={{
-            icon: msNotifications,
-            label: 'Notifications',
-            badge: notificationCount,
-            onPress: onNotificationsPress,
-          }}
-          right={{
-            icon: msSettings,
-            label: 'Settings',
-            onPress: onSettingsPress,
-          }}
-        />
+      <Animated.View style={contentStyle}>
+        {/* Reserves the fixed chrome row so identity layout matches the overlay. */}
+        <View style={styles.chromeSpacer} />
 
-        <ChromeButton icon={msSearch} label="Search" onPress={onSearchPress} />
-      </View>
+        <View style={[styles.identity, { paddingHorizontal: CONTENT_INSET }]}>
+          <Avatar name={profile.displayName} />
 
-      <View style={[styles.identity, { paddingHorizontal: CONTENT_INSET }]}>
-        <Avatar name={profile.displayName} />
-
-        <View style={styles.nameRow}>
-          <Text
-            variant="heading2"
-            style={{
-              fontSize: 26,
-              lineHeight: 30,
-              color: theme.color.text.inverse,
-            }}
-          >
-            {toTitleCase(profile.displayName)}
-          </Text>
-          <Pressable
-            onPress={onEditPress}
-            accessibilityRole="button"
-            accessibilityLabel="Edit profile"
-            hitSlop={8}
-          >
+          <View style={styles.nameRow}>
             <Text
-              variant="bodySmall"
+              variant="heading2"
               style={{
-                fontSize: 12.5,
-                fontWeight: '600',
+                fontSize: 27,
+                lineHeight: 30,
                 color: theme.color.text.inverse,
               }}
             >
-              Edit
+              {toTitleCase(profile.displayName)}
             </Text>
-          </Pressable>
-        </View>
-
-        <Text
-          variant="bodySmall"
-          style={{ fontSize: 12.5, color: meTheme.heroSubtitle, marginTop: 3 }}
-        >
-          {profile.program} · {profile.yearLabel}
-        </Text>
-      </View>
-
-      <View style={[styles.statsRow, { paddingHorizontal: CONTENT_INSET }]}>
-        {stats.map((stat, index) => (
-          <React.Fragment key={stat.id}>
-            {index > 0 ? <View style={styles.statDivider} /> : null}
-            <View style={[styles.stat, { paddingLeft: index === 0 ? 0 : 14 }]}>
+            <Pressable
+              onPress={onEditPress}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile"
+              hitSlop={8}
+            >
               <Text
-                variant="caption"
-                numberOfLines={1}
+                variant="bodySmall"
                 style={{
-                  fontSize: 10.5,
+                  fontSize: 14,
                   fontWeight: '600',
-                  letterSpacing: 0.2,
-                  color: meTheme.heroStatLabel,
-                  marginBottom: 6,
-                }}
-              >
-                {stat.label}
-              </Text>
-              <Text
-                variant="heading3"
-                numberOfLines={1}
-                style={{
-                  fontSize: 20,
-                  lineHeight: 21,
-                  fontWeight: '600',
-                  letterSpacing: -0.6,
                   color: theme.color.text.inverse,
                 }}
               >
-                {stat.value}
+                Edit
               </Text>
-            </View>
-          </React.Fragment>
-        ))}
-      </View>
-    </LinearGradient>
+            </Pressable>
+          </View>
+
+          <Text
+            variant="bodySmall"
+            style={{ fontSize: 14, color: meTheme.heroSubtitle, marginTop: 3 }}
+          >
+            {profile.program} · {profile.yearLabel}
+          </Text>
+        </View>
+
+        <View style={[styles.statsRow, { paddingHorizontal: CONTENT_INSET }]}>
+          {stats.map((stat, index) => (
+            <React.Fragment key={stat.id}>
+              {index > 0 ? <View style={styles.statDivider} /> : null}
+              <View style={[styles.stat, { paddingLeft: index === 0 ? 0 : 14 }]}>
+                <Text
+                  variant="caption"
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '600',
+                    letterSpacing: 0.2,
+                    color: meTheme.heroStatLabel,
+                    marginBottom: 6,
+                  }}
+                >
+                  {stat.label}
+                </Text>
+                <Text
+                  variant="heading3"
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 20,
+                    lineHeight: 21,
+                    fontWeight: '600',
+                    letterSpacing: -0.6,
+                    color: theme.color.text.inverse,
+                  }}
+                >
+                  {stat.value}
+                </Text>
+              </View>
+            </React.Fragment>
+          ))}
+        </View>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -343,18 +427,29 @@ function toTitleCase(value: string): string {
 }
 
 const styles = StyleSheet.create({
-  /**
-   * Overscroll extension is applied via negative marginTop + matching paddingTop
-   * so the same LinearGradient paints continuously into the rubber-band region.
-   */
   hero: {
-    paddingBottom: 52,
+    overflow: 'visible',
   },
-  chromeRow: {
+  wash: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    /** Beyond any rubber-band pull, so the bounce never exposes the page. */
+    top: -WASH_TOP_EXTENSION,
+    bottom: -HERO_EDGE_BLEED,
+  },
+  chromeOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: 16,
+  },
+  chromeSpacer: {
+    height: CHROME_SIZE,
   },
   chrome: {
     width: CHROME_SIZE,
@@ -405,12 +500,16 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderCurve: 'continuous',
     borderWidth: 1.5,
     borderColor: meTheme.heroAvatarBorder,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  /** Only applied when liquid glass is unavailable. */
+  avatarFallback: {
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
   nameRow: {
     flexDirection: 'row',

@@ -10,6 +10,13 @@ export const meTheme = {
   pageBackground: '#F3F3F3',
   cardBackground: '#FFFFFF',
   cardBorder: 'rgba(0, 0, 0, 0.06)',
+  /**
+   * Tint for the glass cards sitting on the grey page. Lighter than the ID
+   * card's 0.82 — that one straddles the burgundy seam and needs the extra
+   * opacity to read as one surface; these have only grey behind them, so a
+   * heavier tint would hide the refraction entirely.
+   */
+  cardGlassTint: 'rgba(255, 255, 255, 0.6)',
 
   /** Hero gradient runs brand → this. */
   heroGradientEnd: '#5E1626',
@@ -24,6 +31,8 @@ export const meTheme = {
   labelText: '#8A8A8C',
   valueText: '#3A3A3C',
   chevron: '#C8C8CA',
+  /** Chevrons on glass need more weight than the flat-card ones. */
+  chevronStrong: '#57575A',
 
   /** Overlapping avatar / service stacks. */
   stackFill: '#F2F2F3',

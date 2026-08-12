@@ -1,9 +1,10 @@
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, msChevronRight } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { meTheme } from '@/screens/me/meTheme';
+import { MeGlassCard } from './MeGlassCard';
 
 /** One entry in the overlapping preview stack. */
 export type MeStackItem = {
@@ -51,7 +52,7 @@ function StackChip({
       <Text
         variant="caption"
         style={{
-          fontSize: shape === 'circle' ? 13 : 12,
+          fontSize: shape === 'circle' ? 14 : 13,
           lineHeight: 16,
           fontWeight: '700',
           color: tinted ? theme.color.text.inverse : theme.color.primary,
@@ -73,23 +74,22 @@ export function MeCollectionCard({ heading, subtitle, items, shape, onPress }: P
   const remainder = items.length - visible.length;
 
   return (
-    <Pressable
+    <MeGlassCard
       onPress={onPress}
-      accessibilityRole="button"
       accessibilityLabel={`${heading}, ${subtitle}`}
-      style={({ pressed }) => [styles.card, { opacity: pressed ? 0.9 : 1 }]}
+      contentStyle={styles.cardContent}
     >
       <View style={styles.headerRow}>
         <View style={styles.headerText}>
           <Text
             variant="bodySmall"
-            style={{ fontSize: 13.5, fontWeight: '600', color: meTheme.headingText }}
+            style={{ fontSize: 17, fontWeight: '600', color: meTheme.headingText }}
           >
             {heading}
           </Text>
           <Text
             variant="caption"
-            style={{ fontSize: 11, color: meTheme.metaText, marginTop: 2 }}
+            style={{ fontSize: 12.5, color: meTheme.metaText, marginTop: 2 }}
           >
             {subtitle}
           </Text>
@@ -115,7 +115,7 @@ export function MeCollectionCard({ heading, subtitle, items, shape, onPress }: P
             <Text
               variant="caption"
               style={{
-                fontSize: 11.5,
+                fontSize: 13,
                 lineHeight: 14,
                 fontWeight: '700',
                 color: meTheme.metaText,
@@ -126,28 +126,14 @@ export function MeCollectionCard({ heading, subtitle, items, shape, onPress }: P
           </View>
         ) : null}
       </View>
-    </Pressable>
+    </MeGlassCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: meTheme.cardBackground,
-    borderRadius: 8,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: meTheme.cardBorder,
+  cardContent: {
     paddingHorizontal: 16,
     paddingVertical: 14,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: { elevation: 2 },
-    }),
   },
   headerRow: {
     flexDirection: 'row',

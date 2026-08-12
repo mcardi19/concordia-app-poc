@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { GlassView } from 'expo-glass-effect';
 import { Text } from '@/components/design-system';
+import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import { MaterialSymbol, msBadge, msChevronRight } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -11,6 +13,13 @@ type Props = {
   profile: StudentProfile;
   onPress?: () => void;
 };
+
+/**
+ * The card straddles the masthead edge, so clear glass sampled burgundy on its
+ * top half and grey on its bottom. A near-opaque white tint keeps it reading as
+ * one solid card across the seam.
+ */
+const CARD_GLASS_TINT = 'rgba(255, 255, 255, 0.82)';
 
 /** Deterministic bar widths — the design cycles a fixed 20-step pattern. */
 const BAR_WIDTHS = [1, 1, 2, 1, 3, 1, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 2, 1, 2, 1];
@@ -36,10 +45,43 @@ function Barcode() {
 
 /**
  * Student ID summary. Overlaps the hero's lower edge (negative margin applied
- * by the screen), so it must paint above it.
+ * by the screen), so it must paint above it. Whole card is one press target;
+ * liquid glass when available (no parent opacity — that flattens the effect).
  */
 export function MeIdCardRow({ profile, onPress }: Props) {
   const theme = useTheme();
+  const glass = useMemo(() => canUseLiquidGlass(), []);
+
+  const body = (
+    <>
+      <View style={styles.row}>
+        <View style={[styles.iconTile, { backgroundColor: theme.color.primary }]}>
+          <MaterialSymbol icon={msBadge} size={22} color={theme.color.text.inverse} />
+        </View>
+
+        <View style={styles.rowText}>
+          <Text
+            variant="bodySmall"
+            style={{ fontSize: 15, fontWeight: '600', color: meTheme.headingText }}
+          >
+            Student ID
+          </Text>
+          <Text
+            variant="caption"
+            style={{ fontSize: 12.5, color: meTheme.metaText, marginTop: 1 }}
+          >
+            {formatStudentId(profile.studentId)} · Tap to scan
+          </Text>
+        </View>
+
+        <MaterialSymbol icon={msChevronRight} size={24} color={meTheme.chevronStrong} />
+      </View>
+
+      <View style={styles.barcodeWrap}>
+        <Barcode />
+      </View>
+    </>
+  );
 
   return (
     <View style={styles.wrapper}>
@@ -48,36 +90,23 @@ export function MeIdCardRow({ profile, onPress }: Props) {
         accessibilityRole="button"
         accessibilityLabel="Student ID — tap to scan"
         style={({ pressed }) => [
-          styles.card,
-          { shadowColor: theme.color.primary, opacity: pressed ? 0.9 : 1 },
+          styles.shadowWrap,
+          { shadowColor: theme.color.primary, transform: [{ scale: pressed ? 0.98 : 1 }] },
         ]}
       >
-        <View style={styles.row}>
-          <View style={[styles.iconTile, { backgroundColor: theme.color.primary }]}>
-            <MaterialSymbol icon={msBadge} size={17} color={theme.color.text.inverse} />
-          </View>
-
-          <View style={styles.rowText}>
-            <Text
-              variant="bodySmall"
-              style={{ fontSize: 13.5, fontWeight: '600', color: meTheme.headingText }}
-            >
-              Student ID
-            </Text>
-            <Text
-              variant="caption"
-              style={{ fontSize: 11, color: meTheme.metaText, marginTop: 1 }}
-            >
-              {formatStudentId(profile.studentId)} · Tap to scan
-            </Text>
-          </View>
-
-          <MaterialSymbol icon={msChevronRight} size={18} color={meTheme.chevron} />
-        </View>
-
-        <View style={styles.barcodeWrap}>
-          <Barcode />
-        </View>
+        {glass ? (
+          <GlassView
+            isInteractive
+            glassEffectStyle="regular"
+            colorScheme="light"
+            tintColor={CARD_GLASS_TINT}
+            style={styles.card}
+          >
+            {body}
+          </GlassView>
+        ) : (
+          <View style={[styles.card, styles.cardFallback]}>{body}</View>
+        )}
       </Pressable>
     </View>
   );
@@ -95,13 +124,10 @@ const styles = StyleSheet.create({
     // Above the hero gradient it overlaps.
     zIndex: 2,
   },
-  card: {
-    backgroundColor: meTheme.cardBackground,
+  /** Shadow lives outside the glass so `overflow: hidden` does not clip it. */
+  shadowWrap: {
     borderRadius: 8,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: meTheme.cardBorder,
-    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 4 },
@@ -111,6 +137,17 @@ const styles = StyleSheet.create({
       android: { elevation: 3 },
     }),
   },
+  card: {
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  /** Only applied when liquid glass is unavailable. */
+  cardFallback: {
+    backgroundColor: meTheme.cardBackground,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: meTheme.cardBorder,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -119,9 +156,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   iconTile: {
-    width: 34,
-    height: 34,
-    borderRadius: 7,
+    width: 42,
+    height: 42,
+    borderRadius: 9,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
