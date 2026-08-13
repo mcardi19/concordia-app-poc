@@ -1,0 +1,100 @@
+diff --git a/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m b/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m
+index 8c17ac7..9026ff9 100644
+--- a/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m
++++ b/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m
+@@ -112,6 +112,9 @@ - (MKAnnotationView *)getAnnotationView
+         _markerView.markerTintColor = self.pinColor;
+         _markerView.titleVisibility = self.titleVisibility ?: MKFeatureVisibilityHidden;
+         _markerView.subtitleVisibility = self.subtitleVisibility ?: MKFeatureVisibilityHidden;
++        if (self.title.length > 0) {
++            _markerView.glyphText = self.title;
++        }
+ 
+         }
+         return _markerView ?: _pinView;
+@@ -171,8 +174,12 @@ - (void)showCalloutView
+ 
+     MKAnnotationView *annotationView = [self getAnnotationView];
+ 
+-    [self setSelected:YES animated:NO];
+-    [self.map selectAnnotation:self animated:NO];
++    // Animate selection on the *displayed* annotation view (MKMarkerAnnotationView /
++    // MKPinAnnotationView). Selecting only `self` with animated:NO skipped MapKit's
++    // pin scale animation when the viewForAnnotation returns a child pin view.
++    [annotationView setSelected:YES animated:YES];
++    [self setSelected:YES animated:YES];
++    [self.map selectAnnotation:self animated:YES];
+ 
+     id event = @{
+             @"action": @"marker-select",
+@@ -281,7 +288,9 @@ - (void)_handleTap:(UITapGestureRecognizer *)recognizer {
+     if (marker.onPress) marker.onPress(event);
+     if (marker.map.onMarkerPress) marker.map.onMarkerPress(event);
+ 
+-    [marker.map selectAnnotation:marker animated:NO];
++    MKAnnotationView *annotationView = [marker getAnnotationView];
++    [annotationView setSelected:YES animated:YES];
++    [marker.map selectAnnotation:marker animated:YES];
+ }
+ 
+ - (void)hideCalloutView
+@@ -291,8 +300,10 @@ - (void)hideCalloutView
+     // hide the callout view
+     [self.map.calloutView dismissCalloutAnimated:YES];
+ 
+-    [self setSelected:NO animated:NO];
+-    [self.map deselectAnnotation:self animated:NO];
++    MKAnnotationView *annotationView = [self getAnnotationView];
++    [annotationView setSelected:NO animated:YES];
++    [self setSelected:NO animated:YES];
++    [self.map deselectAnnotation:self animated:YES];
+ 
+     id event = @{
+             @"action": @"marker-deselect",
+@@ -315,7 +326,19 @@ - (void)setCalloutOffset:(CGPoint)calloutOffset
+ 
+ - (BOOL)shouldShowCalloutView
+ {
+-    return self.calloutView != nil || self.title != nil || self.subtitle != nil;
++    // Title drives the pin glyph; BuildingDrawer handles selection details.
++    return self.calloutView != nil;
++}
++
++- (void)setTitle:(NSString *)title
++{
++    if ([_title isEqualToString:title] || (_title == nil && title == nil)) {
++        return;
++    }
++    _title = [title copy];
++    if (_markerView != nil && title.length > 0) {
++        _markerView.glyphText = title;
++    }
+ }
+ 
+ - (BOOL)shouldUsePinView
+@@ -376,6 +399,25 @@ - (BOOL)isSelected {
+   return _isPreselected || [super isSelected];
+ }
+ 
++- (void)setIsPreselected:(BOOL)isPreselected {
++  if (_isPreselected == isPreselected) {
++    return;
++  }
++  _isPreselected = isPreselected;
++
++  // Keep the displayed pin view (often MKMarkerAnnotationView) in sync so React
++  // can drive the native selection scale without relying on callouts.
++  MKAnnotationView *annotationView = [self getAnnotationView];
++  if (annotationView != nil) {
++    [annotationView setSelected:isPreselected animated:YES];
++  }
++  if (isPreselected) {
++    [self.map selectAnnotation:self animated:YES];
++  } else if ([self.map.selectedAnnotations containsObject:self]) {
++    [self.map deselectAnnotation:self animated:YES];
++  }
++}
++
+ - (void)dealloc {
+     [self.layer removeObserver:self forKeyPath:@"zPosition"];
+ }
