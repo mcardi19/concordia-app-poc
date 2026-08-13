@@ -44,17 +44,23 @@ export function ScheduleScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const now = useNow();
 
-  const [weekMonday] = useState(() => formatWeekMonday(new Date()));
-  const weekDates = useMemo(() => getWeekDates(weekMonday), [weekMonday]);
   const [viewMode, setViewMode] = useState<ScheduleViewMode>('day');
+
+  /*
+    The selected day is a date, not an index into a fixed week — the strip
+    pages across weeks now, so a selection can land outside whichever week was
+    current at mount.
+  */
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const weekDates = useMemo(
+    () => getWeekDates(formatWeekMonday(selectedDate)),
+    [selectedDate],
+  );
 
   const todayKey = getDayKey(now);
   const todayIndex = weekDates.findIndex((d) => isSameDay(d, now));
-  const [selectedIndex, setSelectedIndex] = useState(() =>
-    weekDates.findIndex((d) => isSameDay(d, new Date())),
-  );
-  const selectedDate = weekDates[selectedIndex] ?? weekDates[0];
-  const selectedKey = WEEK_ORDER_KEYS[selectedIndex] ?? todayKey;
+  const selectedIndex = weekDates.findIndex((d) => isSameDay(d, selectedDate));
+  const selectedKey = getDayKey(selectedDate);
   const isViewingToday = isSameDay(selectedDate, now);
   const nowMinutes = isViewingToday ? now.getHours() * 60 + now.getMinutes() : undefined;
 
@@ -68,7 +74,7 @@ export function ScheduleScreen() {
 
   /** Planner window starts at the selected day and runs forward. */
   const plannerDays: PlannerDay[] = useMemo(() => {
-    const start = Math.min(selectedIndex, WEEK_ORDER_KEYS.length - PLANNER_SPAN);
+    const start = Math.min(Math.max(selectedIndex, 0), WEEK_ORDER_KEYS.length - PLANNER_SPAN);
     return WEEK_ORDER_KEYS.slice(start, start + PLANNER_SPAN).map((dayKey, offset) => {
       const date = weekDates[start + offset];
       return {
@@ -101,7 +107,7 @@ export function ScheduleScreen() {
       scrollRef.current?.scrollTo({ y, animated: false });
     });
     return () => cancelAnimationFrame(id);
-  }, [viewMode, selectedIndex]);
+  }, [viewMode, selectedDate]);
 
   return (
     <View style={styles.root}>
@@ -116,21 +122,13 @@ export function ScheduleScreen() {
           todayDate={weekDates[todayIndex]}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          onTodayPress={() => setSelectedIndex(todayIndex)}
+          onTodayPress={() => setSelectedDate(new Date())}
           showAdd={viewMode !== 'week'}
         />
         <ScheduleWeekStrip
-          weekDates={weekDates}
           selectedDate={selectedDate}
           events={MOCK_WEEK_EVENTS}
-          onSelectDate={(date) => {
-            const index = weekDates.findIndex(
-              (d) => d.toDateString() === date.toDateString(),
-            );
-            if (index >= 0) {
-              setSelectedIndex(index);
-            }
-          }}
+          onSelectDate={setSelectedDate}
         />
         {/* All-day stays under the strip so the timetable can scroll beneath it. */}
         {showsAllDayBanner ? (
