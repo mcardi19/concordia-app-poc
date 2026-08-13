@@ -10,7 +10,8 @@ const UPDATE_IMAGE_HEIGHT = 152;
 const CAMPUS_CARD_WIDTH = 170;
 const CAROUSEL_GAP = 14;
 
-const horizontalCarouselProps = {
+/** Shared so other flows' carousels snap identically to Home's. */
+export const horizontalCarouselProps = {
   horizontal: true as const,
   showsHorizontalScrollIndicator: false,
   showsVerticalScrollIndicator: false,

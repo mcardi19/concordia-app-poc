@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassView } from 'expo-glass-effect';
+import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, msSearch } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
@@ -19,6 +21,33 @@ import {
   searchLibrary,
   searchServices,
 } from './globalSearch';
+
+/**
+ * The field's liquid glass, with the flat field as the fallback. `isInteractive`
+ * so the glass responds to the tap that focuses the input.
+ */
+function SearchFieldSurface({ children }: { children: React.ReactNode }) {
+  const glass = useMemo(() => canUseLiquidGlass(), []);
+
+  if (!glass) {
+    return (
+      <View style={[styles.field, styles.fieldFallback, { borderColor: meTheme.cardBorder }]}>
+        {children}
+      </View>
+    );
+  }
+
+  return (
+    <GlassView
+      isInteractive
+      glassEffectStyle="regular"
+      colorScheme="light"
+      style={styles.field}
+    >
+      {children}
+    </GlassView>
+  );
+}
 
 /**
  * Cross-app search: courses, buildings, library and campus services in one
@@ -51,8 +80,8 @@ export function GlobalSearchScreen() {
   return (
     <View style={[styles.root, { paddingTop: insets.top + 12 }]}>
       <View style={styles.fieldWrap}>
-        <View style={[styles.field, { borderColor: meTheme.cardBorder }]}>
-          <MaterialSymbol icon={msSearch} size={20} color={meTheme.metaText} />
+        <SearchFieldSurface>
+          <MaterialSymbol icon={msSearch} size={20} color={theme.color.primary} />
           <TextInput
             value={query}
             onChangeText={setQuery}
@@ -64,7 +93,7 @@ export function GlobalSearchScreen() {
             accessibilityLabel="Search Concordia"
             style={[styles.input, { color: meTheme.headingText }]}
           />
-        </View>
+        </SearchFieldSurface>
       </View>
 
       <ScrollView
@@ -144,6 +173,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  /** Only applied when liquid glass is unavailable. */
+  fieldFallback: {
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: meTheme.cardBackground,
   },

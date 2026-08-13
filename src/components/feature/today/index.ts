@@ -30,3 +30,4 @@ export {
   type UpdateItem,
   type CampusTodayItem,
 } from './todayData';
+export { horizontalCarouselProps } from './TodayCarousels';

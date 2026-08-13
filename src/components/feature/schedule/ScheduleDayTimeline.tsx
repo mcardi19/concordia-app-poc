@@ -9,6 +9,7 @@ import {
   RAIL_WIDTH,
   scheduleTheme,
 } from './scheduleTheme';
+import { ScheduleSurfaceFill } from './ScheduleSurface';
 import type { ScheduleEvent } from './scheduleTypes';
 import { formatClock } from './scheduleUtils';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -70,7 +71,10 @@ export function ScheduleDayTimeline({ events, nowMinutes, onSelectEvent }: Props
           {events.map((event) => {
             const top = topFor(event.startMinutes);
             const height = topFor(event.endMinutes) - top;
-            const isNow = event.now;
+            const isNow =
+              nowMinutes != null &&
+              nowMinutes >= event.startMinutes &&
+              nowMinutes < event.endMinutes;
             return (
               <Pressable
                 key={event.id}
@@ -98,6 +102,8 @@ export function ScheduleDayTimeline({ events, nowMinutes, onSelectEvent }: Props
                     : styles.blockShadow,
                 ]}
               >
+                <ScheduleSurfaceFill />
+
                 <View
                   style={[
                     styles.blockRail,
@@ -237,7 +243,6 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     paddingLeft: 16,
     paddingRight: 12,
-    backgroundColor: scheduleTheme.allDayFill,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,

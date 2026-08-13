@@ -37,7 +37,11 @@ export type CampusStackParamList = {
   ServicesSearch: undefined;
 };
 
-export type LibraryStackParamList = {
+export type AcademicsStackParamList = {
+  AcademicsHome: undefined;
+  AcademicCalendar: undefined;
+  Grades: undefined;
+  /** The former Academic-tab root. No longer linked from the new home. */
   Library: undefined;
 };
 
@@ -74,10 +78,11 @@ export type CampusStackScreenProps<T extends keyof CampusStackParamList> = Compo
   MainTabScreenProps<'Campus'>
 >;
 
-export type LibraryStackScreenProps<T extends keyof LibraryStackParamList> = CompositeScreenProps<
-  NativeStackScreenProps<LibraryStackParamList, T>,
-  MainTabScreenProps<'Library'>
->;
+export type AcademicsStackScreenProps<T extends keyof AcademicsStackParamList> =
+  CompositeScreenProps<
+    NativeStackScreenProps<AcademicsStackParamList, T>,
+    MainTabScreenProps<'Library'>
+  >;
 
 export type SearchStackScreenProps<T extends keyof SearchStackParamList> = CompositeScreenProps<
   NativeStackScreenProps<SearchStackParamList, T>,

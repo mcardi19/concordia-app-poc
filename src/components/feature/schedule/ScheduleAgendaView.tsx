@@ -4,6 +4,7 @@ import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { ScheduleAllDayBanner } from './ScheduleAllDayBanner';
+import { ScheduleSurfaceFill } from './ScheduleSurface';
 import { scheduleTheme } from './scheduleTheme';
 import type { ScheduleAllDayItem, ScheduleEvent } from './scheduleTypes';
 import { formatClock, groupEventsByDay } from './scheduleUtils';
@@ -67,6 +68,8 @@ function NowRow({
         accessibilityLabel={`Now: ${event.courseCode}, ${event.title}`}
         style={styles.nowCard}
       >
+        <ScheduleSurfaceFill />
+
         <View style={[styles.rail, { backgroundColor: theme.color.primary }]} />
 
         <Text variant="caption" style={{ fontSize: 12, color: scheduleTheme.timeSubText }}>
@@ -146,6 +149,8 @@ function AgendaRow({
     >
       <TimeColumn event={event} />
       <View style={styles.plainBody}>
+        <ScheduleSurfaceFill />
+
         <View
           style={[
             styles.rail,
@@ -283,7 +288,6 @@ const styles = StyleSheet.create({
   nowCard: {
     flex: 1,
     minWidth: 0,
-    backgroundColor: scheduleTheme.allDayFill,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
@@ -301,7 +305,6 @@ const styles = StyleSheet.create({
   plainBody: {
     flex: 1,
     minWidth: 0,
-    backgroundColor: scheduleTheme.allDayFill,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,

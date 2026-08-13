@@ -6,6 +6,14 @@ import { msCalendarMonthFill } from '@material-symbols-react-native/rounded-400/
 import { msCalendarToday } from '@material-symbols-react-native/rounded-400/msCalendarToday';
 import { msMap } from '@material-symbols-react-native/rounded-400/msMap';
 import { msMapFill } from '@material-symbols-react-native/rounded-400/msMapFill';
+import { msAssignment } from '@material-symbols-react-native/rounded-400/msAssignment';
+import { msSchedule as msScheduleClock } from '@material-symbols-react-native/rounded-400/msSchedule';
+import { msPayments } from '@material-symbols-react-native/rounded-400/msPayments';
+import { msWorkspacePremium } from '@material-symbols-react-native/rounded-400/msWorkspacePremium';
+import { msHowToReg } from '@material-symbols-react-native/rounded-400/msHowToReg';
+import { msComputer } from '@material-symbols-react-native/rounded-400/msComputer';
+import { msMenuBook } from '@material-symbols-react-native/rounded-400/msMenuBook';
+import { msBarChart } from '@material-symbols-react-native/rounded-400/msBarChart';
 import { msPerson } from '@material-symbols-react-native/rounded-400/msPerson';
 import { msSchool } from '@material-symbols-react-native/rounded-400/msSchool';
 import { msSchoolFill } from '@material-symbols-react-native/rounded-400/msSchoolFill';
@@ -76,6 +84,15 @@ export const featureSymbols: Record<FeatureSymbolKey, MsIconDefinition> = {
 };
 
 export {
+  msSchool,
+  msAssignment,
+  msScheduleClock,
+  msPayments,
+  msWorkspacePremium,
+  msHowToReg,
+  msComputer,
+  msMenuBook,
+  msBarChart,
   msChevronLeft,
   msChevronRight,
   msChevronRightSemibold,
