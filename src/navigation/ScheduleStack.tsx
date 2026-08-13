@@ -1,7 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ScheduleScreen } from '@/screens/schedule/ScheduleScreen';
-import { meScreens } from './meRoutes';
 import { useStackScreenOptions } from './screenOptions';
 import type { ScheduleStackParamList } from './types';
 
@@ -13,7 +12,6 @@ export function ScheduleStack() {
   return (
     <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen name="Schedule" component={ScheduleScreen} options={{ headerShown: false }} />
-      {meScreens(Stack)}
     </Stack.Navigator>
   );
 }

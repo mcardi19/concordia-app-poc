@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { setStatusBarStyle } from 'expo-status-bar';
@@ -20,6 +20,7 @@ import {
   heroStretch,
   type MeCollectionRow,
 } from '@/components/feature/me';
+import { defaultTabBarStyle } from '@/navigation/screenOptions';
 import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { useAuthStore } from '@/state/authStore';
@@ -75,6 +76,37 @@ export function MeHomeScreen({ navigation }: Props) {
       setStatusBarStyle('light');
       return () => setStatusBarStyle('auto');
     }, []),
+  );
+
+  /**
+   * Me is pushed into the hosting tab's stack, and a tab keeps its stack across
+   * tab switches — so Home → profile → Schedule → Home would land back on the
+   * profile rather than Home. Drop the Me sub-stack when the hosting tab
+   * blurs. Listening on the parent (the tab route) rather than this screen:
+   * a screen-level blur also fires when pushing Settings, which must not
+   * unwind the stack underneath it.
+   */
+  useEffect(() => {
+    const tab = navigation.getParent();
+    if (!tab) return;
+    return tab.addListener('blur', () => {
+      navigation.popToTop();
+    });
+  }, [navigation]);
+
+  /**
+   * Me is pushed, not a root of the tab — hide the bar while it is up so it
+   * reads as a screen you came in to and back out of. Restored on blur rather
+   * than unmount so a push to Settings does not flash the bar back.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      const tab = navigation.getParent();
+      tab?.setOptions({ tabBarStyle: { display: 'none' } });
+      return () => {
+        tab?.setOptions({ tabBarStyle: defaultTabBarStyle(meTheme.pageBackground) });
+      };
+    }, [navigation]),
   );
 
   const onScroll = useAnimatedScrollHandler({

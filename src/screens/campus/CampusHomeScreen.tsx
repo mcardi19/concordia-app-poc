@@ -4,7 +4,6 @@ import MapView, { Marker, type Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen, Text } from '@/components/design-system';
 import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
-import { CampusHeaderChrome } from '@/components/feature/campus/CampusHeaderChrome';
 import { useTheme } from '@/design-system/theme';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useCampusUserLocation } from '@/hooks/useCampusUserLocation';
@@ -154,9 +153,6 @@ export function CampusHomeScreen({ navigation }: Props) {
             },
           ]}
         >
-          <CampusHeaderChrome
-            onSearchPress={() => navigation.getParent()?.navigate('Search')}
-          />
           {showLoadingChip ? (
             <Text
               variant="caption"

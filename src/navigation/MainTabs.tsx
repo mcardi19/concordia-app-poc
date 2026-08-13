@@ -102,6 +102,7 @@ export function MainTabs() {
         options={{
           title: 'Search',
           tabBarLabel: 'Search',
+          tabBarLabelVisibilityMode: 'labeled',
           tabBarSystemItem: 'search',
         }}
       />

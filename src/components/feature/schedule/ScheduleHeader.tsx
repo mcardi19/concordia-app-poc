@@ -5,12 +5,12 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
+  msAdd,
   msCheck,
   msExpandMore,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
-import { HeaderProfileButton } from '@/navigation/HeaderProfileButton';
 import { semanticSpacing } from '@/design-system/tokens';
 import { scheduleTheme } from './scheduleTheme';
 import type { ScheduleViewMode } from './scheduleTypes';
@@ -22,6 +22,9 @@ type Props = {
   viewMode: ScheduleViewMode;
   onViewModeChange: (mode: ScheduleViewMode) => void;
   onTodayPress?: () => void;
+  onAddPress?: () => void;
+  /** Add is offered on agenda and day, not on the 3-day planner. */
+  showAdd?: boolean;
 };
 
 const VIEW_LABELS: Record<ScheduleViewMode, string> = {
@@ -74,7 +77,7 @@ function GlassGroup({ children }: { children: React.ReactNode }) {
 
 /**
  * Shared masthead for all three schedule views: month title, a joined
- * view-switcher / today control, and the profile action.
+ * view-switcher / today control.
  */
 export function ScheduleHeader({
   selectedDate,
@@ -82,6 +85,8 @@ export function ScheduleHeader({
   viewMode,
   onViewModeChange,
   onTodayPress,
+  onAddPress,
+  showAdd = true,
 }: Props) {
   const theme = useTheme();
   const glass = useMemo(() => canUseLiquidGlass(), []);
@@ -188,15 +193,21 @@ export function ScheduleHeader({
                 </Text>
               </Pressable>
             </GlassSurface>
-          </GlassGroup>
 
-          {/*
-            Was a glass round button holding search, before search became its
-            own tab. Not wrapped in GlassSurface: that capsule sets
-            `overflow: hidden`, which clips the notification badge off the
-            disc's corner.
-          */}
-          <HeaderProfileButton />
+            {/* Was a FAB over the bottom-right of the list. */}
+            {showAdd ? (
+              <GlassSurface style={styles.pillIconSegment}>
+                <Pressable
+                  onPress={onAddPress}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add event"
+                  style={styles.iconFill}
+                >
+                  <MaterialSymbol icon={msAdd} size={20} color={theme.color.primary} />
+                </Pressable>
+              </GlassSurface>
+            ) : null}
+          </GlassGroup>
 
           {menuOpen ? (
             glass ? (

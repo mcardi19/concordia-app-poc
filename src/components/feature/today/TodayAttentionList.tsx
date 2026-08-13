@@ -4,7 +4,7 @@ import { MaterialSymbol } from '@/components/icons';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
 import type { AttentionItem } from './todayData';
-import { todayHairlineCard } from './todaySurfaces';
+import { TodaySurfaceFill } from './TodaySurface';
 
 const ICON_TILE = 36;
 const ROW_GAP = 12;
@@ -26,9 +26,10 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
         borderRadius: theme.radius.lg,
         borderCurve: 'continuous',
         overflow: 'hidden',
-        ...todayHairlineCard,
       }}
     >
+      <TodaySurfaceFill radius={theme.radius.lg} />
+
       {items.map((item, index) => (
         <View key={item.id}>
           <View

@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
 import type { CampusTodayItem, UpdateItem } from './todayData';
-import { todayHairlineCard } from './todaySurfaces';
+import { TodaySurfaceFill } from './TodaySurface';
 
 const UPDATE_CARD_WIDTH = 294;
 const UPDATE_IMAGE_HEIGHT = 152;
@@ -55,9 +55,10 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
             borderRadius: theme.radius.lg,
             borderCurve: 'continuous',
             overflow: 'hidden',
-            ...todayHairlineCard,
           }}
         >
+          <TodaySurfaceFill radius={theme.radius.lg} />
+
           <View style={{ height: UPDATE_IMAGE_HEIGHT, width: UPDATE_CARD_WIDTH }}>
             <Image
               source={item.image}
@@ -151,9 +152,10 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
             borderRadius: theme.radius.lg,
             borderCurve: 'continuous',
             overflow: 'hidden',
-            ...todayHairlineCard,
           }}
         >
+          <TodaySurfaceFill radius={theme.radius.lg} />
+
           <Image
             source={item.image}
             style={{ width: CAMPUS_CARD_WIDTH, height: 79 }}

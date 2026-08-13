@@ -5,7 +5,6 @@ import { ShuttleScheduleScreen } from '@/screens/shuttle/ShuttleScheduleScreen';
 import { ShuttleTrackerScreen } from '@/screens/shuttle/ShuttleTrackerScreen';
 import { EventsScreen } from '@/screens/events/EventsScreen';
 import { ServicesSearchScreen } from '@/screens/services/ServicesSearchScreen';
-import { meScreens } from './meRoutes';
 import { useStackScreenOptions } from './screenOptions';
 import type { CampusStackParamList } from './types';
 
@@ -33,7 +32,6 @@ export function CampusStack() {
         component={ServicesSearchScreen}
         options={{ title: 'Services search' }}
       />
-      {meScreens(Stack)}
     </Stack.Navigator>
   );
 }

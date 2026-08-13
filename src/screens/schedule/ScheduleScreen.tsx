@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { GlassView } from 'expo-glass-effect';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
-import { MaterialSymbol, msAdd } from '@/components/icons';
 import {
   ScheduleAgendaView,
   ScheduleAllDayBanner,
@@ -28,7 +25,6 @@ import { getWeekDates, WEEK_ORDER_KEYS } from '@/components/feature/schedule/sch
 import { semanticSpacing } from '@/design-system/tokens';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
-import { useTheme } from '@/design-system/theme';
 import { formatWeekMonday } from '@/api/schedule';
 
 /** Friday is "today" in the design data. */
@@ -39,10 +35,8 @@ const PLANNER_SPAN = 3;
 const FOCUS_HOUR = 8;
 
 export function ScheduleScreen() {
-  const theme = useTheme();
   const tabBarPadding = useTabBarContentPadding();
   const onTabBarMinimizeScroll = useTabBarMinimizeScrollHandler();
-  const glass = useMemo(() => canUseLiquidGlass(), []);
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -114,6 +108,7 @@ export function ScheduleScreen() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onTodayPress={() => setSelectedIndex(todayIndex)}
+          showAdd={viewMode !== 'week'}
         />
         <ScheduleWeekStrip
           weekDates={weekDates}
@@ -166,41 +161,6 @@ export function ScheduleScreen() {
         ) : null}
       </ScrollView>
 
-      {/* Add event — present on agenda and day, not on the planner. */}
-      {viewMode !== 'week' ? (
-        <View
-          style={[
-            styles.fabWrap,
-            styles.fabShadow,
-            { bottom: tabBarPadding - 8, shadowColor: theme.color.primary },
-          ]}
-        >
-          {glass ? (
-            <GlassView
-              isInteractive
-              glassEffectStyle="regular"
-              colorScheme="light"
-              style={styles.fab}
-            >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Add event"
-                style={styles.fabFill}
-              >
-                <MaterialSymbol icon={msAdd} size={24} color={theme.color.primary} />
-              </Pressable>
-            </GlassView>
-          ) : (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Add event"
-              style={[styles.fab, styles.fabFallback]}
-            >
-              <MaterialSymbol icon={msAdd} size={24} color={theme.color.primary} />
-            </Pressable>
-          )}
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -224,37 +184,5 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: scheduleTheme.mastheadBorder,
-  },
-  fabWrap: {
-    position: 'absolute',
-    right: semanticSpacing.screenHorizontal,
-  },
-  /** Outer wrapper so the shadow isn't clipped by the glass `overflow: hidden`. */
-  fabShadow: {
-    borderRadius: 28,
-    borderCurve: 'continuous',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.28,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fabFill: {
-    flex: 1,
-    alignSelf: 'stretch',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  /** Only applied when liquid glass is unavailable. */
-  fabFallback: {
-    backgroundColor: scheduleTheme.fabFill,
   },
 });

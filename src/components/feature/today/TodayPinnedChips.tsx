@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -11,6 +11,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { GlassView } from 'expo-glass-effect';
+import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import { MaterialSymbol } from '@/components/icons';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
@@ -30,6 +32,47 @@ type Props = {
   onChipDelete?: (chip: PinnedChip) => void;
   onAddPress?: () => void;
 };
+
+/**
+ * Liquid glass pill with the flat fallback. The shadow stays on the Pressable
+ * outside it — glass sets `overflow: hidden` and would clip it — and press
+ * feedback is the existing scale rather than an opacity dip, which would
+ * flatten the effect.
+ */
+function ChipSurface({
+  radius,
+  children,
+}: {
+  radius: number;
+  children: React.ReactNode;
+}) {
+  const theme = useTheme();
+  const glass = useMemo(() => canUseLiquidGlass(), []);
+
+  if (!glass) {
+    return (
+      <View
+        style={[
+          styles.chipSurface,
+          { borderRadius: radius, backgroundColor: theme.color.background },
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+
+  return (
+    <GlassView
+      isInteractive
+      glassEffectStyle="regular"
+      colorScheme="light"
+      style={[styles.chipSurface, { borderRadius: radius }]}
+    >
+      {children}
+    </GlassView>
+  );
+}
 
 type ChipItemProps = {
   chip: PinnedChip;
@@ -91,32 +134,27 @@ function PinnedChipItem({
         accessibilityLabel={chip.label}
         accessibilityState={{ disabled: isEditing }}
         style={({ pressed }) => ({
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: theme.spacing.sm,
-          backgroundColor: theme.color.background,
           borderRadius: theme.radius.full,
           borderCurve: 'continuous',
-          paddingLeft: 12.5,
-          paddingRight: 16,
-          paddingVertical: 10,
-          borderWidth: 0.5,
-          borderColor: theme.color.background,
           transform: [{ scale: !isEditing && pressed ? 0.975 : 1 }],
           ...todayShadowSoft,
         })}
       >
-        <MaterialSymbol icon={chip.icon} size={18} color={chip.iconColor} />
-        <Text
-          variant="body"
-          style={{
-            fontWeight: '500',
-            fontSize: 17,
-            lineHeight: 17 * 1.2,
-          }}
-        >
-          {chip.label}
-        </Text>
+        <ChipSurface radius={theme.radius.full}>
+          <View style={[styles.chipContent, { gap: theme.spacing.sm }]}>
+            <MaterialSymbol icon={chip.icon} size={18} color={chip.iconColor} />
+            <Text
+              variant="body"
+              style={{
+                fontWeight: '500',
+                fontSize: 17,
+                lineHeight: 17 * 1.2,
+              }}
+            >
+              {chip.label}
+            </Text>
+          </View>
+        </ChipSurface>
       </Pressable>
 
       <Animated.View
@@ -265,3 +303,17 @@ export function TodayPinnedChips({
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  chipSurface: {
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  chipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 12.5,
+    paddingRight: 16,
+    paddingVertical: 10,
+  },
+});

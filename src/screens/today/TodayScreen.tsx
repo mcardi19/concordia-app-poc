@@ -281,6 +281,7 @@ export function TodayScreen({ navigation }: Props) {
             />
           </View>
         ) : null}
+
       </View>
 
       <TodayPinnedAddDrawer

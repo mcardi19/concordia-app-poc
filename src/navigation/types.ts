@@ -9,9 +9,9 @@ export type RootStackParamList = {
 };
 
 /**
- * Me is no longer a tab — the header profile button pushes it into whichever
- * stack the user is already in, so every tab stack registers these routes.
- * Keeping them in one map is what stops the five copies drifting apart.
+ * Me is no longer a tab — Home's header profile button pushes it into the
+ * Today stack. Kept as its own map so another tab can register the same five
+ * screens (via `meScreens`) if the profile action returns elsewhere.
  */
 export type MeRoutes = {
   MeHome: undefined;
@@ -25,11 +25,11 @@ export type TodayStackParamList = MeRoutes & {
   Today: undefined;
 };
 
-export type ScheduleStackParamList = MeRoutes & {
+export type ScheduleStackParamList = {
   Schedule: undefined;
 };
 
-export type CampusStackParamList = MeRoutes & {
+export type CampusStackParamList = {
   CampusHome: undefined;
   ShuttleSchedule: undefined;
   ShuttleTracker: undefined;

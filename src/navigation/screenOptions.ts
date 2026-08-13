@@ -33,3 +33,15 @@ export function useStackScreenOptions(): NativeStackNavigationOptions {
     headerBackButtonDisplayMode: 'minimal',
   };
 }
+
+/**
+ * The tab bar's resting style, for screens that hide it temporarily.
+ * Never set a backgroundColor on iOS — that forces an opaque
+ * UITabBarAppearance and kills iOS 26 liquid glass.
+ */
+export function defaultTabBarStyle(backgroundColor: string) {
+  return Platform.select({
+    ios: undefined,
+    android: { backgroundColor },
+  });
+}
