@@ -14,21 +14,24 @@ import {
 } from '@/components/feature/schedule';
 import {
   MOCK_ALL_DAY_ITEMS,
-  MOCK_NOW_MINUTES,
   MOCK_WEEK_EVENTS,
 } from '@/components/feature/schedule/scheduleMockData';
 import {
   DAY_HOUR_HEIGHT,
   PLANNER_HOUR_HEIGHT,
 } from '@/components/feature/schedule/scheduleTheme';
-import { getWeekDates, WEEK_ORDER_KEYS } from '@/components/feature/schedule/scheduleUtils';
+import {
+  getDayKey,
+  getWeekDates,
+  isSameDay,
+  WEEK_ORDER_KEYS,
+} from '@/components/feature/schedule/scheduleUtils';
+import { useNow } from '@/hooks';
 import { semanticSpacing } from '@/design-system/tokens';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { formatWeekMonday } from '@/api/schedule';
 
-/** Friday is "today" in the design data. */
-const TODAY_KEY = 'fri';
 /** The 3-day planner shows today plus the next two days. */
 const PLANNER_SPAN = 3;
 /** Hour the day/planner grids open on — full day still scrolls above/below. */
@@ -39,15 +42,21 @@ export function ScheduleScreen() {
   const onTabBarMinimizeScroll = useTabBarMinimizeScrollHandler();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
+  const now = useNow();
 
   const [weekMonday] = useState(() => formatWeekMonday(new Date()));
   const weekDates = useMemo(() => getWeekDates(weekMonday), [weekMonday]);
   const [viewMode, setViewMode] = useState<ScheduleViewMode>('day');
 
-  const todayIndex = WEEK_ORDER_KEYS.indexOf(TODAY_KEY);
-  const [selectedIndex, setSelectedIndex] = useState(todayIndex);
+  const todayKey = getDayKey(now);
+  const todayIndex = weekDates.findIndex((d) => isSameDay(d, now));
+  const [selectedIndex, setSelectedIndex] = useState(() =>
+    weekDates.findIndex((d) => isSameDay(d, new Date())),
+  );
   const selectedDate = weekDates[selectedIndex] ?? weekDates[0];
-  const selectedKey = WEEK_ORDER_KEYS[selectedIndex] ?? TODAY_KEY;
+  const selectedKey = WEEK_ORDER_KEYS[selectedIndex] ?? todayKey;
+  const isViewingToday = isSameDay(selectedDate, now);
+  const nowMinutes = isViewingToday ? now.getHours() * 60 + now.getMinutes() : undefined;
 
   const dayEvents = useMemo(
     () =>
@@ -68,17 +77,17 @@ export function ScheduleScreen() {
           ? date.toLocaleDateString('en-CA', { weekday: 'narrow' })
           : dayKey[0].toUpperCase(),
         dateLabel: date ? String(date.getDate()) : '',
-        isToday: dayKey === TODAY_KEY,
+        isToday: dayKey === todayKey,
       };
     });
-  }, [selectedIndex, weekDates]);
+  }, [selectedIndex, weekDates, todayKey]);
 
   const plannerEvents = useMemo(() => {
     const keys = new Set(plannerDays.map((d) => d.dayKey));
     return MOCK_WEEK_EVENTS.filter((e) => keys.has(e.dayKey));
   }, [plannerDays]);
 
-  const showsAllDayBanner = viewMode === 'day' && selectedKey === TODAY_KEY;
+  const showsAllDayBanner = viewMode === 'day' && isViewingToday;
 
   // Full-day grids start at midnight; land on the morning so classes are in view.
   useEffect(() => {
@@ -144,15 +153,15 @@ export function ScheduleScreen() {
           <ScheduleAgendaView
             events={dayEvents}
             weekDates={weekDates}
-            allDayItems={selectedKey === TODAY_KEY ? MOCK_ALL_DAY_ITEMS : []}
-            todayKey={TODAY_KEY}
+            allDayItems={isViewingToday ? MOCK_ALL_DAY_ITEMS : []}
+            todayKey={todayKey}
           />
         ) : null}
 
         {viewMode === 'day' ? (
           <ScheduleDayTimeline
             events={dayEvents}
-            nowMinutes={selectedKey === TODAY_KEY ? MOCK_NOW_MINUTES : undefined}
+            nowMinutes={nowMinutes}
           />
         ) : null}
 

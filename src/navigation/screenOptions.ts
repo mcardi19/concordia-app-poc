@@ -6,6 +6,9 @@ import { primitiveFontWeight } from '@/design-system/tokens/primitive';
 /** Inactive tab label / icon chrome — matches iOS unselected tab label (~secondaryLabel). */
 export const NAV_TAB_INACTIVE = '#3B3B3C';
 
+/** Active-tab selection capsule — light brand wash (schedule fabFill family). */
+export const NAV_TAB_SELECTION_TINT = '#F4E7EA';
+
 export function useStackContentStyle() {
   const theme = useTheme();
   return { backgroundColor: theme.color.background };

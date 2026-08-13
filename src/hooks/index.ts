@@ -9,3 +9,4 @@ export { useBuildings } from './useBuildings';
 export { useCampusUserLocation } from './useCampusUserLocation';
 export { useFeaturedEvents } from './useFeaturedEvents';
 export { useShuttleTracker } from './useShuttleTracker';
+export { useNow } from './useNow';

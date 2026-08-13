@@ -131,6 +131,8 @@ export function CampusHomeScreen({ navigation }: Props) {
                 key={building.id}
                 coordinate={{ latitude: building.lat, longitude: building.lng }}
                 identifier={building.id}
+                title={building.code}
+                titleVisibility="hidden"
                 pinColor={theme.color.primary}
                 isPreselected={selected}
                 stopPropagation
