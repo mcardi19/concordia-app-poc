@@ -1,3 +1,5 @@
+import type { MsIconDefinition } from 'material-symbols-react-native';
+import { msLocationOn, msMenuBook, msSchool, msSupportAgent } from '@/components/icons';
 import type { BuildingSummary, ServiceSearchResult } from '@/types/campus';
 import type { ScheduleEvent } from '@/components/feature/schedule/scheduleTypes';
 import type { CuratedBook, LibraryLoan } from '@/components/feature/library/libraryData';
@@ -21,6 +23,16 @@ export const CATEGORY_LABEL: Record<SearchCategory, string> = {
 };
 
 /** Display order of the result groups. Courses first — the likeliest target. */
+/** Row icon per category, so a result reads as its kind at a glance. */
+export function categoryIcon(category: SearchCategory): MsIconDefinition {
+  return {
+    course: msSchool,
+    building: msLocationOn,
+    library: msMenuBook,
+    service: msSupportAgent,
+  }[category];
+}
+
 export const CATEGORY_ORDER: SearchCategory[] = ['course', 'building', 'library', 'service'];
 
 function matches(query: string, ...fields: (string | undefined)[]): boolean {

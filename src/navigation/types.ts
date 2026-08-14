@@ -47,6 +47,7 @@ export type AcademicsStackParamList = {
 
 export type SearchStackParamList = {
   Search: undefined;
+  SearchCategory: { categoryKey: string };
 };
 
 export type MainTabParamList = {

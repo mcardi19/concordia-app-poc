@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GlobalSearchScreen } from '@/screens/search/GlobalSearchScreen';
+import { SearchCategoryScreen } from '@/screens/search/SearchCategoryScreen';
 import { useStackScreenOptions } from './screenOptions';
 import type { SearchStackParamList } from './types';
 
@@ -12,6 +13,7 @@ export function SearchStack() {
   return (
     <Stack.Navigator screenOptions={{ ...screenOptions, headerShown: false }}>
       <Stack.Screen name="Search" component={GlobalSearchScreen} />
+      <Stack.Screen name="SearchCategory" component={SearchCategoryScreen} />
     </Stack.Navigator>
   );
 }
