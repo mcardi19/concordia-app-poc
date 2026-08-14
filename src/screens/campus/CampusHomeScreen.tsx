@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassActionButton, Screen, Text } from '@/components/design-system';
 import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
 import { CampusQuickCard } from '@/components/feature/campus/CampusQuickCard';
+import { CampusSearchBar } from '@/components/feature/campus/CampusSearchBar';
 import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 import { MaterialSymbol, msMyLocation } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
@@ -65,6 +66,7 @@ export function CampusHomeScreen({ navigation }: Props) {
    */
   const swallowNextMapPressRef = useRef(false);
   const locatingRef = useRef(false);
+  const [query, setQuery] = useState('');
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingSummary | null>(
     null
   );
@@ -121,6 +123,7 @@ export function CampusHomeScreen({ navigation }: Props) {
   const selectBuilding = useCallback((building: BuildingSummary) => {
     swallowNextMapPressRef.current = true;
     setSelectedBuilding(building);
+    setQuery('');
     Keyboard.dismiss();
     mapRef.current?.animateToRegion(regionForBuilding(building), 400);
   }, []);
@@ -233,6 +236,21 @@ export function CampusHomeScreen({ navigation }: Props) {
           ]}
         >
           <View pointerEvents="box-none">
+            {/*
+              Campus searches the map, not the app: a hit here selects the
+              building and flies the camera to it. That is why this stays an
+              inline field rather than the header action the other tabs use —
+              handing off to the app-wide Search screen would lose the map.
+            */}
+            <CampusSearchBar
+              query={query}
+              onChangeQuery={setQuery}
+              buildings={buildings}
+              campusId="sgw"
+              onSelectBuilding={selectBuilding}
+              style={{ marginBottom: theme.spacing.sm }}
+            />
+
             <View
               pointerEvents="box-none"
               style={[styles.locateRow, { marginBottom: theme.spacing.sm }]}

@@ -6,6 +6,7 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
+  msChevronLeft,
   msDirectionsBus,
   msLocalLibrary,
   msNorthEast,
@@ -33,7 +34,7 @@ import { useServicesSearch } from '@/hooks/useServicesSearch';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import { CURATED_BOOKS, LIBRARY_LOANS } from '@/components/feature/library/libraryData';
-import type { SearchStackScreenProps } from '@/navigation/types';
+import type { SearchScreenProps } from '@/navigation/types';
 import {
   CATEGORY_LABEL,
   CATEGORY_ORDER,
@@ -47,7 +48,7 @@ import {
 } from './globalSearch';
 import { searchTheme } from './searchTheme';
 
-type Props = SearchStackScreenProps<'Search'>;
+type Props = SearchScreenProps<'Search'>;
 
 /** Seeded so the zero state has something to show before any search is run. */
 const SEED_RECENTS = [
@@ -164,19 +165,38 @@ export function GlobalSearchScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 12 }]}>
+      {/*
+        Search is pushed by a header action rather than being a tab, and it
+        renders with `headerShown: false` so the field keeps the top of the
+        screen — this row carries the only visible way back. Matches the back
+        control on SearchCategory.
+      */}
       <View style={styles.fieldWrap}>
-        {glass ? (
-          <GlassView
-            isInteractive
-            glassEffectStyle="regular"
-            colorScheme="light"
-            style={styles.field}
+        <View style={styles.fieldRow}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            hitSlop={8}
           >
-            {field}
-          </GlassView>
-        ) : (
-          <View style={[styles.field, styles.fieldFallback]}>{field}</View>
-        )}
+            <SearchSurface style={styles.backButton} radius={18}>
+              <MaterialSymbol icon={msChevronLeft} size={20} color={theme.color.primary} />
+            </SearchSurface>
+          </Pressable>
+
+          {glass ? (
+            <GlassView
+              isInteractive
+              glassEffectStyle="regular"
+              colorScheme="light"
+              style={styles.field}
+            >
+              {field}
+            </GlassView>
+          ) : (
+            <View style={[styles.field, styles.fieldFallback]}>{field}</View>
+          )}
+        </View>
       </View>
 
       {searched ? (
@@ -501,7 +521,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingBottom: 12,
   },
+  fieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   field: {
+    // Takes the row's remaining width beside the back control.
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,

@@ -9,10 +9,18 @@ export type RootStackParamList = {
 };
 
 /**
- * Me is no longer a tab — Home's header profile button pushes it into the
- * Today stack. Kept as its own map so another tab can register the same five
- * screens (via `meScreens`) if the profile action returns elsewhere.
+ * Search is not a tab — a header action button pushes it into the stack the
+ * user is already in, so Home, Academic and Me each register the same two
+ * screens. Declaring them once here is what keeps the copies identical (via
+ * `searchScreens`); a title or option changed in one stack would otherwise
+ * silently differ from the others.
  */
+export type SearchRoutes = {
+  Search: undefined;
+  SearchCategory: { categoryKey: string };
+};
+
+/** The Me tab's own screens, kept separate so `MeStackParamList` reads as a sum. */
 export type MeRoutes = {
   MeHome: undefined;
   Settings: undefined;
@@ -21,7 +29,7 @@ export type MeRoutes = {
   Balance: undefined;
 };
 
-export type TodayStackParamList = MeRoutes & {
+export type TodayStackParamList = SearchRoutes & {
   Today: undefined;
 };
 
@@ -37,7 +45,7 @@ export type CampusStackParamList = {
   ServicesSearch: undefined;
 };
 
-export type AcademicsStackParamList = {
+export type AcademicsStackParamList = SearchRoutes & {
   AcademicsHome: undefined;
   AcademicCalendar: undefined;
   Grades: undefined;
@@ -45,17 +53,14 @@ export type AcademicsStackParamList = {
   Library: undefined;
 };
 
-export type SearchStackParamList = {
-  Search: undefined;
-  SearchCategory: { categoryKey: string };
-};
+export type MeStackParamList = MeRoutes & SearchRoutes;
 
 export type MainTabParamList = {
   Today: undefined;
   Schedule: undefined;
   Campus: undefined;
   Library: undefined;
-  Search: undefined;
+  Me: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<
@@ -85,18 +90,18 @@ export type AcademicsStackScreenProps<T extends keyof AcademicsStackParamList> =
     MainTabScreenProps<'Library'>
   >;
 
-export type SearchStackScreenProps<T extends keyof SearchStackParamList> = CompositeScreenProps<
-  NativeStackScreenProps<SearchStackParamList, T>,
-  MainTabScreenProps<'Search'>
+/**
+ * Search screens render inside whichever tab stack pushed them, so they are
+ * typed against the shared route map rather than one owning stack.
+ */
+export type SearchScreenProps<T extends keyof SearchRoutes> = CompositeScreenProps<
+  NativeStackScreenProps<SearchRoutes, T>,
+  MainTabScreenProps<keyof MainTabParamList>
 >;
 
-/**
- * Me screens render inside whichever tab stack pushed them, so they are typed
- * against the shared route map rather than one owning stack.
- */
-export type MeStackScreenProps<T extends keyof MeRoutes> = CompositeScreenProps<
-  NativeStackScreenProps<MeRoutes, T>,
-  MainTabScreenProps<keyof MainTabParamList>
+export type MeStackScreenProps<T extends keyof MeStackParamList> = CompositeScreenProps<
+  NativeStackScreenProps<MeStackParamList, T>,
+  MainTabScreenProps<'Me'>
 >;
 
 export type MainTabScreenProps<T extends keyof MainTabParamList> = CompositeScreenProps<

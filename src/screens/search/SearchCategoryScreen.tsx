@@ -12,11 +12,11 @@ import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { getCampusServices } from '@/data/buildings';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
-import type { SearchStackScreenProps } from '@/navigation/types';
+import type { SearchScreenProps } from '@/navigation/types';
 import { categoryIcon } from './globalSearch';
 import { searchTheme } from './searchTheme';
 
-type Props = SearchStackScreenProps<'SearchCategory'>;
+type Props = SearchScreenProps<'SearchCategory'>;
 
 /**
  * A service category from the browse rail, opened whole.

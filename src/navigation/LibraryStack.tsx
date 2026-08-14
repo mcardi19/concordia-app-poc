@@ -4,6 +4,7 @@ import { AcademicsHomeScreen } from '@/screens/academics/AcademicsHomeScreen';
 import { AcademicCalendarScreen } from '@/screens/academics/AcademicCalendarScreen';
 import { GradesScreen } from '@/screens/grades/GradesScreen';
 import { LibraryScreen } from '@/screens/library/LibraryScreen';
+import { searchScreens } from './searchRoutes';
 import { useStackScreenOptions } from './screenOptions';
 import type { AcademicsStackParamList } from './types';
 
@@ -32,6 +33,7 @@ export function LibraryStack() {
       />
       <Stack.Screen name="Grades" component={GradesScreen} options={{ title: 'Grade history' }} />
       <Stack.Screen name="Library" component={LibraryScreen} options={{ title: 'Library' }} />
+      {searchScreens(Stack)}
     </Stack.Navigator>
   );
 }

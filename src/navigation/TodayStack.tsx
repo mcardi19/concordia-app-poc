@@ -4,8 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackHeaderItem } from '@react-navigation/native-stack';
 import { TodayScreen } from '@/screens/today/TodayScreen';
 import { useTheme } from '@/design-system/theme';
-import { meNotificationCount } from '@/screens/me/accountData';
-import { meScreens } from './meRoutes';
+import { searchScreens } from './searchRoutes';
 import { useStackScreenOptions } from './screenOptions';
 import { TodayHeaderActions } from './TodayHeaderActions';
 import type { TodayStackParamList } from './types';
@@ -15,6 +14,7 @@ const Stack = createNativeStackNavigator<TodayStackParamList>();
 /** Material Symbols Rounded 400, exported as template PNGs for native bar buttons. */
 const HEADER_ICONS = {
   security: require('../../assets/header/security.png'),
+  search: require('../../assets/header/search.png'),
 } as const;
 
 export function TodayStack() {
@@ -26,14 +26,9 @@ export function TodayStack() {
    * gives each its own liquid-glass capsule — a React view in `headerRight`
    * gets a single platter drawn around the whole slot, which reads as one
    * segmented control.
-   *
-   * The profile action stays native by using the item's own affordances rather
-   * than a custom view: `label` carries the initials and `badge` is UIKit's own
-   * bar-button badge (iOS 26+). Schedule and Campus have no native header, so
-   * they keep the React `HeaderProfileButton`.
    */
   const headerRightItems = useCallback(
-    (openProfile: () => void): NativeStackHeaderItem[] => [
+    (openSearch: () => void): NativeStackHeaderItem[] => [
       {
         type: 'button',
         label: '',
@@ -46,24 +41,11 @@ export function TodayStack() {
       {
         type: 'button',
         label: '',
-        /*
-          An icon item, not a text one: UIKit sizes a text bar-button to its
-          label plus fixed padding and ignores `width`, so initials always came
-          out as a pill beside the icon item's circle.
-
-          SF Symbol rather than the Material Symbol the rest of the header uses
-          — the exported PNG pipeline (see HEADER_ICONS) has no profile glyph
-          yet. Swap `icon` to a template PNG once one exists.
-        */
-        icon: { type: 'sfSymbol', name: 'person.crop.circle' },
+        icon: { type: 'image', source: HEADER_ICONS.search, tinted: true },
         sharesBackground: false,
         tintColor: theme.color.primary,
-        badge: meNotificationCount > 0 ? { value: meNotificationCount } : undefined,
-        accessibilityLabel:
-          meNotificationCount > 0
-            ? `Profile, ${meNotificationCount} notifications`
-            : 'Profile',
-        onPress: openProfile,
+        accessibilityLabel: 'Search',
+        onPress: openSearch,
       },
     ],
     [theme.color.primary],
@@ -84,15 +66,17 @@ export function TodayStack() {
                 headerLargeTitleEnabled: false,
                 headerTitle: '',
                 unstable_headerRightItems: () =>
-                  headerRightItems(() => navigation.navigate('MeHome')),
+                  headerRightItems(() => navigation.navigate('Search')),
               }
             : {
                 title: 'Home',
-                headerRight: () => <TodayHeaderActions />,
+                headerRight: () => (
+                  <TodayHeaderActions onSearchPress={() => navigation.navigate('Search')} />
+                ),
               }),
         })}
       />
-      {meScreens(Stack)}
+      {searchScreens(Stack)}
     </Stack.Navigator>
   );
 }

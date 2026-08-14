@@ -12,6 +12,7 @@ import {
   MaterialSymbol,
   msChevronLeft,
   msNotifications,
+  msSearch,
   msSettings,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
@@ -46,10 +47,11 @@ type HeaderChromeProps = {
   notificationCount?: number;
   onNotificationsPress?: () => void;
   onSettingsPress?: () => void;
+  onSearchPress?: () => void;
   /**
-   * Me is pushed into whichever tab stack opened it and renders with
-   * `headerShown: false`, so this chrome carries the only visible way back —
-   * without it the edge-swipe is the sole exit.
+   * Me is a tab root again, so this is normally absent. Kept for any host that
+   * pushes Me instead: the screen renders with `headerShown: false`, and
+   * without this the edge-swipe would be the only way out.
    */
   onBackPress?: () => void;
 };
@@ -261,6 +263,7 @@ export function MeHeaderChrome({
   notificationCount = 0,
   onNotificationsPress,
   onSettingsPress,
+  onSearchPress,
   onBackPress,
 }: HeaderChromeProps) {
   const insets = useSafeAreaInsets();
@@ -282,7 +285,7 @@ export function MeHeaderChrome({
         </ChromeGlass>
       ) : null}
 
-      {/* Pushes the trailing pair right when there is no back control. */}
+      {/* Pushes the trailing actions right when there is no back control. */}
       <View style={styles.chromeSpring} />
 
       {/* Notifications + settings share one dark pill. */}
@@ -300,6 +303,17 @@ export function MeHeaderChrome({
         }}
       />
 
+      {/*
+        Trailing-most, matching Home, where search is the last bar-button item.
+        Its own capsule rather than a third seat in the pill: that pill groups
+        the account's own chrome, and search leaves Me entirely — same
+        reasoning as Home's `sharesBackground: false` items.
+      */}
+      {onSearchPress ? (
+        <ChromeGlass style={styles.chromeRound}>
+          <ChromeHit icon={msSearch} label="Search" onPress={onSearchPress} />
+        </ChromeGlass>
+      ) : null}
     </View>
   );
 }

@@ -14,6 +14,11 @@ import {
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
+import {
+  HEADER_CHROME_HORIZONTAL_INSET,
+  HEADER_CHROME_TOP_GAP,
+} from '@/navigation/HeaderIconButton';
+import { HeroSearchButton } from '@/navigation/HeroSearchButton';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
 import type { AcademicsStackScreenProps } from '@/navigation/types';
@@ -364,6 +369,18 @@ export function AcademicsHomeScreen({ navigation }: Props) {
           </View>
         </View>
       </ScrollView>
+
+      {/*
+        Fixed rather than inline in the masthead: the hero scrolls away, and
+        search has to stay reachable the way Home's header button is. Same
+        coordinates as `MeHeaderChrome` so the two burgundy surfaces line up.
+      */}
+      <View
+        pointerEvents="box-none"
+        style={[styles.chromeOverlay, { top: insets.top + HEADER_CHROME_TOP_GAP }]}
+      >
+        <HeroSearchButton onPress={() => navigation.navigate('Search')} />
+      </View>
     </View>
   );
 }
@@ -376,6 +393,11 @@ const styles = StyleSheet.create({
   hero: {
     paddingHorizontal: 22,
     paddingBottom: 22,
+  },
+  chromeOverlay: {
+    position: 'absolute',
+    right: HEADER_CHROME_HORIZONTAL_INSET,
+    zIndex: 20,
   },
   statsRow: {
     flexDirection: 'row',
