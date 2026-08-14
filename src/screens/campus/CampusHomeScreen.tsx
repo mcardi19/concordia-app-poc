@@ -1,26 +1,48 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, Keyboard, Platform } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  Linking,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Screen, Text } from '@/components/design-system';
+import { GlassActionButton, Screen, Text } from '@/components/design-system';
 import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
-import { useTheme } from '@/design-system/theme';
+import { CampusQuickCard } from '@/components/feature/campus/CampusQuickCard';
+import { todayShadowSoft } from '@/components/feature/today/todayShadows';
+import { MaterialSymbol, msMyLocation } from '@/components/icons';
+import { radiusStyle, useTheme } from '@/design-system/theme';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useCampusUserLocation } from '@/hooks/useCampusUserLocation';
-import { useTabBarScrollInset } from '@/navigation/tabBarInset';
+import {
+  HEADER_BAR_BUTTON_SIZE,
+  HEADER_ICON_SIZE,
+} from '@/navigation/HeaderIconButton';
+import { useTabBarOverlayInset } from '@/navigation/tabBarInset';
 import type { CampusStackScreenProps } from '@/navigation/types';
+import { getBuildingCatalogRecord } from '@/data/buildings';
+import {
+  buildingMatchesMapFilter,
+  type CampusMapFilter,
+} from '@/services/campus/buildingPresentation';
 import { CAMPUS_MAP_DEFAULTS, type BuildingSummary } from '@/types/campus';
 
 type Props = CampusStackScreenProps<'CampusHome'>;
 
 const DEFAULT_CAMPUS = CAMPUS_MAP_DEFAULTS.sgw;
 
+const MAP_FOCUS_DELTA = 0.004;
+
 function regionForBuilding(building: BuildingSummary): Region {
   return {
     latitude: building.lat,
     longitude: building.lng,
-    latitudeDelta: 0.004,
-    longitudeDelta: 0.004,
+    latitudeDelta: MAP_FOCUS_DELTA,
+    longitudeDelta: MAP_FOCUS_DELTA,
   };
 }
 
@@ -35,19 +57,22 @@ function defaultTabBarStyle(backgroundColor: string) {
 export function CampusHomeScreen({ navigation }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const tabBarInset = useTabBarScrollInset();
+  const tabBarOverlayInset = useTabBarOverlayInset();
   const mapRef = useRef<MapView>(null);
   /**
    * Apple Maps fires MapView `onPress` for marker taps too. Defer + swallow so
    * we don't clear selection in the same gesture (which kills the pin scale).
    */
   const swallowNextMapPressRef = useRef(false);
+  const locatingRef = useRef(false);
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingSummary | null>(
     null
   );
   const { data: buildings = [], isFetching, isError, isPlaceholderData } =
     useBuildings();
-  const { permissionGranted } = useCampusUserLocation();
+  const { permissionGranted, getCurrentCoords } = useCampusUserLocation();
+  const [isLocating, setIsLocating] = useState(false);
+  const [mapFilter, setMapFilter] = useState<CampusMapFilter>('buildings');
 
   const initialRegion = useMemo<Region>(
     () => ({
@@ -59,10 +84,18 @@ export function CampusHomeScreen({ navigation }: Props) {
     []
   );
 
-  const visibleBuildings = useMemo(
-    () => buildings.filter((building) => building.campusId === 'sgw'),
-    [buildings]
-  );
+  const visibleBuildings = useMemo(() => {
+    const campus = buildings.filter((building) => building.campusId === 'sgw');
+    if (mapFilter === 'buildings') {
+      return campus;
+    }
+    return campus.filter((building) =>
+      buildingMatchesMapFilter(
+        getBuildingCatalogRecord(building.campusId, building.code),
+        mapFilter
+      )
+    );
+  }, [buildings, mapFilter]);
 
   /**
    * Hide the native tab bar while the drawer is open so the in-screen sheet can
@@ -108,6 +141,50 @@ export function CampusHomeScreen({ navigation }: Props) {
     }, 0);
   }, [clearSelection]);
 
+  const goToCurrentLocation = useCallback(async () => {
+    if (locatingRef.current) {
+      return;
+    }
+    locatingRef.current = true;
+    setIsLocating(true);
+    try {
+      const coords = await getCurrentCoords();
+      if (!coords) {
+        Alert.alert(
+          'Location unavailable',
+          'Turn on location access to center the map on you.',
+          [
+            { text: 'Not now', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => void Linking.openSettings() },
+          ]
+        );
+        return;
+      }
+      mapRef.current?.animateToRegion(
+        {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          latitudeDelta: MAP_FOCUS_DELTA,
+          longitudeDelta: MAP_FOCUS_DELTA,
+        },
+        400
+      );
+    } finally {
+      locatingRef.current = false;
+      setIsLocating(false);
+    }
+  }, [getCurrentCoords]);
+
+  const onPressShuttle = useCallback(() => {
+    navigation.navigate('ShuttleTracker');
+  }, [navigation]);
+
+  const onPressFilter = useCallback((filter: CampusMapFilter) => {
+    setMapFilter((current) =>
+      filter === 'buildings' || current === filter ? 'buildings' : filter
+    );
+  }, []);
+
   const showLoadingChip = isFetching && isPlaceholderData;
 
   return (
@@ -151,48 +228,98 @@ export function CampusHomeScreen({ navigation }: Props) {
             {
               paddingTop: insets.top + theme.spacing.sm,
               paddingHorizontal: theme.spacing.screenHorizontal,
-              paddingBottom: tabBarInset + theme.spacing.sm,
+              paddingBottom: tabBarOverlayInset,
             },
           ]}
         >
-          {showLoadingChip ? (
-            <Text
-              variant="caption"
-              color="secondary"
-              style={[
-                styles.statusChip,
-                {
-                  marginTop: theme.spacing.sm,
-                  backgroundColor: theme.color.background,
-                  borderRadius: theme.radius.md,
-                  paddingHorizontal: theme.spacing.sm,
-                  paddingVertical: theme.spacing.xs,
-                  alignSelf: 'flex-start',
-                },
-              ]}
+          <View pointerEvents="box-none">
+            <View
+              pointerEvents="box-none"
+              style={[styles.locateRow, { marginBottom: theme.spacing.sm }]}
             >
-              Loading buildings…
-            </Text>
-          ) : null}
-          {isError ? (
-            <Text
-              variant="caption"
-              color="secondary"
-              style={[
-                styles.statusChip,
-                {
-                  marginTop: theme.spacing.sm,
-                  backgroundColor: theme.color.background,
-                  borderRadius: theme.radius.md,
-                  paddingHorizontal: theme.spacing.sm,
-                  paddingVertical: theme.spacing.xs,
-                  alignSelf: 'flex-start',
-                },
-              ]}
-            >
-              Showing offline building list
-            </Text>
-          ) : null}
+              <View
+                style={[
+                  todayShadowSoft,
+                  radiusStyle(HEADER_BAR_BUTTON_SIZE / 2),
+                ]}
+              >
+                <GlassActionButton
+                  accessibilityLabel="Go to current location"
+                  accessibilityState={{ busy: isLocating }}
+                  colorScheme="light"
+                  tintColor="rgba(255,255,255,0.35)"
+                  fallbackBackgroundColor="rgba(255,255,255,0.82)"
+                  disabled={isLocating}
+                  onPress={() => {
+                    void goToCurrentLocation();
+                  }}
+                  style={[
+                    styles.locateButton,
+                    radiusStyle(HEADER_BAR_BUTTON_SIZE / 2),
+                  ]}
+                >
+                  {isLocating ? (
+                    <ActivityIndicator color={theme.color.primary} />
+                  ) : (
+                    <MaterialSymbol
+                      icon={msMyLocation}
+                      size={HEADER_ICON_SIZE}
+                      color={theme.color.text.brand}
+                    />
+                  )}
+                </GlassActionButton>
+              </View>
+            </View>
+            {showLoadingChip ? (
+              <Text
+                variant="caption"
+                color="secondary"
+                style={[
+                  styles.statusChip,
+                  {
+                    marginTop: theme.spacing.sm,
+                    backgroundColor: theme.color.background,
+                    borderRadius: theme.radius.md,
+                    paddingHorizontal: theme.spacing.sm,
+                    paddingVertical: theme.spacing.xs,
+                    alignSelf: 'flex-start',
+                  },
+                ]}
+              >
+                Loading buildings…
+              </Text>
+            ) : null}
+            {isError ? (
+              <Text
+                variant="caption"
+                color="secondary"
+                style={[
+                  styles.statusChip,
+                  {
+                    marginTop: theme.spacing.sm,
+                    backgroundColor: theme.color.background,
+                    borderRadius: theme.radius.md,
+                    paddingHorizontal: theme.spacing.sm,
+                    paddingVertical: theme.spacing.xs,
+                    alignSelf: 'flex-start',
+                  },
+                ]}
+              >
+                Showing offline building list
+              </Text>
+            ) : null}
+          </View>
+
+          <View style={styles.overlaySpacer} pointerEvents="none" />
+
+          {selectedBuilding ? null : (
+            <CampusQuickCard
+              campusName="SGW campus"
+              activeFilter={mapFilter}
+              onPressShuttle={onPressShuttle}
+              onPressFilter={onPressFilter}
+            />
+          )}
         </View>
 
         <BuildingDrawer building={selectedBuilding} onClose={clearSelection} />
@@ -207,6 +334,17 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
+  },
+  overlaySpacer: {
+    flex: 1,
+  },
+  locateRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  locateButton: {
+    width: HEADER_BAR_BUTTON_SIZE,
+    height: HEADER_BAR_BUTTON_SIZE,
   },
   statusChip: {
     overflow: 'hidden',

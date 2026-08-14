@@ -6,7 +6,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { GlassView } from 'expo-glass-effect';
+import { GlassView, type GlassColorScheme } from 'expo-glass-effect';
 import { canUseLiquidGlass } from './liquidGlass';
 
 export type GlassActionButtonProps = Omit<PressableProps, 'children' | 'style'> & {
@@ -21,6 +21,8 @@ export type GlassActionButtonProps = Omit<PressableProps, 'children' | 'style'> 
   accessibilityLabel: string;
   /** When false, skip the press scale (avoids a pop during expand handoff). */
   pressScaleEnabled?: boolean;
+  colorScheme?: GlassColorScheme;
+  tintColor?: string;
 };
 
 /**
@@ -34,6 +36,8 @@ export function GlassActionButton({
   accessibilityLabel,
   disabled,
   pressScaleEnabled = true,
+  colorScheme,
+  tintColor,
   ...pressableProps
 }: GlassActionButtonProps) {
   const useGlass = useMemo(() => canUseLiquidGlass(), []);
@@ -63,7 +67,13 @@ export function GlassActionButton({
       {...pressableProps}
     >
       {useGlass ? (
-        <GlassView isInteractive glassEffectStyle="regular" style={[surfaceStyle, style]}>
+        <GlassView
+          isInteractive
+          glassEffectStyle="regular"
+          colorScheme={colorScheme}
+          tintColor={tintColor}
+          style={[surfaceStyle, style]}
+        >
           {children}
         </GlassView>
       ) : (

@@ -22,6 +22,17 @@ export function useTabBarScrollInset(): number {
 }
 
 /**
+ * Bottom offset for overlays that must sit just above the native tab bar.
+ * Full-bleed screens (`safe={false}`) are not inset by the bar, so its height
+ * and the home-indicator inset have to be added by hand.
+ */
+export function useTabBarOverlayInset(): number {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  return NATIVE_TAB_BAR_HEIGHT + insets.bottom + theme.spacing.sm;
+}
+
+/**
  * Full bottom clearance for scroll views that opt out of automatic content
  * inset adjustment (`contentInsetAdjustmentBehavior="never"`, needed when
  * content runs under the status bar). Those get no automatic tab bar inset,

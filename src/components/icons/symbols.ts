@@ -30,7 +30,6 @@ import { msSchoolFill } from '@material-symbols-react-native/rounded-400/msSchoo
 import { msAccountCircle } from '@material-symbols-react-native/rounded-400/msAccountCircle';
 import { msAccountCircleFill } from '@material-symbols-react-native/rounded-400/msAccountCircleFill';
 import { msAccountBalanceWallet } from '@material-symbols-react-native/rounded-400/msAccountBalanceWallet';
-import { msSchedule } from '@material-symbols-react-native/rounded-400/msSchedule';
 import { msDirectionsBus } from '@material-symbols-react-native/rounded-400/msDirectionsBus';
 import { msEvent } from '@material-symbols-react-native/rounded-400/msEvent';
 import { msSearch } from '@material-symbols-react-native/rounded-400/msSearch';
@@ -43,6 +42,7 @@ import { msMeetingRoom } from '@material-symbols-react-native/rounded-400/msMeet
 import { msBookmarks } from '@material-symbols-react-native/rounded-400/msBookmarks';
 import { msSecurity } from '@material-symbols-react-native/rounded-400/msSecurity';
 import { msLocationOn } from '@material-symbols-react-native/rounded-400/msLocationOn';
+import { msMyLocation } from '@material-symbols-react-native/rounded-400/msMyLocation';
 import { msClose } from '@material-symbols-react-native/rounded-400/msClose';
 import { msNotifications } from '@material-symbols-react-native/rounded-400/msNotifications';
 import { msSettings } from '@material-symbols-react-native/rounded-400/msSettings';
@@ -56,6 +56,16 @@ import { msBookmarkFill } from '@material-symbols-react-native/rounded-400/msBoo
 import { msExpandMore } from '@material-symbols-react-native/rounded-400/msExpandMore';
 import { msCheck } from '@material-symbols-react-native/rounded-400/msCheck';
 import { msAdd } from '@material-symbols-react-native/rounded-400/msAdd';
+import { msAccessible } from '@material-symbols-react-native/rounded-400/msAccessible';
+import { msDirections } from '@material-symbols-react-native/rounded-400/msDirections';
+import { msDirectionsWalk } from '@material-symbols-react-native/rounded-400/msDirectionsWalk';
+import { msDoorFront } from '@material-symbols-react-native/rounded-400/msDoorFront';
+import { msGridView } from '@material-symbols-react-native/rounded-400/msGridView';
+import { msElevator } from '@material-symbols-react-native/rounded-400/msElevator';
+import { msWc } from '@material-symbols-react-native/rounded-400/msWc';
+import { msLocalCafe } from '@material-symbols-react-native/rounded-400/msLocalCafe';
+import { msPedalBike } from '@material-symbols-react-native/rounded-400/msPedalBike';
+import { msStorefront } from '@material-symbols-react-native/rounded-400/msStorefront';
 
 export type TabSymbolPair = {
   outline: MsIconDefinition;
@@ -86,7 +96,7 @@ export const featureSymbols: Record<FeatureSymbolKey, MsIconDefinition> = {
   calendar: msCalendarToday,
   school: msSchool,
   wallet: msAccountBalanceWallet,
-  schedule: msSchedule,
+  schedule: msScheduleClock,
   bus: msDirectionsBus,
   event: msEvent,
   search: msSearch,
@@ -114,6 +124,7 @@ export {
   msSecurity,
   msSearch,
   msLocationOn,
+  msMyLocation,
   msClose,
   msNotifications,
   msSettings,
@@ -127,6 +138,16 @@ export {
   msExpandMore,
   msCheck,
   msAdd,
+  msAccessible,
+  msDirections,
+  msDirectionsWalk,
+  msDoorFront,
+  msGridView,
+  msElevator,
+  msWc,
+  msLocalCafe,
+  msPedalBike,
+  msStorefront,
   msCalendarMonth,
   msEvent,
 };
@@ -150,3 +171,5 @@ export { msLocalLibrary };
 export { msNorthEast };
 export { msArrowForward };
 export { msSearchOff };
+export { msDirectionsBus };
+export { msMap };
