@@ -1,4 +1,14 @@
 import type { MsIconDefinition } from 'material-symbols-react-native';
+import { msSupportAgent } from '@material-symbols-react-native/rounded-400/msSupportAgent';
+import { msBalance } from '@material-symbols-react-native/rounded-400/msBalance';
+import { msGroups } from '@material-symbols-react-native/rounded-400/msGroups';
+import { msBed } from '@material-symbols-react-native/rounded-400/msBed';
+import { msFavorite } from '@material-symbols-react-native/rounded-400/msFavorite';
+import { msWork } from '@material-symbols-react-native/rounded-400/msWork';
+import { msLocalLibrary } from '@material-symbols-react-native/rounded-400/msLocalLibrary';
+import { msNorthEast } from '@material-symbols-react-native/rounded-400/msNorthEast';
+import { msArrowForward } from '@material-symbols-react-native/rounded-400/msArrowForward';
+import { msSearchOff } from '@material-symbols-react-native/rounded-400/msSearchOff';
 import { msHome } from '@material-symbols-react-native/rounded-400/msHome';
 import { msHomeFill } from '@material-symbols-react-native/rounded-400/msHomeFill';
 import { msCalendarMonth } from '@material-symbols-react-native/rounded-400/msCalendarMonth';
@@ -128,3 +138,15 @@ export const meAccountSymbols = {
   parking: msLocalParking,
   locker: msLock,
 } as const;
+
+/* Search & discovery — service categories, recents, empty states. */
+export { msSupportAgent };
+export { msBalance };
+export { msGroups };
+export { msBed };
+export { msFavorite };
+export { msWork };
+export { msLocalLibrary };
+export { msNorthEast };
+export { msArrowForward };
+export { msSearchOff };

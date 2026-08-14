@@ -6,4 +6,8 @@ export const queryKeys = {
   featuredEvents: ['featuredEvents'] as const,
   shuttleTracker: ['shuttleTracker'] as const,
   buildings: ['buildings'] as const,
+  campusServices: (campus: string) => ['campusServices', campus] as const,
+  libraryHours: (dateIso: string) => ['libraryHours', dateIso] as const,
+  libraryComputers: ['libraryComputers'] as const,
+  libraryRooms: ['libraryRooms'] as const,
 };

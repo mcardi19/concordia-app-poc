@@ -1,10 +1,8 @@
 import axios from 'axios';
 import { API_CONFIG } from '@/config/api';
+import { getCampusServices } from '@/data/buildings';
 import type { CampusCode, FeaturedEvent, ServiceSearchResult } from '@/types/campus';
 import {
-  extractLinkTexts,
-  getMarkerBlocks,
-  getMarkerField,
   getPageBlocks,
   getTagText,
 } from '@/utils/xml';
@@ -19,47 +17,7 @@ async function fetchXml(url: string): Promise<string> {
 }
 
 export async function fetchCampusServices(campus: CampusCode): Promise<ServiceSearchResult[]> {
-  const url =
-    campus === 'loy'
-      ? `${API_CONFIG.mapsProxyBaseUrl}/maps-loy.php?action=1`
-      : `${API_CONFIG.mapsProxyBaseUrl}/maps-sgw.php?action=1`;
-
-  let xml: string;
-  try {
-    xml = await fetchXml(url);
-  } catch {
-    xml = await fetchXml(
-      campus === 'loy' ? API_CONFIG.buildingsLoyXmlUrl : API_CONFIG.buildingsSgwXmlUrl
-    );
-  }
-
-  const results: ServiceSearchResult[] = [];
-  getMarkerBlocks(xml).forEach((block, index) => {
-    const buildingName = getMarkerField(block, 'name');
-    const servicesHtml = getMarkerField(block, 'services');
-    const departmentsHtml = getMarkerField(block, 'departments');
-
-    extractLinkTexts(servicesHtml).forEach((label) => {
-      results.push({
-        id: `svc-${campus}-${index}-${label}`,
-        label,
-        buildingName,
-        kind: 'service',
-      });
-    });
-    extractLinkTexts(departmentsHtml).forEach((label) => {
-      results.push({
-        id: `dept-${campus}-${index}-${label}`,
-        label,
-        buildingName,
-        kind: 'department',
-      });
-    });
-  });
-
-  return results.sort((a, b) =>
-    `${a.label} - ${a.buildingName}`.localeCompare(`${b.label} - ${b.buildingName}`)
-  );
+  return getCampusServices(campus);
 }
 
 export function filterServices(

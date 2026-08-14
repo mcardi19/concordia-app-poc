@@ -35,8 +35,10 @@ yarn-error.*
 .env.*
 !.env.example
 
-# typescript
-*.tsbuildinfo
+# sync script temp
+.tmp-catalog-overrides.cjs
+.tmp-catalog-overrides.mjs
+
 
 # generated native folders
 /ios

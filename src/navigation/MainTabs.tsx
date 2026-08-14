@@ -7,7 +7,7 @@ import { ScheduleStack } from './ScheduleStack';
 import { CampusStack } from './CampusStack';
 import { LibraryStack } from './LibraryStack';
 import { SearchStack } from './SearchStack';
-import { NAV_TAB_INACTIVE, NAV_TAB_SELECTION_TINT } from './screenOptions';
+import { NAV_TAB_INACTIVE } from './screenOptions';
 import { useTabBarMinimizeStore } from './tabBarMinimize';
 import type { MainTabParamList } from './types';
 
@@ -65,7 +65,6 @@ export function MainTabs() {
             fontWeight: '500',
           },
           tabBarActiveTintColor: theme.color.primary,
-          tabBarActiveIndicatorColor: NAV_TAB_SELECTION_TINT,
           // Labels still use this; icon colours are pre-baked (see TAB_IMAGES).
           tabBarInactiveTintColor: NAV_TAB_INACTIVE,
           // systemDefault keeps UIKit’s liquid glass. systemMaterial / backgroundColor disable it.

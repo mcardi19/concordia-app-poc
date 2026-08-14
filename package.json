@@ -11,7 +11,8 @@
     "postinstall": "patch-package",
     "test": "jest",
     "lint": "eslint .",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "sync:buildings": "node scripts/sync-buildings-catalog.mjs"
   },
   "dependencies": {
     "@material-symbols-react-native/rounded-400": "^1.0.0",

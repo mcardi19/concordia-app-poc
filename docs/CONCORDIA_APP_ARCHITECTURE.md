@@ -122,7 +122,7 @@ Screens do not call the API client directly; they use hooks that encapsulate API
 
 The app is designed so future modules can be added without breaking the foundation.
 
-- **Maps / service markers**: Campus home is a `react-native-maps` canvas with top search ([CampusHomeScreen](../src/screens/campus/CampusHomeScreen.tsx)); buildings from Open Data `facilities/buildinglist/` via [useBuildings](../src/hooks/useBuildings.ts). After adding `react-native-maps`, rebuild the native dev client (`expo run:ios` / `expo run:android`). Android needs `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY`.
+- **Maps / place intelligence**: Campus home is a `react-native-maps` canvas ([CampusHomeScreen](../src/screens/campus/CampusHomeScreen.tsx)). Pin coordinates from Open Data `facilities/buildinglist/` via [useBuildings](../src/hooks/useBuildings.ts). Building services, departments, and amenities live in the consolidated local catalog at [src/data/buildings/](../src/data/buildings/) — regenerate with `npm run sync:buildings`. See Greenhouse doc *Buildings catalog (PoC)*. After adding or patching `react-native-maps`, rebuild the native dev client (`expo run:ios` / `expo run:android`). Android needs `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY`.
 - **Course schedule**: Add `screens/courses`; data via React Query and a dedicated API module; reuse design system (Card, Text, Button).
 - **Events listing**: Add `screens/events`; same pattern (hooks + API + design system).
 - **Student services / resources**: Add screens under `screens/resources` or similar; link from home or tabs.

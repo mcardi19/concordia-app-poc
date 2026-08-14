@@ -86,7 +86,7 @@ index 5fa1be3..ef8e980 100644
  
  #pragma mark - RCTComponentViewProtocol
 diff --git a/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm b/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm
-index fee81a8..c1efbf3 100644
+index fee81a8..e30a58f 100644
 --- a/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm
 +++ b/node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.mm
 @@ -30,6 +30,26 @@ - (void)updateAppearanceOfTabBar:(nullable UITabBar *)tabBar
@@ -116,30 +116,7 @@ index fee81a8..c1efbf3 100644
    // Step 2 - configure screen-specific appearance
    for (RNSTabsScreenViewController *tabScreenCtrl in tabScreenCtrls) {
      if (tabScreenCtrl == nil) {
-@@ -40,15 +60,76 @@ - (void)updateAppearanceOfTabBar:(nullable UITabBar *)tabBar
- 
-     [self configureTabBarItemForTabScreenController:tabScreenCtrl imageLoader:imageLoader];
-   }
-+
-+  // iOS 26 liquid glass: the selection capsule ignores tabBar.tintColor for its
-+  // fill. Apply the schedule-surface brand wash (#F4E7EA family) via
-+  // selectionIndicatorTintColor after per-item setup. Transparent background
-+  // keeps liquid glass enabled.
-+  if (@available(iOS 26.0, *)) {
-+    UIColor *brand = hostComponentView.tabBarTintColor;
-+    if (brand != nil) {
-+      UITabBarAppearance *selectionAppearance = [[UITabBarAppearance alloc] init];
-+      [selectionAppearance configureWithTransparentBackground];
-+      // Light brand wash — same family as scheduleTheme.fabFill / NAV_TAB_SELECTION_TINT.
-+      selectionAppearance.selectionIndicatorTintColor =
-+          [UIColor colorWithRed:244.0 / 255.0 green:231.0 / 255.0 blue:234.0 / 255.0 alpha:1.0];
-+      tabBar.standardAppearance = selectionAppearance;
-+      tabBar.scrollEdgeAppearance = selectionAppearance;
-+    }
-+  }
- }
- 
- - (void)configureTabBarItemForTabScreenController:(nonnull RNSTabsScreenViewController *)tabScreenCtrl
+@@ -46,9 +66,53 @@ - (void)configureTabBarItemForTabScreenController:(nonnull RNSTabsScreenViewCont
                                        imageLoader:(nullable RCTImageLoader *)imageLoader
  {
    UITabBarItem *tabBarItem = tabScreenCtrl.tabBarItem;
@@ -162,7 +139,9 @@ index fee81a8..c1efbf3 100644
 +    tabBarItem.standardAppearance = requested;
 +    tabBarItem.scrollEdgeAppearance = tabScreenCtrl.tabScreenComponentView.scrollEdgeAppearance;
 +  }
-+
+ 
+-  tabBarItem.standardAppearance = tabScreenCtrl.tabScreenComponentView.standardAppearance;
+-  tabBarItem.scrollEdgeAppearance = tabScreenCtrl.tabScreenComponentView.scrollEdgeAppearance;
 +  // Force inactive/active label colours. On iOS 26 liquid glass, appearance-based
 +  // titleTextAttributes and often unselectedItemTintColor alone do not tint titles.
 +  NSDictionary *normalAttrs = requested.stackedLayoutAppearance.normal.titleTextAttributes;
@@ -175,9 +154,7 @@ index fee81a8..c1efbf3 100644
 +    attrs[NSForegroundColorAttributeName] = inactiveTitleColor;
 +    [tabBarItem setTitleTextAttributes:attrs forState:UIControlStateNormal];
 +  }
- 
--  tabBarItem.standardAppearance = tabScreenCtrl.tabScreenComponentView.standardAppearance;
--  tabBarItem.scrollEdgeAppearance = tabScreenCtrl.tabScreenComponentView.scrollEdgeAppearance;
++
 +  UIColor *activeTitleColor = tabBarItem.standardAppearance != nil
 +                                  ? requested.stackedLayoutAppearance.selected.titleTextAttributes[NSForegroundColorAttributeName]
 +                                  : nil;

@@ -4,6 +4,12 @@ export {
   getConcordiaOpenDataClient,
   type LibraryHourRow,
 } from './concordiaOpenDataClient';
+export {
+  fetchLibraryComputers,
+  fetchLibraryRooms,
+  type LibraryBookableResourceRow,
+  type LibraryComputersResponse,
+} from './libraryFacilities';
 export { isConcordiaOpenDataConfigured } from '@/config/concordiaOpenData';
 export * from './schedule';
 export * from './grades';

@@ -6,6 +6,7 @@ export { useGrades } from './useGrades';
 export { useAccountBalance } from './useAccountBalance';
 export { useServicesSearch } from './useServicesSearch';
 export { useBuildings } from './useBuildings';
+export { useBuildingPlace } from './useBuildingPlace';
 export { useCampusUserLocation } from './useCampusUserLocation';
 export { useFeaturedEvents } from './useFeaturedEvents';
 export { useShuttleTracker } from './useShuttleTracker';

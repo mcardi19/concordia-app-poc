@@ -1,4 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { GlassContainer, GlassView } from 'expo-glass-effect';
 import { Text } from '@/components/design-system';
@@ -17,6 +24,11 @@ import type { ScheduleViewMode } from './scheduleTypes';
 
 type Props = {
   selectedDate: Date;
+  /**
+   * Month the title shows. Follows the week you have paged to, which is not
+   * necessarily the month of the selected day. Falls back to `selectedDate`.
+   */
+  monthDate?: Date;
   /** Day shown on the “jump to today” control next to the view picker. */
   todayDate?: Date;
   viewMode: ScheduleViewMode;
@@ -75,12 +87,57 @@ function GlassGroup({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Fade-and-rise on the way out, spring on the way in. */
+const MONTH_OUT_MS = 110;
+const MONTH_IN_SPRING = { damping: 18, stiffness: 220, mass: 0.7 } as const;
+const MONTH_RISE = 7;
+
+/**
+ * Month label that swaps rather than cuts when you page the week strip.
+ *
+ * The text is held in state and only replaced at the midpoint of the
+ * transition, so the outgoing month animates away before the incoming one
+ * springs in — cross-fading two absolutely-positioned labels would be the
+ * alternative, but it needs a fixed width and this title sits next to a
+ * chevron in an auto-sized row.
+ */
+function MonthTitle({ month }: { month: string }) {
+  const [shown, setShown] = useState(month);
+  const progress = useSharedValue(1);
+
+  useEffect(() => {
+    if (month === shown) return;
+    progress.value = withTiming(0, { duration: MONTH_OUT_MS }, (finished) => {
+      if (!finished) return;
+      runOnJS(setShown)(month);
+      progress.value = withSpring(1, MONTH_IN_SPRING);
+    });
+  }, [month, shown, progress]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ translateY: (1 - progress.value) * MONTH_RISE }],
+  }));
+
+  return (
+    <Animated.View style={style}>
+      <Text
+        variant="heading2"
+        style={{ fontSize: 26, lineHeight: 30, color: scheduleTheme.headingText }}
+      >
+        {shown}
+      </Text>
+    </Animated.View>
+  );
+}
+
 /**
  * Shared masthead for all three schedule views: month title, a joined
  * view-switcher / today control.
  */
 export function ScheduleHeader({
   selectedDate,
+  monthDate,
   todayDate,
   viewMode,
   onViewModeChange,
@@ -92,7 +149,7 @@ export function ScheduleHeader({
   const glass = useMemo(() => canUseLiquidGlass(), []);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const month = selectedDate.toLocaleDateString('en-CA', { month: 'long' });
+  const month = (monthDate ?? selectedDate).toLocaleDateString('en-CA', { month: 'long' });
   const todayDay = (todayDate ?? new Date()).getDate();
   const todayLabel = (todayDate ?? new Date()).toLocaleDateString('en-CA', {
     weekday: 'long',
@@ -120,7 +177,8 @@ export function ScheduleHeader({
         <Text
           variant="bodySmall"
           style={{
-            fontSize: 15,
+            fontSize: 17,
+            lineHeight: 22,
             fontWeight: active ? '600' : '500',
             color: active ? theme.color.primary : scheduleTheme.headingText,
           }}
@@ -128,7 +186,7 @@ export function ScheduleHeader({
           {VIEW_LABELS[mode]}
         </Text>
         {active ? (
-          <MaterialSymbol icon={msCheck} size={18} color={theme.color.primary} />
+          <MaterialSymbol icon={msCheck} size={20} color={theme.color.primary} />
         ) : (
           <View style={styles.menuCheckSpacer} />
         )}
@@ -144,12 +202,7 @@ export function ScheduleHeader({
           accessibilityRole="button"
           accessibilityLabel={`${month}, change month`}
         >
-          <Text
-            variant="heading2"
-            style={{ fontSize: 26, lineHeight: 30, color: scheduleTheme.headingText }}
-          >
-            {month}
-          </Text>
+          <MonthTitle month={month} />
           <MaterialSymbol icon={msExpandMore} size={18} color={scheduleTheme.headingText} />
         </Pressable>
 
@@ -166,7 +219,7 @@ export function ScheduleHeader({
               >
                 <Text
                   variant="bodySmall"
-                  style={{ fontSize: 13, fontWeight: '600', color: theme.color.primary }}
+                  style={{ fontSize: 15, fontWeight: '600', color: theme.color.primary }}
                 >
                   {VIEW_LABELS[viewMode]}
                 </Text>
@@ -270,13 +323,6 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
-  roundButton: {
-    width: HEADER_BAR_BUTTON_SIZE,
-    height: HEADER_BAR_BUTTON_SIZE,
-    borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
   segmentFill: {
     flex: 1,
     flexDirection: 'row',
@@ -303,7 +349,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: HEADER_BAR_BUTTON_SIZE + 8,
     right: 0,
-    minWidth: 168,
+    minWidth: 184,
     borderRadius: 16,
     borderCurve: 'continuous',
     overflow: 'hidden',
@@ -325,13 +371,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingVertical: 12,
     borderRadius: 10,
     borderCurve: 'continuous',
     gap: 16,
   },
   menuCheckSpacer: {
-    width: 18,
-    height: 18,
+    width: 20,
+    height: 20,
   },
 });

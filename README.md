@@ -40,6 +40,7 @@ Then press `i` for iOS simulator or `a` for Android, or scan the QR code with **
 | `npm test` | Run Jest unit/component tests  |
 | `npm run lint` | Run ESLint                     |
 | `npm run format` | Format with Prettier           |
+| `npm run sync:buildings` | Regenerate `src/data/buildings/catalog.ts` from maps XML + overrides |
 
 ## Tests
 
@@ -61,7 +62,8 @@ See [docs/CONCORDIA_APP_ARCHITECTURE.md](docs/CONCORDIA_APP_ARCHITECTURE.md). Su
 - `src/auth` – Auth service (OIDC stub)
 - `src/services` – Logger, secure storage
 - `src/state` – Zustand store(s)
-- `src/hooks` – useAuth, useApi, useTheme
+- `src/hooks` – useAuth, useApi, useTheme, useBuildingPlace, …
+- `src/data/buildings` – consolidated building catalog (website + maps XML snapshot)
 - `src/accessibility` – Constants (e.g. min touch target)
 
 ## Environment

@@ -4,6 +4,8 @@ export type ServiceSearchResult = {
   id: string;
   label: string;
   buildingName: string;
+  /** Maps XML `<label>` — the building code when present. */
+  buildingCode?: string;
   kind: 'service' | 'department';
 };
 

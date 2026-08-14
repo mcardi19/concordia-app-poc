@@ -35,5 +35,16 @@ export {
   msAdd,
   msCalendarMonth,
   msEvent,
+  msSupportAgent,
+  msBalance,
+  msGroups,
+  msBed,
+  msFavorite,
+  msWork,
+  msLocalLibrary,
+  msDirectionsBus,
+  msNorthEast,
+  msArrowForward,
+  msSearchOff,
 } from './symbols';
 export type { TabSymbolPair, FeatureSymbolKey } from './symbols';

@@ -27,7 +27,7 @@ function TimeColumn({ event, strong }: { event: ScheduleEvent; strong?: boolean 
       <Text
         variant="bodySmall"
         style={{
-          fontSize: 13.5,
+          fontSize: 15,
           fontWeight: '500',
           letterSpacing: -0.2,
           color: strong ? theme.color.primary : scheduleTheme.timeText,
@@ -38,7 +38,7 @@ function TimeColumn({ event, strong }: { event: ScheduleEvent; strong?: boolean 
       <Text
         variant="caption"
         style={{
-          fontSize: 11,
+          fontSize: 12.5,
           fontWeight: '500',
           color: scheduleTheme.timeSubText,
           marginTop: 2,
@@ -72,16 +72,16 @@ function NowRow({
 
         <View style={[styles.rail, { backgroundColor: theme.color.primary }]} />
 
-        <Text variant="caption" style={{ fontSize: 12, color: scheduleTheme.timeSubText }}>
+        <Text variant="caption" style={{ fontSize: 13.5, color: scheduleTheme.timeSubText }}>
           <Text
             variant="caption"
-            style={{ fontSize: 12, fontWeight: '700', color: theme.color.primary }}
+            style={{ fontSize: 13.5, fontWeight: '700', color: theme.color.primary }}
           >
             NOW ·{' '}
           </Text>
           <Text
             variant="caption"
-            style={{ fontSize: 12, fontWeight: '600', color: theme.color.primary }}
+            style={{ fontSize: 13.5, fontWeight: '600', color: theme.color.primary }}
           >
             {event.courseCode}
           </Text>
@@ -91,7 +91,7 @@ function NowRow({
         <Text
           variant="bodySmall"
           style={{
-            fontSize: 16.5,
+            fontSize: 18,
             fontWeight: '600',
             letterSpacing: -0.2,
             color: scheduleTheme.headingText,
@@ -101,10 +101,10 @@ function NowRow({
           {event.title}
         </Text>
 
-        <Text variant="caption" style={{ fontSize: 12.5, color: '#6A6A6C', marginTop: 8 }}>
+        <Text variant="caption" style={{ fontSize: 14, color: '#6A6A6C', marginTop: 8 }}>
           <Text
             variant="caption"
-            style={{ fontSize: 12.5, fontWeight: '600', color: '#1A1A1C' }}
+            style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1C' }}
           >
             {event.room}
           </Text>
@@ -115,13 +115,13 @@ function NowRow({
           <View style={[styles.actionPrimary, { backgroundColor: theme.color.primary }]}>
             <Text
               variant="bodySmall"
-              style={{ fontSize: 13, fontWeight: '600', color: theme.color.text.inverse }}
+              style={{ fontSize: 14, fontWeight: '600', color: theme.color.text.inverse }}
             >
               Course details
             </Text>
           </View>
           <View style={styles.actionSecondary}>
-            <Text variant="bodySmall" style={{ fontSize: 13, fontWeight: '600', color: '#1A1A1C' }}>
+            <Text variant="bodySmall" style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1C' }}>
               Message
             </Text>
           </View>
@@ -161,7 +161,7 @@ function AgendaRow({
         <Text
           variant="caption"
           style={{
-            fontSize: 11,
+            fontSize: 12.5,
             fontWeight: '600',
             letterSpacing: 0.2,
             color: theme.color.primary,
@@ -172,7 +172,7 @@ function AgendaRow({
         <Text
           variant="bodySmall"
           style={{
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: '600',
             color: scheduleTheme.bodyText,
             marginTop: 3,
@@ -180,7 +180,7 @@ function AgendaRow({
         >
           {event.title}
         </Text>
-        <Text variant="caption" style={{ fontSize: 12, color: scheduleTheme.metaText, marginTop: 2 }}>
+        <Text variant="caption" style={{ fontSize: 13.5, color: scheduleTheme.metaText, marginTop: 2 }}>
           {event.room}
           {event.professor ? ` · ${event.professor}` : ''}
         </Text>

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   FlatList,
   Pressable,
@@ -6,8 +6,14 @@ import {
   useWindowDimensions,
   View,
   type ListRenderItemInfo,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
-import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -19,9 +25,15 @@ type Props = {
   selectedDate: Date;
   events: ScheduleEvent[];
   onSelectDate: (date: Date) => void;
+  /**
+   * Fires when paging settles on a different week, passing that week's Sunday.
+   * The screen decides what to do with it — which day to select and which
+   * month to title — because both are date policy, not strip behaviour.
+   */
+  onVisibleWeekChange?: (weekStart: Date) => void;
 };
 
-const CIRCLE = 36;
+const CIRCLE = 40;
 /** A day at or above this many events gets the solid density dot. */
 const BUSY_THRESHOLD = 3;
 
@@ -32,9 +44,10 @@ const BUSY_THRESHOLD = 3;
  */
 const WEEK_RADIUS = 52;
 const PAGE_COUNT = WEEK_RADIUS * 2 + 1;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** Spring for the selection circle. Snappy, no overshoot worth seeing. */
-const SELECT_SPRING = { damping: 15, stiffness: 260, mass: 0.6 } as const;
+/** Spring for the press bounce on day circles. */
+const PRESS_SPRING = { damping: 15, stiffness: 260, mass: 0.6 } as const;
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
@@ -67,21 +80,27 @@ function DayCell({
 }) {
   const theme = useTheme();
   const busy = count >= BUSY_THRESHOLD;
+  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+  const scale = useSharedValue(1);
 
   /**
-   * The circle scales up into its resting size as the day becomes selected,
-   * so the fill reads as arriving rather than cutting in. Driven off the
-   * boolean instead of a press handler — selection can also move by tapping
-   * "today" in the header, and that should animate identically.
+   * Selected and unselected circles share one resting size. Press still
+   * springs down so the tap reads as a response without leaving the
+   * current day larger than its neighbours.
    */
-  const circleStyle = useAnimatedStyle(
-    () => ({ transform: [{ scale: withSpring(selected ? 1 : 0.82, SELECT_SPRING) }] }),
-    [selected],
-  );
+  const circleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.88, PRESS_SPRING);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, PRESS_SPRING);
+      }}
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={date.toLocaleDateString('en-CA', {
@@ -97,7 +116,7 @@ function DayCell({
           fontSize: 12,
           fontWeight: '600',
           letterSpacing: 0.2,
-          color: scheduleTheme.timeSubText,
+          color: isWeekend ? scheduleTheme.timeSubText : scheduleTheme.headingText,
         }}
       >
         {getDayLetter(date)}
@@ -113,7 +132,7 @@ function DayCell({
         <Text
           variant="bodySmall"
           style={{
-            fontSize: 17,
+            fontSize: 19,
             fontWeight: selected ? '700' : '500',
             color: selected ? theme.color.text.inverse : scheduleTheme.headingText,
           }}
@@ -145,11 +164,17 @@ function DayCell({
  * width. Paging is the strip's own state — moving to another week previews it
  * without changing the selected day, the way a calendar behaves.
  *
- * The selected day is a circle around the number only; the weekday letter stays
- * outside it, which keeps the row reading as a calendar strip rather than a
- * segmented control.
+ * The selected day is a filled circle around the number only; the weekday letter
+ * stays outside it, which keeps the row reading as a calendar strip rather than a
+ * segmented control. Selected and unselected circles share one size; press
+ * springs briefly for tap feedback.
  */
-export function ScheduleWeekStrip({ selectedDate, events, onSelectDate }: Props) {
+export function ScheduleWeekStrip({
+  selectedDate,
+  events,
+  onSelectDate,
+  onVisibleWeekChange,
+}: Props) {
   const { width } = useWindowDimensions();
   const listRef = useRef<FlatList<Date>>(null);
 
@@ -158,6 +183,7 @@ export function ScheduleWeekStrip({ selectedDate, events, onSelectDate }: Props)
    * `selectedDate` would shift every page index under the list mid-scroll.
    */
   const anchor = useRef(startOfWeek(selectedDate)).current;
+  const visibleIndex = useRef(WEEK_RADIUS);
 
   const weeks = useMemo(
     () => Array.from({ length: PAGE_COUNT }, (_, i) => addDays(anchor, (i - WEEK_RADIUS) * 7)),
@@ -192,6 +218,34 @@ export function ScheduleWeekStrip({ selectedDate, events, onSelectDate }: Props)
     [width, selectedDate, countsByDayKey, onSelectDate],
   );
 
+  const onMomentumScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const index = Math.round(event.nativeEvent.contentOffset.x / width);
+      if (index === visibleIndex.current) return;
+      visibleIndex.current = index;
+      const week = weeks[index];
+      if (week) onVisibleWeekChange?.(week);
+    },
+    [width, weeks, onVisibleWeekChange],
+  );
+
+  /*
+    Follow the selection when it moves from outside — the header's "today"
+    control, or a deep link. Paging already sets `visibleIndex` before it
+    reports the change, so a page-driven selection matches here and no scroll
+    is issued; this only fires for changes the strip did not cause.
+  */
+  const selectedIndex =
+    WEEK_RADIUS +
+    Math.round((startOfWeek(selectedDate).getTime() - anchor.getTime()) / WEEK_MS);
+
+  useEffect(() => {
+    if (selectedIndex === visibleIndex.current) return;
+    if (selectedIndex < 0 || selectedIndex >= PAGE_COUNT) return;
+    visibleIndex.current = selectedIndex;
+    listRef.current?.scrollToIndex({ index: selectedIndex, animated: true });
+  }, [selectedIndex]);
+
   const getItemLayout = useCallback(
     (_: ArrayLike<Date> | null | undefined, index: number) => ({
       length: width,
@@ -216,6 +270,7 @@ export function ScheduleWeekStrip({ selectedDate, events, onSelectDate }: Props)
         directionalLockEnabled
         alwaysBounceVertical={false}
         overScrollMode="never"
+        onMomentumScrollEnd={onMomentumScrollEnd}
         windowSize={3}
         initialNumToRender={1}
         maxToRenderPerBatch={2}

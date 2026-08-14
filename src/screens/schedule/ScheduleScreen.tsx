@@ -29,10 +29,20 @@ import {
 import { useNow } from '@/hooks';
 import { semanticSpacing } from '@/design-system/tokens';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
+import { HEADER_CHROME_TOP_GAP } from '@/navigation/HeaderIconButton';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { formatWeekMonday } from '@/api/schedule';
 
 /** The 3-day planner shows today plus the next two days. */
+/** Wednesday — decides which month a week spanning a boundary is titled by. */
+const MIDWEEK_OFFSET = 3;
+
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
 const PLANNER_SPAN = 3;
 /** Hour the day/planner grids open on — full day still scrolls above/below. */
 const FOCUS_HOUR = 8;
@@ -52,6 +62,8 @@ export function ScheduleScreen() {
     current at mount.
   */
   const [selectedDate, setSelectedDate] = useState(() => new Date());
+  /** Month the header shows — the week being looked at, not the day selected. */
+  const [visibleWeek, setVisibleWeek] = useState(() => new Date());
   const weekDates = useMemo(
     () => getWeekDates(formatWeekMonday(selectedDate)),
     [selectedDate],
@@ -116,19 +128,37 @@ export function ScheduleScreen() {
         `position: sticky`, and the view switcher has to stay reachable
         however far the timetable is scrolled.
       */}
-      <View style={[styles.pinned, { paddingTop: insets.top + 6 }]}>
+      <View style={[styles.pinned, { paddingTop: insets.top + HEADER_CHROME_TOP_GAP }]}>
         <ScheduleHeader
           selectedDate={selectedDate}
+          monthDate={visibleWeek}
           todayDate={weekDates[todayIndex]}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          onTodayPress={() => setSelectedDate(new Date())}
+          onTodayPress={() => {
+            setSelectedDate(new Date());
+            setVisibleWeek(new Date());
+          }}
           showAdd={viewMode !== 'week'}
         />
         <ScheduleWeekStrip
           selectedDate={selectedDate}
           events={MOCK_WEEK_EVENTS}
-          onSelectDate={setSelectedDate}
+          onSelectDate={(date) => {
+            setSelectedDate(date);
+            setVisibleWeek(date);
+          }}
+          onVisibleWeekChange={(weekStart) => {
+            /*
+              Paging keeps you on the same weekday: land on Thursday, page
+              forward, and you are on the next Thursday rather than back at
+              Sunday. The title tracks the midweek day instead, so a week
+              straddling a month boundary is titled by the month holding most
+              of it — which is not necessarily the selected day's month.
+            */
+            setSelectedDate((prev) => addDays(weekStart, prev.getDay()));
+            setVisibleWeek(addDays(weekStart, MIDWEEK_OFFSET));
+          }}
         />
         {/* All-day stays under the strip so the timetable can scroll beneath it. */}
         {showsAllDayBanner ? (
