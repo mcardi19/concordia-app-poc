@@ -3,7 +3,14 @@ export { ScheduleWeekStrip } from './ScheduleWeekStrip';
 export { ScheduleAllDayBanner } from './ScheduleAllDayBanner';
 export { ScheduleAgendaView } from './ScheduleAgendaView';
 export { ScheduleDayTimeline } from './ScheduleDayTimeline';
-export { ScheduleThreeDayView, type PlannerDay } from './ScheduleThreeDayView';
+export { ScheduleHourRail } from './ScheduleHourRail';
+export {
+  ScheduleThreeDayView,
+  PLANNER_GRID_TOP,
+  PLANNER_HEAD_HEIGHT,
+  type PlannerDay,
+} from './ScheduleThreeDayView';
+export { SchedulePager } from './SchedulePager';
 export { ScheduleWeekView } from './ScheduleWeekView';
 export { scheduleTheme } from './scheduleTheme';
 export type {

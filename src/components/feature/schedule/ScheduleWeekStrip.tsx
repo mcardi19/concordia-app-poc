@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -10,8 +11,14 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import Animated, {
+  type SharedValue,
+  Extrapolation,
+  interpolate,
+  interpolateColor,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
+  withSequence,
   withSpring,
 } from 'react-native-reanimated';
 import { Text } from '@/components/design-system';
@@ -31,6 +38,10 @@ type Props = {
    * month to title — because both are date policy, not strip behaviour.
    */
   onVisibleWeekChange?: (weekStart: Date) => void;
+  /** Days the timetable pager advances per swipe. */
+  stepDays?: number;
+  /** Pager offset in page units so day numbers can scale while you swipe. */
+  scrollProgress?: SharedValue<number>;
 };
 
 const CIRCLE = 40;
@@ -48,6 +59,11 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** Spring for the press bounce on day circles. */
 const PRESS_SPRING = { damping: 15, stiffness: 260, mass: 0.6 } as const;
+const PULSE_SCALE = 0.88;
+
+function utcDay(date: Date): number {
+  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+}
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
@@ -67,39 +83,117 @@ function dayKeyOf(date: Date): string {
   return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
 }
 
+function playNumberPulse(scale: SharedValue<number>) {
+  scale.value = withSequence(
+    withSpring(PULSE_SCALE, PRESS_SPRING),
+    withSpring(1, PRESS_SPRING),
+  );
+}
+
+/** Fill amount for a day circle while the timetable pager is in motion. */
+function daySelectionFill(progress: number, dayOffset: number, stepDays: number): number {
+  'worklet';
+  const traveled = Math.min(1, Math.abs(progress));
+  if (dayOffset === 0) {
+    return interpolate(traveled, [0, 1], [1, 0], Extrapolation.CLAMP);
+  }
+  const incoming =
+    (progress > 0 && dayOffset === stepDays) ||
+    (progress < 0 && dayOffset === -stepDays);
+  if (incoming) {
+    return interpolate(traveled, [0, 1], [0, 1], Extrapolation.CLAMP);
+  }
+  return 0;
+}
+
+function dayOffsetFromStamp(cellStamp: number, selectedStamp: number): number {
+  'worklet';
+  return Math.round((cellStamp - selectedStamp) / 86_400_000);
+}
+
+function pagerNumberScale(progress: number, dayOffset: number, stepDays: number): number {
+  'worklet';
+  const traveled = Math.min(1, Math.abs(progress));
+  if (dayOffset === 0) {
+    return interpolate(traveled, [0, 1], [1, PULSE_SCALE], Extrapolation.CLAMP);
+  }
+  if (
+    (progress > 0 && dayOffset === stepDays) ||
+    (progress < 0 && dayOffset === -stepDays)
+  ) {
+    return interpolate(traveled, [0, 1], [PULSE_SCALE, 1], Extrapolation.CLAMP);
+  }
+  return 1;
+}
+
 function DayCell({
   date,
   selected,
   count,
+  pulseId,
+  stepDays,
+  scrollProgress,
+  selectedStamp,
   onPress,
 }: {
   date: Date;
   selected: boolean;
   count: number;
+  /** Bumps when the selected day changes, including from the timetable pager. */
+  pulseId: number;
+  stepDays: number;
+  scrollProgress?: SharedValue<number>;
+  selectedStamp: SharedValue<number>;
   onPress: () => void;
 }) {
   const theme = useTheme();
+  const primary = theme.color.primary;
   const busy = count >= BUSY_THRESHOLD;
   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-  const scale = useSharedValue(1);
+  const pressScale = useSharedValue(1);
+  const pressedRef = useRef(false);
+  const cellStamp = utcDay(date);
+
+  const fill = useDerivedValue(() => {
+    const offset = dayOffsetFromStamp(cellStamp, selectedStamp.value);
+    return daySelectionFill(scrollProgress?.value ?? 0, offset, stepDays);
+  });
 
   /**
    * Selected and unselected circles share one resting size. Press still
-   * springs down so the tap reads as a response without leaving the
-   * current day larger than its neighbours.
+   * springs down so the tap reads as a response. Timetable swipes drive the
+   * same squash — and the fill — on the outgoing and incoming day numbers.
    */
-  const circleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const circleStyle = useAnimatedStyle(() => {
+    const progress = scrollProgress?.value ?? 0;
+    const offset = dayOffsetFromStamp(cellStamp, selectedStamp.value);
+    return {
+      backgroundColor: interpolateColor(fill.value, [0, 1], [`${primary}00`, primary]),
+      transform: [{ scale: pressScale.value * pagerNumberScale(progress, offset, stepDays) }],
+    };
+  });
+
+  const idleNumberStyle = useAnimatedStyle(() => ({ opacity: 1 - fill.value }));
+  const selectedNumberStyle = useAnimatedStyle(() => ({ opacity: fill.value }));
+
+  useEffect(() => {
+    if (!selected || pulseId === 0) return;
+    if (pressedRef.current) {
+      pressedRef.current = false;
+      return;
+    }
+    playNumberPulse(pressScale);
+  }, [pulseId, selected, pressScale]);
 
   return (
     <Pressable
       onPress={onPress}
       onPressIn={() => {
-        scale.value = withSpring(0.88, PRESS_SPRING);
+        pressedRef.current = true;
+        pressScale.value = withSpring(PULSE_SCALE, PRESS_SPRING);
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, PRESS_SPRING);
+        pressScale.value = withSpring(1, PRESS_SPRING);
       }}
       accessibilityRole="button"
       accessibilityState={{ selected }}
@@ -122,23 +216,13 @@ function DayCell({
         {getDayLetter(date)}
       </Text>
 
-      <Animated.View
-        style={[
-          styles.circle,
-          selected ? { backgroundColor: theme.color.primary } : null,
-          circleStyle,
-        ]}
-      >
-        <Text
-          variant="bodySmall"
-          style={{
-            fontSize: 19,
-            fontWeight: selected ? '700' : '500',
-            color: selected ? theme.color.text.inverse : scheduleTheme.headingText,
-          }}
-        >
+      <Animated.View style={[styles.circle, circleStyle]}>
+        <Animated.Text style={[styles.dayNum, styles.dayNumIdle, idleNumberStyle]}>
           {date.getDate()}
-        </Text>
+        </Animated.Text>
+        <Animated.Text style={[styles.dayNum, styles.dayNumSelected, selectedNumberStyle]}>
+          {date.getDate()}
+        </Animated.Text>
       </Animated.View>
 
       <View
@@ -174,6 +258,8 @@ export function ScheduleWeekStrip({
   events,
   onSelectDate,
   onVisibleWeekChange,
+  stepDays = 1,
+  scrollProgress,
 }: Props) {
   const { width } = useWindowDimensions();
   const listRef = useRef<FlatList<Date>>(null);
@@ -184,6 +270,10 @@ export function ScheduleWeekStrip({
    */
   const anchor = useRef(startOfWeek(selectedDate)).current;
   const visibleIndex = useRef(WEEK_RADIUS);
+  const skipFirstPulse = useRef(true);
+  const skipPagerPulse = useRef(false);
+  const [pulseId, setPulseId] = useState(0);
+  const selectedStamp = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`;
 
   const weeks = useMemo(
     () => Array.from({ length: PAGE_COUNT }, (_, i) => addDays(anchor, (i - WEEK_RADIUS) * 7)),
@@ -198,6 +288,44 @@ export function ScheduleWeekStrip({
     return counts;
   }, [events]);
 
+  /*
+    Follow the selection when it moves from outside — the header's "today"
+    control, or a deep link. Paging already sets `visibleIndex` before it
+    reports the change, so a page-driven selection matches here and no scroll
+    is issued; this only fires for changes the strip did not cause.
+  */
+  const selectedIndex =
+    WEEK_RADIUS +
+    Math.round((startOfWeek(selectedDate).getTime() - anchor.getTime()) / WEEK_MS);
+
+  const selectedStampSv = useSharedValue(utcDay(selectedDate));
+
+  useEffect(() => {
+    if (skipFirstPulse.current) {
+      skipFirstPulse.current = false;
+      return;
+    }
+    if (skipPagerPulse.current) {
+      skipPagerPulse.current = false;
+      return;
+    }
+    setPulseId((id) => id + 1);
+  }, [selectedStamp]);
+
+  /*
+    Commit the new selected day and drop pager progress in the same layout
+    pass so the fill does not snap back to the outgoing day.
+  */
+  useLayoutEffect(() => {
+    if (scrollProgress && Math.abs(scrollProgress.value) > 0.05) {
+      skipPagerPulse.current = true;
+    }
+    selectedStampSv.value = utcDay(selectedDate);
+    if (scrollProgress) {
+      scrollProgress.value = 0;
+    }
+  }, [scrollProgress, selectedDate, selectedStampSv]);
+
   const renderWeek = useCallback(
     ({ item }: ListRenderItemInfo<Date>) => (
       <View style={[styles.page, { width }]}>
@@ -209,35 +337,34 @@ export function ScheduleWeekStrip({
               date={date}
               selected={isSameDay(date, selectedDate)}
               count={countsByDayKey[dayKeyOf(date)] ?? 0}
+              pulseId={pulseId}
+              stepDays={stepDays}
+              scrollProgress={scrollProgress}
+              selectedStamp={selectedStampSv}
               onPress={() => onSelectDate(date)}
             />
           );
         })}
       </View>
     ),
-    [width, selectedDate, countsByDayKey, onSelectDate],
+    [width, selectedDate, countsByDayKey, onSelectDate, pulseId, stepDays, scrollProgress, selectedStampSv],
   );
 
   const onMomentumScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      /*
+        Ignore strip paging while the timetable pager is in motion — a
+        residual offset must not be treated as a week change.
+      */
+      if (scrollProgress && Math.abs(scrollProgress.value) > 0.05) return;
       const index = Math.round(event.nativeEvent.contentOffset.x / width);
       if (index === visibleIndex.current) return;
       visibleIndex.current = index;
       const week = weeks[index];
       if (week) onVisibleWeekChange?.(week);
     },
-    [width, weeks, onVisibleWeekChange],
+    [width, weeks, onVisibleWeekChange, scrollProgress],
   );
-
-  /*
-    Follow the selection when it moves from outside — the header's "today"
-    control, or a deep link. Paging already sets `visibleIndex` before it
-    reports the change, so a page-driven selection matches here and no scroll
-    is issued; this only fires for changes the strip did not cause.
-  */
-  const selectedIndex =
-    WEEK_RADIUS +
-    Math.round((startOfWeek(selectedDate).getTime() - anchor.getTime()) / WEEK_MS);
 
   useEffect(() => {
     if (selectedIndex === visibleIndex.current) return;
@@ -282,8 +409,22 @@ export function ScheduleWeekStrip({
 const styles = StyleSheet.create({
   root: {
     paddingVertical: 14,
+    overflow: 'hidden',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: scheduleTheme.mastheadBorder,
+  },
+  dayNum: {
+    fontSize: 19,
+    fontFamily: Platform.select({ ios: 'System', android: 'sans-serif' }),
+  },
+  dayNumIdle: {
+    fontWeight: '500',
+    color: scheduleTheme.headingText,
+  },
+  dayNumSelected: {
+    position: 'absolute',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   page: {
     flexDirection: 'row',

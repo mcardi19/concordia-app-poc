@@ -7,12 +7,17 @@ import { ScheduleAllDayBanner } from './ScheduleAllDayBanner';
 import { ScheduleSurfaceFill } from './ScheduleSurface';
 import { scheduleTheme } from './scheduleTheme';
 import type { ScheduleAllDayItem, ScheduleEvent } from './scheduleTypes';
-import { formatClock, groupEventsByDay } from './scheduleUtils';
+import { formatClock, getDayKey, groupEventsByDay } from './scheduleUtils';
 
 type Props = {
   events: ScheduleEvent[];
   /** Supplies the date shown beside the weekday on each day divider. */
   weekDates?: Date[];
+  /**
+   * When set, the agenda is a single day's page (used by the swipe pager)
+   * rather than a week grouping. Empty days still render a heading.
+   */
+  date?: Date;
   allDayItems: ScheduleAllDayItem[];
   /** Day key that should read as "Today". */
   todayKey: string;
@@ -196,12 +201,27 @@ function AgendaRow({
 export function ScheduleAgendaView({
   events,
   weekDates,
+  date,
   allDayItems,
   todayKey,
   onSelectEvent,
 }: Props) {
   const theme = useTheme();
-  const groups = groupEventsByDay(events, weekDates);
+  const groups = date
+    ? [
+        {
+          dayKey: getDayKey(date),
+          weekdayLabel: date.toLocaleDateString('en-CA', { weekday: 'long' }),
+          dateLabel: date.toLocaleDateString('en-CA', {
+            month: 'short',
+            day: 'numeric',
+          }),
+          events: events
+            .filter((event) => event.dayKey === getDayKey(date))
+            .sort((a, b) => a.startMinutes - b.startMinutes),
+        },
+      ]
+    : groupEventsByDay(events, weekDates);
 
   return (
     <View style={styles.root}>
@@ -236,20 +256,34 @@ export function ScheduleAgendaView({
               <ScheduleAllDayBanner items={allDayItems} showGutterLabel />
             ) : null}
 
-            {group.events.map((event) =>
-              event.now ? (
-                <NowRow
-                  key={event.id}
-                  event={event}
-                  onPress={() => onSelectEvent?.(event)}
-                />
-              ) : (
-                <AgendaRow
-                  key={event.id}
-                  event={event}
-                  onPress={() => onSelectEvent?.(event)}
-                />
-              ),
+            {group.events.length === 0 ? (
+              <Text
+                variant="bodySmall"
+                style={{
+                  fontSize: 15,
+                  color: scheduleTheme.metaText,
+                  paddingHorizontal: 4,
+                  paddingTop: 8,
+                }}
+              >
+                Nothing scheduled
+              </Text>
+            ) : (
+              group.events.map((event) =>
+                event.now ? (
+                  <NowRow
+                    key={event.id}
+                    event={event}
+                    onPress={() => onSelectEvent?.(event)}
+                  />
+                ) : (
+                  <AgendaRow
+                    key={event.id}
+                    event={event}
+                    onPress={() => onSelectEvent?.(event)}
+                  />
+                ),
+              )
             )}
           </View>
         );

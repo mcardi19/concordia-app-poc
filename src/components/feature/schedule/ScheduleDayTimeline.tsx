@@ -19,6 +19,11 @@ type Props = {
   /** Minutes from midnight for the "now" rule. Omit to hide it. */
   nowMinutes?: number;
   onSelectEvent?: (event: ScheduleEvent) => void;
+  /**
+   * Hide the hour labels and left gutter — the screen pins a shared rail
+   * beside the pager so swiping does not take the time slots with it.
+   */
+  hideRail?: boolean;
 };
 
 const HOURS = Array.from(
@@ -39,31 +44,50 @@ function hourLabel(hour: number): string {
  * against a fixed hour grid, so an event's height encodes its real duration
  * and overlapping blocks stay visually truthful.
  */
-export function ScheduleDayTimeline({ events, nowMinutes, onSelectEvent }: Props) {
+export function ScheduleDayTimeline({
+  events,
+  nowMinutes,
+  onSelectEvent,
+  hideRail = false,
+}: Props) {
   const theme = useTheme();
   const gridHeight = HOURS.length * DAY_HOUR_HEIGHT;
   const nowTop = nowMinutes != null ? topFor(nowMinutes) : null;
 
   return (
-    <View style={styles.root}>
-      <View style={[styles.rail, { height: gridHeight }]}>
-        {HOURS.map((hour, index) => (
-          <Text
-            key={hour}
-            variant="caption"
-            style={[
-              styles.hourLabel,
-              { top: index * DAY_HOUR_HEIGHT, color: scheduleTheme.railLabel },
-            ]}
-          >
-            {hourLabel(hour)}
-          </Text>
-        ))}
+    <View style={[styles.root, hideRail ? styles.rootInPager : null]}>
+      <View
+        style={[
+          styles.rail,
+          { height: gridHeight },
+          hideRail ? styles.railFlush : null,
+        ]}
+      >
+        {hideRail
+          ? null
+          : HOURS.map((hour, index) => (
+              <Text
+                key={hour}
+                variant="caption"
+                style={[
+                  styles.hourLabel,
+                  { top: index * DAY_HOUR_HEIGHT, color: scheduleTheme.railLabel },
+                ]}
+              >
+                {hourLabel(hour)}
+              </Text>
+            ))}
 
         {HOURS.map((hour, index) => (
           <View
             key={`line-${hour}`}
-            style={[styles.hourLine, { top: index * DAY_HOUR_HEIGHT + 4 }]}
+            style={[
+              styles.hourLine,
+              {
+                top: index * DAY_HOUR_HEIGHT + 4,
+                left: hideRail ? 0 : RAIL_WIDTH,
+              },
+            ]}
           />
         ))}
 
@@ -176,10 +200,16 @@ export function ScheduleDayTimeline({ events, nowMinutes, onSelectEvent }: Props
               pointerEvents="none"
               style={[styles.nowRule, { top: nowTop, backgroundColor: theme.color.primary }]}
             >
-              <View style={[styles.nowDot, { backgroundColor: theme.color.primary }]} />
               <View
                 style={[
-                  styles.nowPill,
+                  styles.nowDot,
+                  hideRail ? styles.nowDotInPager : null,
+                  { backgroundColor: theme.color.primary },
+                ]}
+              />
+              <View
+                style={[
+                  hideRail ? styles.nowPillInPager : styles.nowPill,
                   {
                     backgroundColor: theme.color.primary,
                     shadowColor: theme.color.primary,
@@ -212,9 +242,15 @@ const styles = StyleSheet.create({
     // Last hour label sits on the bottom edge of the rail.
     paddingBottom: 24,
   },
+  rootInPager: {
+    paddingHorizontal: 0,
+  },
   rail: {
     position: 'relative',
     paddingLeft: RAIL_WIDTH,
+  },
+  railFlush: {
+    paddingLeft: 0,
   },
   hourLabel: {
     position: 'absolute',
@@ -226,7 +262,6 @@ const styles = StyleSheet.create({
   },
   hourLine: {
     position: 'absolute',
-    left: RAIL_WIDTH,
     right: 0,
     height: StyleSheet.hairlineWidth,
     backgroundColor: scheduleTheme.railLine,
@@ -284,11 +319,26 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
+  nowDotInPager: {
+    left: 0,
+  },
   nowPill: {
     position: 'absolute',
     right: '100%',
     top: -9,
     marginRight: 12,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.33,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  nowPillInPager: {
+    position: 'absolute',
+    left: 12,
+    top: -9,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 10,

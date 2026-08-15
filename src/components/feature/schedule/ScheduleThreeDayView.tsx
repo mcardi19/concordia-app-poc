@@ -24,7 +24,17 @@ type Props = {
   days: PlannerDay[];
   events: ScheduleEvent[];
   onSelectEvent?: (event: ScheduleEvent) => void;
+  /**
+   * Hide the hour labels and header gutter — the screen pins a shared rail
+   * beside the pager so swiping does not take the time slots with it.
+   */
+  hideRail?: boolean;
 };
+
+/** Top inset above the 3-day column heads. */
+export const PLANNER_GRID_TOP = 14;
+/** Column-head row. Kept explicit so the shared hour rail can align under it. */
+export const PLANNER_HEAD_HEIGHT = 50;
 
 const HOURS = Array.from(
   { length: DAY_HOUR_END - DAY_HOUR_START + 1 },
@@ -44,7 +54,12 @@ function hourLabel(hour: number): string {
  * looking ahead, and a live marker pulls attention back to the present.
  * Blocks carry only a code and (when tall enough) a room.
  */
-export function ScheduleThreeDayView({ days, events, onSelectEvent }: Props) {
+export function ScheduleThreeDayView({
+  days,
+  events,
+  onSelectEvent,
+  hideRail = false,
+}: Props) {
   const theme = useTheme();
   const gridHeight = HOURS.length * PLANNER_HOUR_HEIGHT;
 
@@ -64,10 +79,10 @@ export function ScheduleThreeDayView({ days, events, onSelectEvent }: Props) {
 
   return (
     <View>
-      <View style={styles.gridWrap}>
+      <View style={[styles.gridWrap, hideRail ? styles.gridWrapInPager : null]}>
         {/* Column heads */}
         <View style={styles.headRow}>
-          <View style={styles.headSpacer} />
+          {hideRail ? null : <View style={styles.headSpacer} />}
           {days.map((day) => (
             <View key={day.dayKey} style={styles.headCell}>
               <Text
@@ -97,21 +112,22 @@ export function ScheduleThreeDayView({ days, events, onSelectEvent }: Props) {
         </View>
 
         <View style={styles.body}>
-          {/* Hour rail */}
-          <View style={[styles.rail, { height: gridHeight }]}>
-            {HOURS.map((hour, index) => (
-              <Text
-                key={hour}
-                variant="caption"
-                style={[
-                  styles.hourLabel,
-                  { top: index * PLANNER_HOUR_HEIGHT - 5, color: scheduleTheme.railLabel },
-                ]}
-              >
-                {hourLabel(hour)}
-              </Text>
-            ))}
-          </View>
+          {hideRail ? null : (
+            <View style={[styles.rail, { height: gridHeight }]}>
+              {HOURS.map((hour, index) => (
+                <Text
+                  key={hour}
+                  variant="caption"
+                  style={[
+                    styles.hourLabel,
+                    { top: index * PLANNER_HOUR_HEIGHT - 5, color: scheduleTheme.railLabel },
+                  ]}
+                >
+                  {hourLabel(hour)}
+                </Text>
+              ))}
+            </View>
+          )}
 
           {/* Day columns */}
           <View style={[styles.columns, { height: gridHeight }]}>
@@ -193,7 +209,7 @@ export function ScheduleThreeDayView({ days, events, onSelectEvent }: Props) {
       </View>
 
       {/* Footer summary */}
-      <View style={styles.summaryWrap}>
+      <View style={[styles.summaryWrap, hideRail ? styles.summaryWrapInPager : null]}>
         <View style={styles.summary}>
           {[
             { label: 'Classes', value: totals.classes },
@@ -236,12 +252,17 @@ export function ScheduleThreeDayView({ days, events, onSelectEvent }: Props) {
 
 const styles = StyleSheet.create({
   gridWrap: {
-    paddingTop: 14,
+    paddingTop: PLANNER_GRID_TOP,
     paddingHorizontal: semanticSpacing.screenHorizontal,
+  },
+  gridWrapInPager: {
+    paddingHorizontal: 0,
   },
   headRow: {
     flexDirection: 'row',
+    height: PLANNER_HEAD_HEIGHT,
     paddingBottom: 10,
+    alignItems: 'flex-end',
   },
   headSpacer: {
     width: RAIL_WIDTH,
@@ -300,6 +321,9 @@ const styles = StyleSheet.create({
   summaryWrap: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 20,
+  },
+  summaryWrapInPager: {
+    paddingHorizontal: 0,
   },
   summary: {
     flexDirection: 'row',

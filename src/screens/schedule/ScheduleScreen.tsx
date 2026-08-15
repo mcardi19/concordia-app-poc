@@ -1,11 +1,16 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  PLANNER_GRID_TOP,
+  PLANNER_HEAD_HEIGHT,
   ScheduleAgendaView,
   ScheduleAllDayBanner,
   ScheduleDayTimeline,
   ScheduleHeader,
+  ScheduleHourRail,
+  SchedulePager,
   ScheduleThreeDayView,
   ScheduleWeekStrip,
   scheduleTheme,
@@ -24,7 +29,6 @@ import {
   getDayKey,
   getWeekDates,
   isSameDay,
-  WEEK_ORDER_KEYS,
 } from '@/components/feature/schedule/scheduleUtils';
 import { useNow } from '@/hooks';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -33,12 +37,11 @@ import { HEADER_CHROME_TOP_GAP } from '@/navigation/HeaderIconButton';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { formatWeekMonday } from '@/api/schedule';
 
-/** The 3-day planner shows today plus the next two days. */
 /** Wednesday — decides which month a week spanning a boundary is titled by. */
 const MIDWEEK_OFFSET = 3;
 
 function addDays(date: Date, days: number): Date {
-  const d = new Date(date);
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   d.setDate(d.getDate() + days);
   return d;
 }
@@ -46,13 +49,129 @@ function addDays(date: Date, days: number): Date {
 const PLANNER_SPAN = 3;
 /** Hour the day/planner grids open on — full day still scrolls above/below. */
 const FOCUS_HOUR = 8;
+/** Matches `ScheduleDayTimeline` padding above the hour grid. */
+const DAY_GRID_TOP = 18;
+
+function plannerDaysFrom(start: Date, today: Date): PlannerDay[] {
+  return Array.from({ length: PLANNER_SPAN }, (_, offset) => {
+    const date = addDays(start, offset);
+    return {
+      dayKey: getDayKey(date),
+      letter: date.toLocaleDateString('en-CA', { weekday: 'narrow' }),
+      dateLabel: String(date.getDate()),
+      isToday: isSameDay(date, today),
+    };
+  });
+}
+
+type PageProps = {
+  date: Date;
+  viewMode: ScheduleViewMode;
+  now: Date;
+  tabBarPadding: number;
+  /** Timeline pages sit beside a pinned hour rail and scroll with the parent. */
+  embedTimeline?: boolean;
+};
+
+function SchedulePage({
+  date,
+  viewMode,
+  now,
+  tabBarPadding,
+  embedTimeline = false,
+}: PageProps) {
+  const scrollRef = useRef<ScrollView>(null);
+  const onScroll = useTabBarMinimizeScrollHandler();
+  const dayKey = getDayKey(date);
+  const isViewingToday = isSameDay(date, now);
+  const nowMinutes = isViewingToday ? now.getHours() * 60 + now.getMinutes() : undefined;
+
+  const dayEvents = useMemo(
+    () =>
+      MOCK_WEEK_EVENTS.filter((event) => event.dayKey === dayKey).sort(
+        (a, b) => a.startMinutes - b.startMinutes,
+      ),
+    [dayKey],
+  );
+
+  const plannerDays = useMemo(() => plannerDaysFrom(date, now), [date, now]);
+  const plannerEvents = useMemo(() => {
+    const keys = new Set(plannerDays.map((day) => day.dayKey));
+    return MOCK_WEEK_EVENTS.filter((event) => keys.has(event.dayKey));
+  }, [plannerDays]);
+
+  useEffect(() => {
+    if (embedTimeline) return;
+    if (viewMode !== 'day' && viewMode !== 'week') {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+      return;
+    }
+    const hourHeight = viewMode === 'day' ? DAY_HOUR_HEIGHT : PLANNER_HOUR_HEIGHT;
+    const y = FOCUS_HOUR * hourHeight;
+    const id = requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y, animated: false });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [viewMode, date, embedTimeline]);
+
+  const body = (
+    <>
+      {viewMode === 'agenda' ? (
+        <ScheduleAgendaView
+          date={date}
+          events={dayEvents}
+          allDayItems={isViewingToday ? MOCK_ALL_DAY_ITEMS : []}
+          todayKey={getDayKey(now)}
+        />
+      ) : null}
+
+      {viewMode === 'day' ? (
+        <ScheduleDayTimeline
+          events={dayEvents}
+          nowMinutes={nowMinutes}
+          hideRail={embedTimeline}
+        />
+      ) : null}
+
+      {viewMode === 'week' ? (
+        <ScheduleThreeDayView
+          days={plannerDays}
+          events={plannerEvents}
+          hideRail={embedTimeline}
+        />
+      ) : null}
+    </>
+  );
+
+  if (embedTimeline) {
+    return body;
+  }
+
+  return (
+    <ScrollView
+      ref={scrollRef}
+      style={styles.scroller}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ flexGrow: 1, paddingBottom: tabBarPadding }}
+      scrollEventThrottle={16}
+      onScroll={onScroll}
+      contentInsetAdjustmentBehavior="never"
+      nestedScrollEnabled
+      directionalLockEnabled
+    >
+      {body}
+    </ScrollView>
+  );
+}
 
 export function ScheduleScreen() {
   const tabBarPadding = useTabBarContentPadding();
-  const onTabBarMinimizeScroll = useTabBarMinimizeScrollHandler();
+  const onTabBarMinimize = useTabBarMinimizeScrollHandler();
   const insets = useSafeAreaInsets();
-  const scrollRef = useRef<ScrollView>(null);
   const now = useNow();
+  const pagerProgress = useSharedValue(0);
+  const timelineScrollRef = useRef<ScrollView>(null);
+  const [pagerWidth, setPagerWidth] = useState(0);
 
   const [viewMode, setViewMode] = useState<ScheduleViewMode>('day');
 
@@ -69,57 +188,47 @@ export function ScheduleScreen() {
     [selectedDate],
   );
 
-  const todayKey = getDayKey(now);
   const todayIndex = weekDates.findIndex((d) => isSameDay(d, now));
-  const selectedIndex = weekDates.findIndex((d) => isSameDay(d, selectedDate));
-  const selectedKey = getDayKey(selectedDate);
   const isViewingToday = isSameDay(selectedDate, now);
-  const nowMinutes = isViewingToday ? now.getHours() * 60 + now.getMinutes() : undefined;
-
-  const dayEvents = useMemo(
-    () =>
-      MOCK_WEEK_EVENTS.filter((e) => e.dayKey === selectedKey).sort(
-        (a, b) => a.startMinutes - b.startMinutes,
-      ),
-    [selectedKey],
-  );
-
-  /** Planner window starts at the selected day and runs forward. */
-  const plannerDays: PlannerDay[] = useMemo(() => {
-    const start = Math.min(Math.max(selectedIndex, 0), WEEK_ORDER_KEYS.length - PLANNER_SPAN);
-    return WEEK_ORDER_KEYS.slice(start, start + PLANNER_SPAN).map((dayKey, offset) => {
-      const date = weekDates[start + offset];
-      return {
-        dayKey,
-        letter: date
-          ? date.toLocaleDateString('en-CA', { weekday: 'narrow' })
-          : dayKey[0].toUpperCase(),
-        dateLabel: date ? String(date.getDate()) : '',
-        isToday: dayKey === todayKey,
-      };
-    });
-  }, [selectedIndex, weekDates, todayKey]);
-
-  const plannerEvents = useMemo(() => {
-    const keys = new Set(plannerDays.map((d) => d.dayKey));
-    return MOCK_WEEK_EVENTS.filter((e) => keys.has(e.dayKey));
-  }, [plannerDays]);
-
   const showsAllDayBanner = viewMode === 'day' && isViewingToday;
+  const isTimeline = viewMode === 'day' || viewMode === 'week';
+  const stepDays = viewMode === 'week' ? PLANNER_SPAN : 1;
+  const hourHeight = viewMode === 'day' ? DAY_HOUR_HEIGHT : PLANNER_HOUR_HEIGHT;
+  const railTop =
+    viewMode === 'week' ? PLANNER_GRID_TOP + PLANNER_HEAD_HEIGHT : DAY_GRID_TOP;
 
-  // Full-day grids start at midnight; land on the morning so classes are in view.
+  const onTimelineScroll = onTabBarMinimize;
+
+  /*
+    Open the grid on the focus hour when the rail geometry changes — not when
+    the selected day does. Paging must keep the same hours on screen.
+  */
   useEffect(() => {
-    if (viewMode !== 'day' && viewMode !== 'week') {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-      return;
-    }
-    const hourHeight = viewMode === 'day' ? DAY_HOUR_HEIGHT : PLANNER_HOUR_HEIGHT;
-    const y = FOCUS_HOUR * hourHeight;
+    if (!isTimeline) return;
+    const y = railTop + FOCUS_HOUR * hourHeight;
     const id = requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ y, animated: false });
+      timelineScrollRef.current?.scrollTo({ y, animated: false });
     });
     return () => cancelAnimationFrame(id);
-  }, [viewMode, selectedDate]);
+  }, [isTimeline, hourHeight, railTop]);
+
+  const goToDate = useCallback((date: Date) => {
+    setSelectedDate(date);
+    setVisibleWeek(date);
+  }, []);
+
+  const renderPage = useCallback(
+    (date: Date) => (
+      <SchedulePage
+        date={date}
+        viewMode={viewMode}
+        now={now}
+        tabBarPadding={tabBarPadding}
+        embedTimeline={isTimeline}
+      />
+    ),
+    [viewMode, now, tabBarPadding, isTimeline],
+  );
 
   return (
     <View style={styles.root}>
@@ -136,18 +245,16 @@ export function ScheduleScreen() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onTodayPress={() => {
-            setSelectedDate(new Date());
-            setVisibleWeek(new Date());
+            goToDate(new Date());
           }}
           showAdd={viewMode !== 'week'}
         />
         <ScheduleWeekStrip
           selectedDate={selectedDate}
           events={MOCK_WEEK_EVENTS}
-          onSelectDate={(date) => {
-            setSelectedDate(date);
-            setVisibleWeek(date);
-          }}
+          onSelectDate={goToDate}
+          stepDays={stepDays}
+          scrollProgress={pagerProgress}
           onVisibleWeekChange={(weekStart) => {
             /*
               Paging keeps you on the same weekday: land on Thursday, page
@@ -160,44 +267,77 @@ export function ScheduleScreen() {
             setVisibleWeek(addDays(weekStart, MIDWEEK_OFFSET));
           }}
         />
-        {/* All-day stays under the strip so the timetable can scroll beneath it. */}
-        {showsAllDayBanner ? (
-          <View style={styles.allDayWrap}>
-            <ScheduleAllDayBanner items={MOCK_ALL_DAY_ITEMS} />
+        {/*
+          Day view always keeps this slot, even with no all-day card, so the
+          hour rail does not jump when paging onto or off a day that has one.
+          The card itself is painted only when that day has entries.
+        */}
+        {viewMode === 'day' ? (
+          <View
+            style={styles.allDayWrap}
+            pointerEvents={showsAllDayBanner ? 'auto' : 'none'}
+            accessibilityElementsHidden={!showsAllDayBanner}
+            importantForAccessibility={showsAllDayBanner ? 'yes' : 'no-hide-descendants'}
+          >
+            <View style={showsAllDayBanner ? null : styles.allDayHidden}>
+              <ScheduleAllDayBanner items={MOCK_ALL_DAY_ITEMS} />
+            </View>
           </View>
         ) : null}
       </View>
 
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroller}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: tabBarPadding }}
-        scrollEventThrottle={16}
-        onScroll={onTabBarMinimizeScroll}
-        contentInsetAdjustmentBehavior="never"
-      >
-        {viewMode === 'agenda' ? (
-          <ScheduleAgendaView
-            events={dayEvents}
-            weekDates={weekDates}
-            allDayItems={isViewingToday ? MOCK_ALL_DAY_ITEMS : []}
-            todayKey={todayKey}
-          />
-        ) : null}
-
-        {viewMode === 'day' ? (
-          <ScheduleDayTimeline
-            events={dayEvents}
-            nowMinutes={nowMinutes}
-          />
-        ) : null}
-
-        {viewMode === 'week' ? (
-          <ScheduleThreeDayView days={plannerDays} events={plannerEvents} />
-        ) : null}
-      </ScrollView>
-
+      {isTimeline ? (
+        <ScrollView
+          ref={timelineScrollRef}
+          style={styles.scroller}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: tabBarPadding }}
+          scrollEventThrottle={16}
+          onScroll={onTimelineScroll}
+          contentInsetAdjustmentBehavior="never"
+          directionalLockEnabled
+        >
+          <View style={styles.timelineRow}>
+            <View>
+              <View style={{ height: railTop }} />
+              <ScheduleHourRail
+                hourHeight={hourHeight}
+                labelOffset={viewMode === 'week' ? -5 : 0}
+                labelSize={viewMode === 'week' ? 11 : 12}
+              />
+            </View>
+            <View
+              style={styles.timelinePager}
+              onLayout={(event) => {
+                const next = event.nativeEvent.layout.width;
+                setPagerWidth((current) => (current === next ? current : next));
+              }}
+            >
+              {pagerWidth > 0 ? (
+                <SchedulePager
+                  key={viewMode}
+                  selectedDate={selectedDate}
+                  stepDays={stepDays}
+                  onChangeDate={goToDate}
+                  renderPage={renderPage}
+                  scrollProgress={pagerProgress}
+                  pageWidth={pagerWidth}
+                  fill={false}
+                />
+              ) : null}
+            </View>
+          </View>
+        </ScrollView>
+      ) : (
+        <SchedulePager
+          key={viewMode}
+          selectedDate={selectedDate}
+          stepDays={stepDays}
+          onChangeDate={goToDate}
+          renderPage={renderPage}
+          scrollProgress={pagerProgress}
+        />
+      )}
     </View>
   );
 }
@@ -215,11 +355,23 @@ const styles = StyleSheet.create({
   scroller: {
     flex: 1,
   },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: semanticSpacing.screenHorizontal,
+  },
+  timelinePager: {
+    flex: 1,
+    minWidth: 0,
+  },
   allDayWrap: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 10,
     paddingBottom: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: scheduleTheme.mastheadBorder,
+  },
+  allDayHidden: {
+    opacity: 0,
   },
 });
