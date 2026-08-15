@@ -6,11 +6,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import {
-  GlassView,
-  isGlassEffectAPIAvailable,
-  isLiquidGlassAvailable,
-} from 'expo-glass-effect';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 export type GlassActionButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   children: React.ReactNode;
@@ -19,16 +15,49 @@ export type GlassActionButtonProps = Omit<PressableProps, 'children' | 'style'> 
    * fills the full capsule (including horizontal inset around the label).
    */
   style?: StyleProp<ViewStyle>;
-  /** Used when liquid glass is unavailable (Android, older iOS). */
+  /** Used when liquid glass is unavailable (Android, older iOS, Expo Go). */
   fallbackBackgroundColor?: string;
   accessibilityLabel: string;
   /** When false, skip the press scale (avoids a pop during expand handoff). */
   pressScaleEnabled?: boolean;
 };
 
-function canUseLiquidGlass(): boolean {
+type GlassModule = {
+  GlassView: React.ComponentType<{
+    isInteractive?: boolean;
+    glassEffectStyle?: string;
+    style?: StyleProp<ViewStyle>;
+    children?: React.ReactNode;
+  }>;
+  isLiquidGlassAvailable: () => boolean;
+  isGlassEffectAPIAvailable: () => boolean;
+};
+
+function isExpoGo(): boolean {
+  return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+}
+
+function loadGlassModule(): GlassModule | null {
+  // Expo Go does not ship a safe ExpoGlassEffect native view; importing
+  // expo-glass-effect on iOS can crash before any availability check runs.
+  if (isExpoGo()) {
+    return null;
+  }
   try {
-    return isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
+    // Lazy require so Expo Go never evaluates GlassView.ios.js.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('expo-glass-effect') as GlassModule;
+  } catch {
+    return null;
+  }
+}
+
+function canUseLiquidGlass(glass: GlassModule | null): boolean {
+  if (!glass) {
+    return false;
+  }
+  try {
+    return glass.isLiquidGlassAvailable() && glass.isGlassEffectAPIAvailable();
   } catch {
     return false;
   }
@@ -37,6 +66,7 @@ function canUseLiquidGlass(): boolean {
 /**
  * Circular or pill action control with native iOS liquid glass when available.
  * Avoids parent opacity (breaks UIVisualEffectView); press uses a slight scale.
+ * Falls back to a translucent View in Expo Go / unsupported runtimes.
  */
 export function GlassActionButton({
   children,
@@ -47,7 +77,9 @@ export function GlassActionButton({
   pressScaleEnabled = true,
   ...pressableProps
 }: GlassActionButtonProps) {
-  const useGlass = useMemo(() => canUseLiquidGlass(), []);
+  const glass = useMemo(() => loadGlassModule(), []);
+  const useGlass = useMemo(() => canUseLiquidGlass(glass), [glass]);
+  const GlassView = glass?.GlassView;
 
   const surfaceStyle: ViewStyle = {
     alignItems: 'center',
@@ -73,7 +105,7 @@ export function GlassActionButton({
       ]}
       {...pressableProps}
     >
-      {useGlass ? (
+      {useGlass && GlassView ? (
         <GlassView isInteractive glassEffectStyle="regular" style={[surfaceStyle, style]}>
           {children}
         </GlassView>
