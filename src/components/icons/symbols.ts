@@ -9,6 +9,7 @@ import { msLocalLibrary } from '@material-symbols-react-native/rounded-400/msLoc
 import { msNorthEast } from '@material-symbols-react-native/rounded-400/msNorthEast';
 import { msArrowForward } from '@material-symbols-react-native/rounded-400/msArrowForward';
 import { msSearchOff } from '@material-symbols-react-native/rounded-400/msSearchOff';
+import { msHistory } from '@material-symbols-react-native/rounded-400/msHistory';
 import { msHome } from '@material-symbols-react-native/rounded-400/msHome';
 import { msHomeFill } from '@material-symbols-react-native/rounded-400/msHomeFill';
 import { msCalendarMonth } from '@material-symbols-react-native/rounded-400/msCalendarMonth';
@@ -171,5 +172,6 @@ export { msLocalLibrary };
 export { msNorthEast };
 export { msArrowForward };
 export { msSearchOff };
+export { msHistory };
 export { msDirectionsBus };
 export { msMap };

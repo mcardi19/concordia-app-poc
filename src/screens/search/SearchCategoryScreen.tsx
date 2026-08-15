@@ -11,7 +11,6 @@ import {
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { getCampusServices } from '@/data/buildings';
-import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import type { SearchScreenProps } from '@/navigation/types';
 import { categoryIcon } from './globalSearch';
 import { searchTheme } from './searchTheme';
@@ -29,7 +28,6 @@ type Props = SearchScreenProps<'SearchCategory'>;
 export function SearchCategoryScreen({ route, navigation }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const tabBarPadding = useTabBarContentPadding();
 
   const category = useMemo(
     () => SERVICE_CATEGORIES.find((c) => c.key === route.params.categoryKey),
@@ -82,7 +80,8 @@ export function SearchCategoryScreen({ route, navigation }: Props) {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
+        // No tab bar to clear on the search screens — just the home indicator.
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.masthead}>

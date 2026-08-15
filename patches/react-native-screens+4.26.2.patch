@@ -186,6 +186,19 @@ index 74b4851..83004cc 100644
        _previousFrame = frame;
      }
    }
+diff --git a/node_modules/react-native-screens/ios/tabs/host/RNSTabsHostComponentView.mm b/node_modules/react-native-screens/ios/tabs/host/RNSTabsHostComponentView.mm
+index 8b61f5b..802807d 100644
+--- a/node_modules/react-native-screens/ios/tabs/host/RNSTabsHostComponentView.mm
++++ b/node_modules/react-native-screens/ios/tabs/host/RNSTabsHostComponentView.mm
+@@ -244,7 +244,7 @@ - (void)updateProps:(const facebook::react::Props::Shared &)props
+     _tabBarHidden = newComponentProps.tabBarHidden;
+ #if RNS_IPHONE_OS_VERSION_AVAILABLE(18_0)
+     if (@available(iOS 18.0, *)) {
+-      [_controller setTabBarHidden:_tabBarHidden animated:NO];
++      [_controller setTabBarHidden:_tabBarHidden animated:YES];
+     } else
+ #endif // RNS_IPHONE_OS_VERSION_AVAILABLE(18_0)
+     {
 diff --git a/node_modules/react-native-screens/src/fabric/gamma/stack/StackHeaderConfigAndroidNativeComponent.ts b/node_modules/react-native-screens/src/fabric/gamma/stack/StackHeaderConfigAndroidNativeComponent.ts
 index 06b8e7f..228cbef 100644
 --- a/node_modules/react-native-screens/src/fabric/gamma/stack/StackHeaderConfigAndroidNativeComponent.ts

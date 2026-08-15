@@ -142,3 +142,10 @@ export const semanticMotion = {
 
 /** Minimum touch target size (iOS 44pt / Material 48dp). */
 export const touchTargetMinSize = 48;
+
+/**
+ * Search field height, shared by the global search screen and the Campus map
+ * field so the two read as the same control. Capsule-shaped at this height —
+ * a small corner radius reads as a text box rather than a search field.
+ */
+export const searchFieldHeight = 52;

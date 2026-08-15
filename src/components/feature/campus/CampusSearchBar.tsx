@@ -18,6 +18,7 @@ import {
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, msSearch } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
+import { searchFieldHeight } from '@/design-system/tokens';
 import { MIN_TOUCH_TARGET_SIZE } from '@/accessibility';
 import { filterBuildings } from '@/api/buildings';
 import type { BuildingSummary, CampusCode } from '@/types/campus';
@@ -31,7 +32,7 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
-const SEARCH_FIELD_HEIGHT = Math.max(MIN_TOUCH_TARGET_SIZE, 48);
+const SEARCH_FIELD_HEIGHT = Math.max(MIN_TOUCH_TARGET_SIZE, searchFieldHeight);
 /** Clear the capsule’s rounded ends (optical inset past the curve). */
 const SEARCH_FIELD_HORIZONTAL_INSET = 22;
 

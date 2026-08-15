@@ -59,5 +59,6 @@ export {
   msNorthEast,
   msArrowForward,
   msSearchOff,
+  msHistory,
 } from './symbols';
 export type { TabSymbolPair, FeatureSymbolKey } from './symbols';

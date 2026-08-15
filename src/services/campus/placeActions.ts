@@ -25,8 +25,27 @@ export function openAppleMapsDirections(
   const q = label ? `&q=${encodeURIComponent(label)}` : '';
   const url =
     Platform.OS === 'ios'
-      ? `maps://?daddr=${dest}&dirflg=d${q}`
-      : `https://maps.apple.com/?daddr=${dest}&dirflg=d${q}`;
+      ? `maps://?daddr=${dest}&dirflg=w${q}`
+      : `https://maps.apple.com/?daddr=${dest}&dirflg=w${q}`;
+  void Linking.openURL(url);
+}
+
+/** Opens the Apple Maps place card (hours, photos, entrances when available). */
+export function openAppleMapsPlace(
+  lat: number,
+  lng: number,
+  label: string
+): void {
+  const ll = `${lat},${lng}`;
+  const q = encodeURIComponent(label);
+  const url =
+    Platform.OS === 'ios'
+      ? `maps://?q=${q}&ll=${ll}`
+      : `https://maps.apple.com/?q=${q}&ll=${ll}`;
+  void Linking.openURL(url);
+}
+
+export function openBuildingWebsite(url: string): void {
   void Linking.openURL(url);
 }
 

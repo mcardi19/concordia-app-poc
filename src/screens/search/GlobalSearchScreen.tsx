@@ -1,6 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { Keyboard, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { GlassView } from 'expo-glass-effect';
 import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
@@ -8,6 +14,7 @@ import {
   MaterialSymbol,
   msChevronLeft,
   msDirectionsBus,
+  msHistory,
   msLocalLibrary,
   msNorthEast,
   msSchool,
@@ -21,6 +28,7 @@ import {
   SEARCH_NEEDS,
   SERVICE_CATEGORIES,
   SearchNeedRail,
+  SearchGroupLabel,
   SearchResultGroup,
   SearchResultRow,
   SearchScopeChips,
@@ -28,10 +36,10 @@ import {
   type SearchScope,
 } from '@/components/feature/search';
 import { useTheme } from '@/design-system/theme';
-import { semanticSpacing } from '@/design-system/tokens';
+import { searchFieldHeight, semanticSpacing } from '@/design-system/tokens';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useServicesSearch } from '@/hooks/useServicesSearch';
-import { useTabBarContentPadding } from '@/navigation/tabBarInset';
+import { horizontalCarouselProps } from '@/components/feature/today';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import { CURATED_BOOKS, LIBRARY_LOANS } from '@/components/feature/library/libraryData';
 import type { SearchScreenProps } from '@/navigation/types';
@@ -49,6 +57,13 @@ import {
 import { searchTheme } from './searchTheme';
 
 type Props = SearchScreenProps<'Search'>;
+
+/** Gap between the back control, the field, and Cancel. */
+const FIELD_ROW_GAP = 10;
+
+/** Page metrics for the Browse-services rail — `snapToInterval` needs both. */
+const CATEGORY_PAGE_WIDTH = 300;
+const CATEGORY_RAIL_GAP = 12;
 
 /** Seeded so the zero state has something to show before any search is run. */
 const SEED_RECENTS = [
@@ -68,7 +83,6 @@ const SEED_RECENTS = [
 export function GlobalSearchScreen({ navigation }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const tabBarPadding = useTabBarContentPadding();
   const glass = useMemo(() => canUseLiquidGlass(), []);
 
   const [query, setQuery] = useState('');
@@ -134,10 +148,59 @@ export function GlobalSearchScreen({ navigation }: Props) {
     return groupHits(scoped.filter((h) => h.id !== bestMatch?.id));
   }, [hits, scope, bestMatch]);
 
-  const runSearch = useCallback((next: string) => {
+  /*
+    Cancel slides in from behind the right edge and the field gives up the
+    width, the way the platform search field behaves.
+
+    Driven by a negative margin rather than an animated width: at width 0 the
+    button would have no room to lay out, so its natural width could never be
+    measured. This way it always lays out in full and is simply pulled out of
+    the row (and clipped) while hidden.
+
+    Everything the animation needs is a shared value or a ref, and it is
+    started straight from the focus handlers. Routing it through state and an
+    effect instead put a full re-render of this screen — the whole zero state,
+    every glass surface in it — between the tap and the first frame, which is
+    what made it stutter. Measuring into a shared value rather than state
+    keeps the layout pass from forcing a second one.
+  */
+  const cancelProgress = useSharedValue(0);
+  const cancelWidth = useSharedValue(0);
+  const focusedRef = useRef(false);
+  const queryRef = useRef('');
+
+  const revealCancel = useCallback(
+    (next: boolean) => {
+      cancelProgress.value = withTiming(next ? 1 : 0, {
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+      });
+    },
+    [cancelProgress],
+  );
+
+  /** Query lives in state (results need it) and a ref (the handlers do). */
+  const updateQuery = useCallback((next: string) => {
+    queryRef.current = next;
     setQuery(next);
-    setScope(null);
   }, []);
+
+  const runSearch = useCallback(
+    (next: string) => {
+      updateQuery(next);
+      setScope(null);
+      // Reached without focusing the field — tapping a task or a recent.
+      revealCancel(next.length > 0);
+    },
+    [updateQuery, revealCancel],
+  );
+
+  /* Stable, so `ZeroState`'s memo actually holds. */
+  const clearRecents = useCallback(() => setRecents([]), []);
+  const openCategory = useCallback(
+    (key: string) => navigation.navigate('SearchCategory', { categoryKey: key }),
+    [navigation],
+  );
 
   const remember = useCallback((label: string, icon: typeof msSearch) => {
     setRecents((prev) => [
@@ -146,16 +209,54 @@ export function GlobalSearchScreen({ navigation }: Props) {
     ].slice(0, 4));
   }, []);
 
+  /**
+   * Focus is the trigger, not typing — the way out should be there the moment
+   * the field is live. On blur it stays up while there is still a query to
+   * clear, since scrolling the results dismisses the keyboard.
+   */
+  const onFieldFocus = useCallback(() => {
+    focusedRef.current = true;
+    revealCancel(true);
+  }, [revealCancel]);
+
+  const onFieldBlur = useCallback(() => {
+    focusedRef.current = false;
+    revealCancel(queryRef.current.length > 0);
+  }, [revealCancel]);
+
+  /**
+   * Cancel replaces the field's own clear button, so it does what that did —
+   * empties the query — and drops the keyboard with it. Leaving search is the
+   * back control's job.
+   */
+  const cancelSearch = useCallback(() => {
+    // Clipped out of the row while hidden, but never trust that for a tap.
+    if (cancelProgress.value === 0) return;
+    updateQuery('');
+    setScope(null);
+    Keyboard.dismiss();
+    if (!focusedRef.current) revealCancel(false);
+  }, [cancelProgress, updateQuery, revealCancel]);
+
+  const cancelStyle = useAnimatedStyle(() => ({
+    // The row's gap is pulled back too, or the field stays a gap short of the
+    // full width while Cancel is hidden.
+    marginRight: -(cancelWidth.value + FIELD_ROW_GAP) * (1 - cancelProgress.value),
+    opacity: cancelProgress.value,
+  }));
+
   const field = (
     <>
-      <MaterialSymbol icon={msSearch} size={20} color={theme.color.primary} />
+      <MaterialSymbol icon={msSearch} size={22} color={theme.color.primary} />
       <TextInput
         value={query}
-        onChangeText={setQuery}
-        placeholder="Search services, people, places…"
+        onChangeText={updateQuery}
+        // Short enough to survive the field narrowing when Cancel slides in.
+        placeholder="Search Concordia"
         placeholderTextColor={searchTheme.metaText}
         autoCorrect={false}
-        clearButtonMode="while-editing"
+        onFocus={onFieldFocus}
+        onBlur={onFieldBlur}
         returnKeyType="search"
         accessibilityLabel="Search Concordia"
         style={[styles.input, { color: searchTheme.headingText }]}
@@ -179,7 +280,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
             accessibilityLabel="Back"
             hitSlop={8}
           >
-            <SearchSurface style={styles.backButton} radius={18}>
+            <SearchSurface style={styles.backButton} radius={22}>
               <MaterialSymbol icon={msChevronLeft} size={20} color={theme.color.primary} />
             </SearchSurface>
           </Pressable>
@@ -196,6 +297,24 @@ export function GlobalSearchScreen({ navigation }: Props) {
           ) : (
             <View style={[styles.field, styles.fieldFallback]}>{field}</View>
           )}
+
+          <Animated.View style={cancelStyle}>
+            <Pressable
+              onPress={cancelSearch}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel search"
+              hitSlop={6}
+              // Into a shared value, not state — this must not cause a render.
+              onLayout={(e) => {
+                cancelWidth.value = e.nativeEvent.layout.width;
+              }}
+              style={({ pressed }) => [styles.cancel, { opacity: pressed ? 0.5 : 1 }]}
+            >
+              <Text variant="bodySmall" numberOfLines={1} style={styles.cancelLabel}>
+                Cancel
+              </Text>
+            </Pressable>
+          </Animated.View>
         </View>
       </View>
 
@@ -206,15 +325,16 @@ export function GlobalSearchScreen({ navigation }: Props) {
       <ScrollView
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
+        // No tab bar to clear on this screen — just the home indicator.
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
       >
         {!searched ? (
           <ZeroState
             recents={recents}
             onRunSearch={runSearch}
-            onClearRecents={() => setRecents([])}
-            onOpenCategory={(key) => navigation.navigate('SearchCategory', { categoryKey: key })}
+            onClearRecents={clearRecents}
+            onOpenCategory={openCategory}
           />
         ) : isLoading ? (
           <ResultSkeleton />
@@ -267,8 +387,14 @@ export function GlobalSearchScreen({ navigation }: Props) {
   );
 }
 
-/** Browse-first zero state. */
-function ZeroState({
+/**
+ * Browse-first zero state.
+ *
+ * Memoised: this subtree is a dozen-odd glass surfaces, and without it every
+ * keystroke and every focus change rebuilt the lot — enough of a commit to
+ * eat the first frames of the Cancel animation.
+ */
+const ZeroState = React.memo(function ZeroState({
   recents,
   onRunSearch,
   onClearRecents,
@@ -313,39 +439,41 @@ function ZeroState({
         ))}
       </ScrollView>
 
+      {/*
+        Straight on the page rather than in a card: these are past queries, not
+        results, and a grouped surface gave them the same weight as the service
+        categories below. Every row carries the history glyph for the same
+        reason — a per-result icon read as a destination.
+      */}
       {recents.length > 0 ? (
-        <SearchResultGroup label="Recent" action="Clear" onActionPress={onClearRecents}>
-          {recents.map((recent, i) => (
+        <View style={styles.recentBlock}>
+          <SearchGroupLabel action="Clear" onActionPress={onClearRecents}>
+            Recent
+          </SearchGroupLabel>
+          {recents.map((recent) => (
             <Pressable
               key={recent.label}
               onPress={() => onRunSearch(recent.label)}
               accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.recentRow,
-                i < recents.length - 1 ? styles.recentDivider : null,
-                { opacity: pressed ? 0.6 : 1 },
-              ]}
+              style={({ pressed }) => [styles.recentRow, { opacity: pressed ? 0.6 : 1 }]}
             >
-              <View style={styles.recentIcon}>
-                <MaterialSymbol icon={recent.icon} size={18} color={searchTheme.metaText} />
-              </View>
+              <MaterialSymbol icon={msHistory} size={20} color={searchTheme.metaText} />
               <Text variant="bodySmall" style={styles.recentLabel}>
                 {recent.label}
               </Text>
               <MaterialSymbol icon={msNorthEast} size={16} color={searchTheme.chevron} />
             </Pressable>
           ))}
-        </SearchResultGroup>
+        </View>
       ) : null}
 
       <View style={styles.section}>
         <SearchResultGroupLabelRow label="Browse services" />
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+          {...horizontalCarouselProps}
+          snapToInterval={CATEGORY_PAGE_WIDTH + CATEGORY_RAIL_GAP}
           contentContainerStyle={styles.categoryRail}
           keyboardShouldPersistTaps="handled"
-          decelerationRate="fast"
         >
           {pages.map((page, index) => (
             <SearchSurface key={index} style={styles.categoryPage}>
@@ -387,7 +515,7 @@ function ZeroState({
       </View>
     </>
   );
-}
+});
 
 /** Nothing matched — offer a correction and a way back to browsing. */
 function NoResults({ query, onRunSearch }: { query: string; onRunSearch: (q: string) => void }) {
@@ -524,11 +652,24 @@ const styles = StyleSheet.create({
   fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: FIELD_ROW_GAP,
+    // Clips Cancel while its negative margin holds it past the right edge.
+    overflow: 'hidden',
   },
+  cancel: {
+    paddingLeft: 2,
+    justifyContent: 'center',
+  },
+  cancelLabel: {
+    fontSize: 15,
+    lineHeight: 19,
+    fontWeight: '600',
+    color: '#912238',
+  },
+  /** Grown with the field so the row still reads as one control group. */
   backButton: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -538,9 +679,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    height: 40,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    height: searchFieldHeight,
+    // Same capsule, inset and glyph size as the Campus field.
+    paddingHorizontal: 22,
+    borderRadius: searchFieldHeight / 2,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -594,24 +736,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: searchTheme.bodyText,
   },
+  recentBlock: {
+    paddingTop: 22,
+  },
   recentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    // Aligned to the page, not inset inside a card.
+    paddingHorizontal: semanticSpacing.screenHorizontal,
+    paddingVertical: 11,
   },
   recentDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: searchTheme.rowDivider,
-  },
-  recentIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: searchTheme.recentFill,
   },
   recentLabel: {
     flex: 1,
@@ -625,13 +763,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryRail: {
-    gap: 12,
+    gap: CATEGORY_RAIL_GAP,
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingVertical: 4,
     alignItems: 'stretch',
   },
   categoryPage: {
-    width: 300,
+    width: CATEGORY_PAGE_WIDTH,
   },
   categoryRow: {
     flexDirection: 'row',

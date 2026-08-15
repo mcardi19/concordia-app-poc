@@ -2,8 +2,9 @@
 /**
  * Regenerates src/data/buildings/catalog.ts from:
  * - concordia.ca/maps/buildings directory (catalog.overrides.ts)
- * - campus maps XML (services, departments, amenities)
- * - hand-curated website detail pages (catalog.overrides.ts)
+ * - crawled building detail pages (overview, accessibility, venues, services, departments)
+ * - campus maps XML (services, departments, amenities — merged with website)
+ * - hand-curated overrides in catalog.overrides.ts (library branches, aliases)
  *
  * Usage: node scripts/sync-buildings-catalog.mjs
  */
@@ -16,6 +17,9 @@ import { createRequire } from 'node:module';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const require = createRequire(import.meta.url);
+
+const WEBSITE_BASE = 'https://www.concordia.ca/maps/buildings';
+const CRAWL_CONCURRENCY = 6;
 
 const AMENITY_LABELS = {
   disability: 'Accessible',
@@ -31,19 +35,147 @@ const XML_URLS = {
   loy: 'https://sites.concordia.ca/cq/proxy/maps-loy.php?action=1',
 };
 
+const WEBSITE_SECTIONS = new Set([
+  'Building overview',
+  'Building accessibility',
+  'Building access hours',
+  'Venues',
+  'Departments',
+  'Services',
+]);
+
+function decodeHtml(value) {
+  return String(value ?? '')
+    .replace(/&amp;/g, '&')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function extractLinks(html) {
   const out = [];
   const re = /<a[^>]*>([^<]*)<\/a>/gi;
   let match = re.exec(html);
   while (match) {
-    const text = match[1]
-      .replace(/&amp;/g, '&')
-      .replace(/&nbsp;/g, ' ')
-      .trim();
+    const text = decodeHtml(match[1]);
     if (text) out.push(text);
     match = re.exec(html);
   }
   return out;
+}
+
+function normalizeListKey(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/\s*&\s*/g, ' and ')
+    .replace(/\([^)]*\)/g, '')
+    .trim();
+}
+
+function mergeUniqueLists(...groups) {
+  const seen = new Set();
+  const next = [];
+  groups.flat().forEach((value) => {
+    const trimmed = String(value ?? '').trim();
+    if (!trimmed) return;
+    const key = normalizeListKey(trimmed);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    next.push(trimmed);
+  });
+  return next;
+}
+
+function parseBuildingPage(html) {
+  const mainMatch = html.match(
+    /<div class="content-main parsys">([\s\S]*?)<div class="custom-footer-top/
+  );
+  const main = mainMatch ? mainMatch[1] : html;
+  const parsed = {
+    overview: undefined,
+    accessibility: [],
+    accessHours: [],
+    venues: [],
+    departments: [],
+    services: [],
+    imageUrl: undefined,
+  };
+
+  const headings = [];
+  const h2Re = /<h2[^>]*>([\s\S]*?)<\/h2>/gi;
+  let match = h2Re.exec(main);
+  while (match) {
+    headings.push({
+      title: decodeHtml(match[1]),
+      index: match.index,
+      len: match[0].length,
+    });
+    match = h2Re.exec(main);
+  }
+
+  for (let i = 0; i < headings.length; i += 1) {
+    const heading = headings[i].title;
+    if (!WEBSITE_SECTIONS.has(heading)) continue;
+
+    const start = headings[i].index + headings[i].len;
+    const end = i + 1 < headings.length ? headings[i + 1].index : main.length;
+    const chunk = main.slice(start, end);
+    const listItems = [...chunk.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+      .map((item) => decodeHtml(item[1]))
+      .filter(Boolean);
+
+    if (heading === 'Building overview') {
+      const paragraphs = [...chunk.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+        .map((item) => decodeHtml(item[1]))
+        .filter(Boolean);
+      if (paragraphs.length) {
+        parsed.overview = paragraphs.join('\n\n');
+      }
+      continue;
+    }
+
+    if (heading === 'Building accessibility') {
+      parsed.accessibility = cleanAccessibility(
+        listItems.length ? listItems : [decodeHtml(chunk)]
+      );
+      continue;
+    }
+
+    if (heading === 'Building access hours') {
+      parsed.accessHours = listItems;
+      continue;
+    }
+
+    if (heading === 'Venues') {
+      parsed.venues = listItems;
+      continue;
+    }
+
+    if (heading === 'Departments') {
+      parsed.departments = listItems;
+      continue;
+    }
+
+    if (heading === 'Services') {
+      parsed.services = listItems;
+    }
+  }
+
+  const imageMatch = [
+    ...main.matchAll(
+      /<img[^>]+src="(\/content\/concordia\/en\/maps\/buildings\/[^"]+\.(?:jpg|jpeg|png|webp))"[^>]*class="cq-dd-image\s*"/gi
+    ),
+  ][0];
+  if (imageMatch?.[1]) {
+    parsed.imageUrl = `https://www.concordia.ca${imageMatch[1]}`;
+  }
+
+  return parsed;
 }
 
 function parseXmlMarkers(xml, campusId) {
@@ -61,8 +193,8 @@ function parseXmlMarkers(xml, campusId) {
     const amenHtml = (block.match(/<ammeneties>([\s\S]*?)<\/ammeneties>/i) ?? [])[1] ?? '';
 
     const amenities = [];
-    for (const match of amenHtml.matchAll(/maki-icon\s+(\w+)/gi)) {
-      const label = AMENITY_LABELS[match[1].toLowerCase()] ?? match[1];
+    for (const icon of amenHtml.matchAll(/maki-icon\s+(\w+)/gi)) {
+      const label = AMENITY_LABELS[icon[1].toLowerCase()] ?? icon[1];
       if (!amenities.includes(label)) amenities.push(label);
     }
 
@@ -79,7 +211,7 @@ function parseXmlMarkers(xml, campusId) {
   return byCode;
 }
 
-async function fetchXml(url) {
+async function fetchText(url) {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status}`);
@@ -87,8 +219,55 @@ async function fetchXml(url) {
   return response.text();
 }
 
+async function crawlBuildingPages(directory) {
+  const byKey = new Map();
+  let index = 0;
+
+  async function worker() {
+    while (index < directory.length) {
+      const entry = directory[index];
+      index += 1;
+      const url = `${WEBSITE_BASE}/${entry.code.toLowerCase()}.html`;
+      try {
+        const html = await fetchText(url);
+        byKey.set(`${entry.campusId}-${entry.code.toUpperCase()}`, parseBuildingPage(html));
+      } catch (error) {
+        console.warn(`Warning: could not crawl ${url}: ${error.message}`);
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(CRAWL_CONCURRENCY, directory.length) }, () => worker())
+  );
+
+  return byKey;
+}
+
 function quote(value) {
-  return `'${String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+  return `'${String(value)
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r?\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()}'`;
+}
+
+function cleanAccessibility(items) {
+  return items
+    .flatMap((item) =>
+      item.split(
+        /(?=Accessibility ramp|Accessible entrance|Accessible building|Wheelchair lift)/i
+      )
+    )
+    .map((item) =>
+      decodeHtml(item)
+        .replace(/Back to top[\s\S]*$/i, '')
+        .replace(/&copy;/gi, '')
+        .trim()
+    )
+    .filter(Boolean);
 }
 
 function formatStringArray(values, indent) {
@@ -108,8 +287,7 @@ function formatExtra(extra, indent) {
       return [`${indent}  ${key}: ${formatStringArray(value, `${indent}  `)},`];
     }
     if (typeof value === 'string') {
-      const escaped = value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      return [`${indent}  ${key}: '${escaped}',`];
+      return [`${indent}  ${key}: ${quote(value)},`];
     }
     return [];
   });
@@ -119,17 +297,7 @@ function formatExtra(extra, indent) {
 }
 
 function uniqueAliases(...groups) {
-  const seen = new Set();
-  const next = [];
-  groups.flat().forEach((value) => {
-    const trimmed = String(value ?? '').trim();
-    if (!trimmed) return;
-    const key = trimmed.toLowerCase();
-    if (seen.has(key)) return;
-    seen.add(key);
-    next.push(trimmed);
-  });
-  return next;
+  return mergeUniqueLists(...groups);
 }
 
 async function main() {
@@ -138,20 +306,22 @@ async function main() {
     throw new Error(`Missing ${overridesPath}`);
   }
 
-  // Load overrides via ts-node alternative: dynamic import won't work for TS in plain node.
-  // Parse constants from the TS source with lightweight regex extraction.
   const overridesSource = fs.readFileSync(overridesPath, 'utf8');
   const { CATALOG_OVERRIDES, WEBSITE_DIRECTORY } = loadOverridesFromSource(overridesSource);
 
-  const [sgwXml, loyXml] = await Promise.all([
-    fetchXml(XML_URLS.sgw),
-    fetchXml(XML_URLS.loy),
+  console.log(`Crawling ${WEBSITE_DIRECTORY.length} building pages…`);
+  const [websiteByKey, sgwXml, loyXml] = await Promise.all([
+    crawlBuildingPages(WEBSITE_DIRECTORY),
+    fetchText(XML_URLS.sgw),
+    fetchText(XML_URLS.loy),
   ]);
 
-  const xmlByKey = new Map([
-    ...parseXmlMarkers(sgwXml, 'sgw'),
-    ...parseXmlMarkers(loyXml, 'loy'),
-  ].map((entry) => [`${entry[1].campusId}-${entry[0]}`, entry[1]]));
+  const xmlByKey = new Map(
+    [...parseXmlMarkers(sgwXml, 'sgw'), ...parseXmlMarkers(loyXml, 'loy')].map((entry) => [
+      `${entry[1].campusId}-${entry[0]}`,
+      entry[1],
+    ])
+  );
 
   const sgwRows = [];
   const loyRows = [];
@@ -159,22 +329,20 @@ async function main() {
   for (const entry of WEBSITE_DIRECTORY) {
     const key = `${entry.campusId}-${entry.code.toUpperCase()}`;
     const xml = xmlByKey.get(key);
+    const website = websiteByKey.get(key) ?? {};
     const override = CATALOG_OVERRIDES[key] ?? {};
 
     const extra = {
-      aliases: uniqueAliases(
-        override.aliases,
-        entry.name,
-        entry.code,
-        xml?.xmlName
-      ),
-      overview: override.overview,
-      accessibility: override.accessibility,
-      venues: override.venues,
+      aliases: uniqueAliases(override.aliases, entry.name, entry.code, xml?.xmlName),
+      overview: override.overview ?? website.overview?.replace(/\s+/g, ' ').trim(),
+      accessibility: override.accessibility ?? website.accessibility,
+      accessHours: website.accessHours,
+      venues: override.venues ?? website.venues,
       library: override.library,
-      services: xml?.services ?? [],
-      departments: xml?.departments ?? [],
+      services: mergeUniqueLists(override.services, website.services, xml?.services),
+      departments: mergeUniqueLists(override.departments, website.departments, xml?.departments),
       amenities: xml?.amenities ?? [],
+      imageUrl: website.imageUrl,
     };
 
     Object.keys(extra).forEach((k) => {
@@ -222,8 +390,8 @@ function row(
 
 /**
  * Consolidated building database.
- * Generated by \`npm run sync:buildings\` from website directory + maps XML,
- * merged with hand-curated detail pages in catalog.overrides.ts.
+ * Generated by \`npm run sync:buildings\` from the website directory,
+ * crawled building detail pages, maps XML, and catalog.overrides.ts.
  * Coordinates still come from Open Data \`facilities/buildinglist/\`.
  */
 export const BUILDING_CATALOG: BuildingCatalogRecord[] = [
