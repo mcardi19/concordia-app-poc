@@ -191,9 +191,14 @@ export function CampusResultsDrawer({
 
           {buildings.length === 0 ? (
             <Text
-              variant="bodySmall"
+              variant="body"
               color="secondary"
-              style={{ paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.md }}
+              style={{
+                paddingHorizontal: theme.spacing.lg,
+                paddingTop: theme.spacing.md,
+                fontSize: 15,
+                lineHeight: 15 * 1.45,
+              }}
             >
               Nothing on this campus matches that yet.
             </Text>
@@ -232,10 +237,23 @@ export function CampusResultsDrawer({
                     </Text>
                   </View>
                   <View style={styles.rowText}>
-                    <Text variant="body" color="primary" numberOfLines={1} style={styles.rowTitle}>
+                    <Text
+                      variant="body"
+                      color="primary"
+                      numberOfLines={1}
+                      style={[
+                        styles.rowTitle,
+                        { fontSize: 18, lineHeight: 18 * 1.2 },
+                      ]}
+                    >
                       {building.name}
                     </Text>
-                    <Text variant="bodySmall" color="secondary" numberOfLines={1}>
+                    <Text
+                      variant="body"
+                      color="secondary"
+                      numberOfLines={1}
+                      style={{ fontSize: 15, lineHeight: 15 * 1.45, marginTop: 2 }}
+                    >
                       {meta(building, coords)}
                     </Text>
                   </View>
@@ -272,7 +290,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   codeBadge: {
     width: 44,
@@ -284,6 +302,7 @@ const styles = StyleSheet.create({
   },
   codeLabel: {
     fontWeight: '700',
+    fontSize: 15,
   },
   rowText: {
     flex: 1,

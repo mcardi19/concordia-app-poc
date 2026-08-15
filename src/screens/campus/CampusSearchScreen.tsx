@@ -341,10 +341,10 @@ export function CampusSearchScreen({ navigation }: Props) {
           groups.map((group) => (
             <View key={group.group} style={styles.group}>
               <View style={styles.groupHead}>
-                <Text variant="caption" style={styles.groupLabel}>
+                <Text variant="bodySmall" style={styles.groupLabel}>
                   {CAMPUS_GROUP_LABEL[group.group]}
                 </Text>
-                <Text variant="caption" style={styles.groupCount}>
+                <Text variant="bodySmall" style={styles.groupCount}>
                   {group.hits.length}
                 </Text>
               </View>
@@ -395,13 +395,13 @@ function ResultRow({
       style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : 1 }]}
     >
       <View style={[styles.rowIcon, { backgroundColor: `${theme.color.primary}14` }]}>
-        <MaterialSymbol icon={hit.icon} size={18} color={theme.color.primary} />
+        <MaterialSymbol icon={hit.icon} size={22} color={theme.color.primary} />
       </View>
       <View style={styles.rowText}>
-        <Text variant="bodySmall" numberOfLines={1} style={styles.rowTitle}>
+        <Text variant="body" numberOfLines={1} style={styles.rowTitle}>
           {highlighted(hit.title, highlight, theme.color.primary)}
         </Text>
-        <Text variant="caption" numberOfLines={1} style={styles.rowMeta}>
+        <Text variant="body" numberOfLines={1} style={styles.rowMeta}>
           {hit.subtitle}
         </Text>
       </View>
@@ -412,7 +412,7 @@ function ResultRow({
           </Text>
         </View>
       ) : (
-        <MaterialSymbol icon={msNorthEast} size={16} color={searchTheme.chevron} />
+        <MaterialSymbol icon={msNorthEast} size={18} color={searchTheme.chevron} />
       )}
       {!last ? <View style={styles.rowDivider} /> : null}
     </Pressable>
@@ -472,7 +472,7 @@ function RestingState({
           >
             <SearchSurface style={styles.chip} radius={999}>
               <View style={[styles.liveDot, { backgroundColor: searchTheme.statusOpen }]} />
-              <Text variant="caption" style={styles.chipLabel}>
+              <Text variant="bodySmall" style={styles.chipLabel}>
                 {`Shuttle · ${shuttleMinutes} min`}
               </Text>
             </SearchSurface>
@@ -489,7 +489,7 @@ function RestingState({
           >
             <SearchSurface style={styles.chip} radius={999}>
               <MaterialSymbol icon={chip.icon} size={17} color={theme.color.primary} />
-              <Text variant="caption" style={styles.chipLabel}>
+              <Text variant="bodySmall" style={styles.chipLabel}>
                 {CAMPUS_FILTER_LABEL[chip.filter]}
               </Text>
             </SearchSurface>
@@ -507,11 +507,11 @@ function RestingState({
               accessibilityRole="button"
               style={({ pressed }) => [styles.recentRow, { opacity: pressed ? 0.6 : 1 }]}
             >
-              <MaterialSymbol icon={msHistory} size={19} color={searchTheme.metaText} />
-              <Text variant="bodySmall" numberOfLines={1} style={styles.recentLabel}>
+              <MaterialSymbol icon={msHistory} size={22} color={searchTheme.metaText} />
+              <Text variant="body" numberOfLines={1} style={styles.recentLabel}>
                 {recent}
               </Text>
-              <MaterialSymbol icon={msNorthEast} size={16} color={searchTheme.chevron} />
+              <MaterialSymbol icon={msNorthEast} size={18} color={searchTheme.chevron} />
             </Pressable>
           ))}
         </View>
@@ -611,13 +611,13 @@ function ActivityCard({
     >
       <SearchSurface style={styles.activityCard}>
         <View style={[styles.activityIcon, { backgroundColor: `${theme.color.primary}14` }]}>
-          <MaterialSymbol icon={icon} size={20} color={theme.color.primary} />
+          <MaterialSymbol icon={icon} size={22} color={theme.color.primary} />
         </View>
         <View style={styles.rowText}>
-          <Text variant="bodySmall" numberOfLines={1} style={styles.activityTitle}>
+          <Text variant="body" numberOfLines={1} style={styles.activityTitle}>
             {title}
           </Text>
-          <Text variant="caption" numberOfLines={1} style={styles.rowMeta}>
+          <Text variant="body" numberOfLines={1} style={styles.rowMeta}>
             {meta}
           </Text>
         </View>
@@ -642,12 +642,12 @@ function SectionHead({
 }) {
   return (
     <View style={styles.sectionHead}>
-      <Text variant="caption" style={styles.sectionLabel}>
+      <Text variant="bodySmall" style={styles.sectionLabel}>
         {label}
       </Text>
       {action ? (
         <Pressable onPress={onActionPress} accessibilityRole="button" hitSlop={8}>
-          <Text variant="caption" color="brand" style={styles.sectionAction}>
+          <Text variant="bodySmall" color="brand" style={styles.sectionAction}>
             {action}
           </Text>
         </Pressable>
@@ -665,7 +665,7 @@ function NoResults({ query }: { query: string }) {
       <Text variant="heading3" style={styles.emptyTitle}>
         {`Nothing on campus for “${query}”`}
       </Text>
-      <Text variant="bodySmall" style={styles.emptyBody}>
+      <Text variant="body" style={styles.emptyBody}>
         Try a building code like H or LB, a course, or a service.
       </Text>
     </View>
@@ -770,8 +770,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   chipLabel: {
-    fontSize: 13.5,
-    lineHeight: 17,
+    fontSize: 15,
+    lineHeight: 19,
     fontWeight: '600',
     color: searchTheme.bodyText,
   },
@@ -791,15 +791,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionLabel: {
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '600',
     letterSpacing: 0,
     color: searchTheme.eyebrowText,
   },
   sectionAction: {
-    fontSize: 13,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '600',
   },
   recentRow: {
@@ -807,12 +807,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingVertical: 11,
+    paddingVertical: 13,
   },
   recentLabel: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 18,
+    lineHeight: 18 * 1.2,
     fontWeight: '500',
     color: searchTheme.bodyText,
   },
@@ -838,8 +838,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   favouriteName: {
-    fontSize: 11.5,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: '500',
     color: searchTheme.headingText,
     marginTop: 7,
@@ -854,7 +854,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 13,
-    paddingVertical: 12,
+    paddingVertical: 13,
   },
   activityIcon: {
     width: 38,
@@ -865,8 +865,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activityTitle: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 18,
+    lineHeight: 18 * 1.2,
     fontWeight: '600',
     color: searchTheme.headingText,
   },
@@ -877,8 +877,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   activityActionLabel: {
-    fontSize: 12,
-    lineHeight: 15,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: '600',
     color: '#FFFFFF',
   },
@@ -893,15 +893,15 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   groupLabel: {
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '600',
     letterSpacing: 0,
     color: searchTheme.eyebrowText,
   },
   groupCount: {
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
     color: searchTheme.eyebrowCount,
   },
@@ -915,7 +915,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingVertical: 10,
+    paddingVertical: 14,
   },
   rowDivider: {
     position: 'absolute',
@@ -926,9 +926,9 @@ const styles = StyleSheet.create({
     backgroundColor: searchTheme.rowDivider,
   },
   rowIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -937,15 +937,16 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  // Same title/meta scale as Today attention rows and app-wide Search.
   rowTitle: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
+    fontSize: 18,
+    lineHeight: 18 * 1.2,
+    fontWeight: '600',
     color: searchTheme.headingText,
   },
   rowMeta: {
-    fontSize: 11.5,
-    lineHeight: 15,
+    fontSize: 15,
+    lineHeight: 15 * 1.45,
     color: searchTheme.metaText,
     marginTop: 2,
   },
@@ -956,8 +957,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   onMapLabel: {
-    fontSize: 11.5,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: '600',
   },
   emptyBlock: {
@@ -977,34 +978,34 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   emptyTitle: {
-    fontSize: 21,
-    lineHeight: 26,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '600',
     letterSpacing: -0.3,
     color: searchTheme.headingText,
     textAlign: 'center',
   },
   emptyBody: {
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 15,
+    lineHeight: 22,
     color: searchTheme.metaText,
     textAlign: 'center',
     marginTop: 8,
     maxWidth: 280,
   },
   skeletonIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: 'rgba(20,12,16,0.07)',
   },
   skeletonLine: {
-    height: 12,
+    height: 14,
     borderRadius: 6,
     backgroundColor: 'rgba(20,12,16,0.09)',
     marginTop: 4,
   },
   skeletonLineSmall: {
-    height: 9,
+    height: 11,
   },
 });
