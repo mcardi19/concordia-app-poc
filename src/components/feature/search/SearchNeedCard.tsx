@@ -9,7 +9,7 @@ import { SearchSurface } from './SearchSurface';
 import type { SearchNeed } from './searchDiscoveryData';
 
 const CARD_WIDTH = 208;
-const QUESTION_LINE_HEIGHT = 20;
+const QUESTION_LINE_HEIGHT = 22;
 
 type Props = {
   needs: SearchNeed[];
@@ -43,24 +43,24 @@ export function SearchNeedRail({ needs, onSelect }: Props) {
         >
           <SearchSurface style={styles.surface} radius={14}>
             <View style={[styles.icon, { backgroundColor: `${theme.color.primary}16` }]}>
-              <MaterialSymbol icon={need.icon} size={18} color={theme.color.primary} />
+              <MaterialSymbol icon={need.icon} size={20} color={theme.color.primary} />
             </View>
 
-            <Text variant="bodySmall" style={styles.question}>
+            <Text variant="body" style={styles.question}>
               {need.question}
             </Text>
 
             {/* Destination pinned to the base so cards align across the rail. */}
             <View style={styles.destinationRow}>
               <Text
-                variant="caption"
+                variant="bodySmall"
                 numberOfLines={1}
                 color="brand"
                 style={styles.destination}
               >
                 {need.destination}
               </Text>
-              <MaterialSymbol icon={msArrowForward} size={15} color={theme.color.primary} />
+              <MaterialSymbol icon={msArrowForward} size={16} color={theme.color.primary} />
             </View>
           </SearchSurface>
         </Pressable>
@@ -85,16 +85,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   icon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
   question: {
-    fontSize: 16,
+    fontSize: 18,
     lineHeight: QUESTION_LINE_HEIGHT,
     fontWeight: '600',
     letterSpacing: -0.2,
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
   destination: {
     flex: 1,
     minWidth: 0,
-    fontSize: 12.5,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '600',
   },
 });

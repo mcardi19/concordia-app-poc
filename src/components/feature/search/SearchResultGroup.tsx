@@ -22,13 +22,13 @@ export function SearchGroupLabel({
 }) {
   return (
     <View style={styles.labelRow}>
-      <Text variant="caption" style={styles.label}>
+      <Text variant="bodySmall" style={styles.label}>
         {children}
         {count != null ? <Text style={styles.labelCount}>{`  ${count}`}</Text> : null}
       </Text>
       {action ? (
         <Pressable onPress={onActionPress} accessibilityRole="button" hitSlop={8}>
-          <Text variant="caption" color="brand" style={styles.action}>
+          <Text variant="bodySmall" color="brand" style={styles.action}>
             {action}
           </Text>
         </Pressable>
@@ -109,15 +109,15 @@ export function SearchResultRow({
       ]}
     >
       <View style={[styles.rowIcon, { backgroundColor: `${theme.color.primary}0E` }]}>
-        <MaterialSymbol icon={icon} size={20} color={theme.color.primary} />
+        <MaterialSymbol icon={icon} size={22} color={theme.color.primary} />
       </View>
 
       <View style={styles.rowText}>
-        <Text variant="bodySmall" style={styles.rowTitle}>
+        <Text variant="body" style={styles.rowTitle}>
           {renderHighlighted(title, highlight, theme.color.primary)}
         </Text>
         {subtitle ? (
-          <Text variant="caption" numberOfLines={1} style={styles.rowSubtitle}>
+          <Text variant="body" numberOfLines={1} style={styles.rowSubtitle}>
             {subtitle}
           </Text>
         ) : null}
@@ -139,7 +139,7 @@ export function SearchResultRow({
         ) : null}
       </View>
 
-      <MaterialSymbol icon={msChevronRight} size={18} color={searchTheme.chevron} />
+      <MaterialSymbol icon={msChevronRight} size={20} color={searchTheme.chevron} />
     </Pressable>
   );
 }
@@ -173,8 +173,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   label: {
-    fontSize: 13,
-    lineHeight: 17,
+    // Matches Today section meta (14) rather than the denser caption role.
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '600',
     // Sentence case does not need the tracking uppercase does to stay legible.
     letterSpacing: 0,
@@ -185,8 +186,8 @@ const styles = StyleSheet.create({
     color: searchTheme.eyebrowCount,
   },
   action: {
-    fontSize: 13,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '600',
   },
   card: {
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingVertical: 14,
   },
   rowDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
   rowIcon: {
     width: 36,
     height: 36,
-    borderRadius: 9,
+    borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -228,15 +229,16 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  // Same title/meta scale as TodayAttentionList list rows.
   rowTitle: {
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 18,
+    lineHeight: 18 * 1.2,
     fontWeight: '600',
     color: searchTheme.headingText,
   },
   rowSubtitle: {
-    fontSize: 12.5,
-    lineHeight: 16,
+    fontSize: 15,
+    lineHeight: 15 * 1.45,
     color: searchTheme.metaText,
     marginTop: 2,
   },
@@ -252,8 +254,8 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   statusText: {
-    fontSize: 11.5,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: '600',
   },
 });

@@ -342,7 +342,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
           <NoResults query={trimmed} onRunSearch={runSearch} />
         ) : (
           <>
-            <Text variant="caption" style={styles.summary}>
+            <Text variant="bodySmall" style={styles.summary}>
               {`${hits.length} result${hits.length === 1 ? '' : 's'} for “${trimmed}”`}
             </Text>
 
@@ -431,7 +431,7 @@ const ZeroState = React.memo(function ZeroState({
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
             <SearchSurface style={styles.taskChip} radius={999}>
-              <Text variant="caption" style={styles.taskLabel}>
+              <Text variant="bodySmall" style={styles.taskLabel}>
                 {task}
               </Text>
             </SearchSurface>
@@ -457,11 +457,11 @@ const ZeroState = React.memo(function ZeroState({
               accessibilityRole="button"
               style={({ pressed }) => [styles.recentRow, { opacity: pressed ? 0.6 : 1 }]}
             >
-              <MaterialSymbol icon={msHistory} size={20} color={searchTheme.metaText} />
-              <Text variant="bodySmall" style={styles.recentLabel}>
+              <MaterialSymbol icon={msHistory} size={22} color={searchTheme.metaText} />
+              <Text variant="body" style={styles.recentLabel}>
                 {recent.label}
               </Text>
-              <MaterialSymbol icon={msNorthEast} size={16} color={searchTheme.chevron} />
+              <MaterialSymbol icon={msNorthEast} size={18} color={searchTheme.chevron} />
             </Pressable>
           ))}
         </View>
@@ -492,13 +492,13 @@ const ZeroState = React.memo(function ZeroState({
                   <View
                     style={[styles.categoryIcon, { backgroundColor: `${theme.color.primary}0E` }]}
                   >
-                    <MaterialSymbol icon={category.icon} size={20} color={theme.color.primary} />
+                    <MaterialSymbol icon={category.icon} size={22} color={theme.color.primary} />
                   </View>
                   <View style={styles.categoryText}>
-                    <Text variant="bodySmall" style={styles.categoryLabel}>
+                    <Text variant="body" style={styles.categoryLabel}>
                       {category.label}
                     </Text>
-                    <Text variant="caption" numberOfLines={1} style={styles.categoryBlurb}>
+                    <Text variant="body" numberOfLines={1} style={styles.categoryBlurb}>
                       {category.blurb}
                     </Text>
                   </View>
@@ -530,7 +530,7 @@ function NoResults({ query, onRunSearch }: { query: string; onRunSearch: (q: str
         <Text variant="heading3" style={styles.emptyTitle}>
           {`No results for “${query}”`}
         </Text>
-        <Text variant="bodySmall" style={styles.emptyBody}>
+        <Text variant="body" style={styles.emptyBody}>
           Check the spelling, or try one of the searches below.
         </Text>
       </View>
@@ -541,7 +541,7 @@ function NoResults({ query, onRunSearch }: { query: string; onRunSearch: (q: str
           accessibilityRole="button"
           style={styles.didYouMean}
         >
-          <Text variant="bodySmall" style={styles.didYouMeanText}>
+          <Text variant="body" style={styles.didYouMeanText}>
             Did you mean <Text style={styles.didYouMeanTerm}>{suggestion}</Text>?
           </Text>
         </Pressable>
@@ -558,7 +558,7 @@ function NoResults({ query, onRunSearch }: { query: string; onRunSearch: (q: str
               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
             >
               <SearchSurface style={styles.taskChip} radius={999}>
-                <Text variant="caption" style={styles.taskLabel}>
+                <Text variant="bodySmall" style={styles.taskLabel}>
                   {s}
                 </Text>
               </SearchSurface>
@@ -597,7 +597,7 @@ function ResultSkeleton() {
 /** Standalone group label, for sections whose body is not a single card. */
 function SearchResultGroupLabelRow({ label }: { label: string }) {
   return (
-    <Text variant="caption" style={styles.sectionLabel}>
+    <Text variant="bodySmall" style={styles.sectionLabel}>
       {label}
     </Text>
   );
@@ -700,8 +700,8 @@ const styles = StyleSheet.create({
   summary: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 14,
-    fontSize: 12.5,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     color: searchTheme.metaText,
   },
   bestMatch: {
@@ -714,8 +714,8 @@ const styles = StyleSheet.create({
   sectionLabel: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     marginBottom: 11,
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '600',
     letterSpacing: 0,
     color: searchTheme.eyebrowText,
@@ -731,8 +731,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   taskLabel: {
-    fontSize: 13.5,
-    lineHeight: 17,
+    fontSize: 15,
+    lineHeight: 19,
     fontWeight: '600',
     color: searchTheme.bodyText,
   },
@@ -745,7 +745,7 @@ const styles = StyleSheet.create({
     gap: 12,
     // Aligned to the page, not inset inside a card.
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingVertical: 11,
+    paddingVertical: 13,
   },
   recentDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -753,8 +753,8 @@ const styles = StyleSheet.create({
   },
   recentLabel: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 18,
+    lineHeight: 18 * 1.2,
     fontWeight: '500',
     color: searchTheme.bodyText,
   },
@@ -776,12 +776,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 13,
     paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingVertical: 14,
   },
   categoryIcon: {
     width: 36,
     height: 36,
-    borderRadius: 9,
+    borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -791,14 +791,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   categoryLabel: {
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 18,
+    lineHeight: 18 * 1.2,
     fontWeight: '600',
     color: searchTheme.headingText,
   },
   categoryBlurb: {
-    fontSize: 12.5,
-    lineHeight: 16,
+    fontSize: 15,
+    lineHeight: 15 * 1.45,
     color: searchTheme.metaText,
     marginTop: 2,
   },
@@ -819,16 +819,16 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   emptyTitle: {
-    fontSize: 21,
-    lineHeight: 26,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '600',
     letterSpacing: -0.3,
     color: searchTheme.headingText,
     textAlign: 'center',
   },
   emptyBody: {
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 15,
+    lineHeight: 22,
     color: searchTheme.metaText,
     textAlign: 'center',
     marginTop: 8,
@@ -844,8 +844,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(145, 34, 56, 0.06)',
   },
   didYouMeanText: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 15,
+    lineHeight: 20,
     color: searchTheme.bodyText,
   },
   didYouMeanTerm: {
@@ -862,17 +862,17 @@ const styles = StyleSheet.create({
     marginHorizontal: semanticSpacing.screenHorizontal,
   },
   skeletonIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: 'rgba(20,12,16,0.07)',
   },
   skeletonLine: {
-    height: 12,
+    height: 14,
     borderRadius: 6,
     backgroundColor: 'rgba(20,12,16,0.09)',
   },
   skeletonLineSmall: {
-    height: 9,
+    height: 11,
   },
 });

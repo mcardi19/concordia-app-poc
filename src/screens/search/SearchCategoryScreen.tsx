@@ -92,7 +92,7 @@ export function SearchCategoryScreen({ route, navigation }: Props) {
             <Text variant="heading3" style={styles.title}>
               {category.label}
             </Text>
-            <Text variant="caption" style={styles.subtitle}>
+            <Text variant="body" style={styles.subtitle}>
               {category.blurb}
             </Text>
           </View>
@@ -100,7 +100,7 @@ export function SearchCategoryScreen({ route, navigation }: Props) {
 
         {category.key === 'wellbeing' ? (
           <View style={styles.banner}>
-            <Text variant="bodySmall" style={styles.bannerText}>
+            <Text variant="body" style={styles.bannerText}>
               In crisis right now?{' '}
               <Text style={styles.bannerLink}>Call Campus Safety 514-848-3717</Text> — 24/7.
             </Text>
@@ -127,7 +127,7 @@ export function SearchCategoryScreen({ route, navigation }: Props) {
           <View style={styles.section}>
             <SearchSurface style={styles.card}>
               <View style={styles.emptyRow}>
-                <Text variant="bodySmall" style={styles.emptyText}>
+                <Text variant="body" style={styles.emptyText}>
                   {`No ${category.label.toLowerCase()} services are listed for SGW right now.`}
                 </Text>
               </View>
@@ -181,8 +181,8 @@ const styles = StyleSheet.create({
     color: searchTheme.headingText,
   },
   subtitle: {
-    fontSize: 12.5,
-    lineHeight: 16,
+    fontSize: 15,
+    lineHeight: 15 * 1.45,
     color: searchTheme.metaText,
     marginTop: 3,
   },
@@ -196,8 +196,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(145, 34, 56, 0.06)',
   },
   bannerText: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
     color: searchTheme.bodyText,
   },
   bannerLink: {
@@ -215,8 +215,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   emptyText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
     color: searchTheme.metaText,
   },
   missing: {

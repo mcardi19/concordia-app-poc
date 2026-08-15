@@ -50,7 +50,7 @@ export function SearchScopeChips({ scopes, active, onSelect }: Props) {
             ]}
           >
             <Text
-              variant="caption"
+              variant="bodySmall"
               style={[
                 styles.label,
                 { color: on ? theme.color.text.inverse : searchTheme.bodyText },
@@ -88,22 +88,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
   label: {
-    fontSize: 12.5,
-    // 15 sat under the font's own line box and clipped the descenders in
-    // "Buildings".
-    lineHeight: 17,
+    fontSize: 14,
+    // Keep lineHeight above the font's own metrics so descenders in
+    // "Buildings" are not clipped.
+    lineHeight: 19,
     fontWeight: '600',
   },
   count: {
-    fontSize: 11,
-    lineHeight: 17,
+    fontSize: 12.5,
+    lineHeight: 19,
     fontWeight: '500',
     opacity: 0.75,
   },
