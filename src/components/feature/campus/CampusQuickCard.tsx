@@ -2,7 +2,13 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MsIconDefinition } from 'material-symbols-react-native';
 import { Text } from '@/components/design-system';
-import { todayShadowMedium } from '@/components/feature/today/todayShadows';
+import { todayShadowMedium, todayShadowSoft } from '@/components/feature/today/todayShadows';
+import {
+  GLASS_PILL_ICON_SIZE,
+  GLASS_PILL_PRESSED_SCALE,
+  GlassPillSurface,
+  glassPillStyles,
+} from '@/components/design-system/GlassPill';
 import {
   MaterialSymbol,
   msGridView,
@@ -15,25 +21,28 @@ import {
 } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import { useShuttleTracker } from '@/hooks/useShuttleTracker';
-import type { CampusMapFilter } from '@/services/campus/buildingPresentation';
+import {
+  CAMPUS_FILTER_LABEL,
+  type CampusMapFilter,
+} from '@/services/campus/buildingPresentation';
+import { CardGlass } from './campusSheet';
 
 const CARD_RADIUS = 24;
 const PILL_RADIUS = 999;
-const ICON_SIZE = 16;
 
 type AmenityPill = {
   id: CampusMapFilter;
-  label: string;
   icon: MsIconDefinition;
 };
 
+/** Labels come from `CAMPUS_FILTER_LABEL`; only the icon is local to this card. */
 const AMENITY_PILLS: AmenityPill[] = [
-  { id: 'buildings', label: 'Buildings', icon: msGridView },
-  { id: 'cafe', label: 'Cafés', icon: msLocalCafe },
-  { id: 'study', label: 'Quiet study', icon: msMeetingRoom },
-  { id: 'print', label: 'Print', icon: msPrint },
-  { id: 'parking', label: 'Parking', icon: msLocalParking },
-  { id: 'bike', label: 'Bike racks', icon: msPedalBike },
+  { id: 'buildings', icon: msGridView },
+  { id: 'cafe', icon: msLocalCafe },
+  { id: 'study', icon: msMeetingRoom },
+  { id: 'print', icon: msPrint },
+  { id: 'parking', icon: msLocalParking },
+  { id: 'bike', icon: msPedalBike },
 ];
 
 type Props = {
@@ -59,14 +68,16 @@ export function CampusQuickCard({
     shuttleMinutes != null ? `Shuttle · ${shuttleMinutes} min` : 'Shuttle';
 
   return (
-    <View
-      style={[
-        todayShadowMedium,
-        radiusStyle(CARD_RADIUS),
-        { backgroundColor: theme.color.background },
-      ]}
-    >
+    /*
+      Shadow on the outer view, glass on the inner one. The clip that rounds
+      the glass would also clip a shadow drawn on the same view, and the glass
+      cannot carry an opaque background without ceasing to be glass — so the
+      two live on separate layers, the way the locate button and the sheets
+      on this map already do.
+    */
+    <View style={[todayShadowMedium, radiusStyle(CARD_RADIUS)]}>
       <View style={[styles.clip, radiusStyle(CARD_RADIUS)]}>
+        <CardGlass radius={CARD_RADIUS} />
         <View style={styles.handleRow}>
           <View
             style={[styles.handle, { backgroundColor: theme.color.border }]}
@@ -80,7 +91,7 @@ export function CampusQuickCard({
             color={theme.color.text.brand}
           />
           <Text variant="body" style={styles.locationText}>
-            You're at{' '}
+            You’re at{' '}
             <Text variant="body" style={styles.locationCampus}>
               {campusName}
             </Text>
@@ -103,53 +114,65 @@ export function CampusQuickCard({
             accessibilityLabel={shuttleLabel}
             onPress={onPressShuttle}
             style={({ pressed }) => [
-              styles.pill,
-              { backgroundColor: theme.color.backgroundSubtle, opacity: pressed ? 0.72 : 1 },
+              styles.pillPressable,
+              radiusStyle(PILL_RADIUS),
+              todayShadowSoft,
+              { transform: [{ scale: pressed ? GLASS_PILL_PRESSED_SCALE : 1 }] },
             ]}
           >
-            <View
-              style={[
-                styles.statusDot,
-                {
-                  backgroundColor:
-                    shuttleMinutes != null
-                      ? theme.color.success
-                      : theme.color.text.subtle,
-                },
-              ]}
-            />
-            <Text variant="caption" numberOfLines={1} style={styles.pillLabel}>
-              {shuttleLabel}
-            </Text>
+            <GlassPillSurface radius={PILL_RADIUS}>
+              <View style={[glassPillStyles.content, { gap: theme.spacing.sm }]}>
+                <View
+                  style={[
+                    styles.statusDot,
+                    {
+                      backgroundColor:
+                        shuttleMinutes != null
+                          ? theme.color.success
+                          : theme.color.text.subtle,
+                    },
+                  ]}
+                />
+                <Text variant="body" numberOfLines={1} style={glassPillStyles.labelCompact}>
+                  {shuttleLabel}
+                </Text>
+              </View>
+            </GlassPillSurface>
           </Pressable>
 
           {AMENITY_PILLS.map((pill) => {
             const on = pill.id !== 'buildings' && activeFilter === pill.id;
+            const label = CAMPUS_FILTER_LABEL[pill.id];
             return (
               <Pressable
                 key={pill.id}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                accessibilityLabel={pill.label}
+                accessibilityLabel={label}
                 onPress={() => onPressFilter(pill.id)}
                 style={({ pressed }) => [
-                  styles.pill,
-                  {
-                    backgroundColor: on
-                      ? `${theme.color.primary}14`
-                      : theme.color.backgroundSubtle,
-                    opacity: pressed ? 0.72 : 1,
-                  },
+                  styles.pillPressable,
+                  radiusStyle(PILL_RADIUS),
+                  todayShadowSoft,
+                  { transform: [{ scale: pressed ? GLASS_PILL_PRESSED_SCALE : 1 }] },
                 ]}
               >
-                <MaterialSymbol
-                  icon={pill.icon}
-                  size={ICON_SIZE}
-                  color={theme.color.text.brand}
-                />
-                <Text variant="caption" numberOfLines={1} style={styles.pillLabel}>
-                  {pill.label}
-                </Text>
+                {/* Selected reads as a brand wash over the same capsule. */}
+                <GlassPillSurface
+                  radius={PILL_RADIUS}
+                  tintColor={on ? `${theme.color.primary}24` : undefined}
+                >
+                  <View style={[glassPillStyles.content, { gap: theme.spacing.sm }]}>
+                    <MaterialSymbol
+                      icon={pill.icon}
+                      size={GLASS_PILL_ICON_SIZE}
+                      color={theme.color.text.brand}
+                    />
+                    <Text variant="body" numberOfLines={1} style={glassPillStyles.labelCompact}>
+                      {label}
+                    </Text>
+                  </View>
+                </GlassPillSurface>
               </Pressable>
             );
           })}
@@ -205,20 +228,8 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 14,
   },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  pillPressable: {
     flexShrink: 0,
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: PILL_RADIUS,
-    borderCurve: 'continuous',
-  },
-  pillLabel: {
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '600',
   },
   statusDot: {
     width: 8,

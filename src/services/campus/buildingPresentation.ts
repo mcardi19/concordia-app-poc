@@ -92,6 +92,20 @@ export function buildAmenityRows(
 /** Map-rail filters on the campus overlay card. `buildings` is the unfiltered default. */
 export type CampusMapFilter = 'buildings' | 'cafe' | 'study' | 'print' | 'parking' | 'bike';
 
+/**
+ * One name per filter, shared by the overlay card's pills, the Campus search
+ * chips, and the search field once a category is active — picking a pill puts
+ * this exact string in the field, so they cannot be allowed to drift.
+ */
+export const CAMPUS_FILTER_LABEL: Record<CampusMapFilter, string> = {
+  buildings: 'Buildings',
+  cafe: 'Cafés',
+  study: 'Quiet study',
+  print: 'Print',
+  parking: 'Parking',
+  bike: 'Bike racks',
+};
+
 const MAP_FILTER_MATCH: Record<Exclude<CampusMapFilter, 'buildings'>, RegExp> = {
   cafe: /café|cafe|coffee|cafeteria|hive|people'?s potato|restaurant/,
   study: /study|library|reading room|quiet/,

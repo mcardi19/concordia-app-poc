@@ -2,10 +2,8 @@ import React, { useMemo } from 'react';
 import {
   View,
   Pressable,
-  ScrollView,
   StyleSheet,
   Platform,
-  TextInput,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -16,19 +14,17 @@ import {
   isLiquidGlassAvailable,
 } from 'expo-glass-effect';
 import { Text } from '@/components/design-system';
-import { MaterialSymbol, msSearch } from '@/components/icons';
+import { MaterialSymbol, msClose, msSearch } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import { searchFieldHeight } from '@/design-system/tokens';
 import { MIN_TOUCH_TARGET_SIZE } from '@/accessibility';
-import { filterBuildings } from '@/api/buildings';
-import type { BuildingSummary, CampusCode } from '@/types/campus';
 
 type Props = {
-  query: string;
-  onChangeQuery: (value: string) => void;
-  buildings: BuildingSummary[];
-  campusId?: CampusCode;
-  onSelectBuilding: (building: BuildingSummary) => void;
+  onPress: () => void;
+  placeholder?: string;
+  /** The active category, shown in place of the placeholder. */
+  value?: string | null;
+  onClear?: () => void;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -83,29 +79,35 @@ function GlassChrome({ style }: { style?: StyleProp<ViewStyle> }) {
   );
 }
 
+/**
+ * The map's search field.
+ *
+ * A button, not an input: tapping it pushes the Campus search screen, which
+ * reaches courses, library and services as well as buildings and can hand a
+ * place back to the map. It used to filter buildings inline, which could only
+ * ever find buildings and left no room for the resting state.
+ */
 export function CampusSearchBar({
-  query,
-  onChangeQuery,
-  buildings,
-  campusId = 'sgw',
-  onSelectBuilding,
+  onPress,
+  placeholder = 'Search campus',
+  value,
+  onClear,
   style,
 }: Props) {
   const theme = useTheme();
-  const results = useMemo(
-    () => filterBuildings(buildings, query, campusId),
-    [buildings, query, campusId]
-  );
-  const showResults = query.trim().length > 0;
-  const fieldRadius = theme.radius.full;
-  const resultsRadius = theme.radius.xl;
+  const active = value != null && value.length > 0;
 
   return (
-    <View style={style}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="search"
+      accessibilityLabel={active ? `${value}. Search campus` : placeholder}
+      style={({ pressed }) => [style, { opacity: pressed ? 0.85 : 1 }]}
+    >
       <View
         style={[
           styles.fieldShell,
-          radiusStyle(fieldRadius),
+          radiusStyle(theme.radius.full),
           { height: SEARCH_FIELD_HEIGHT },
         ]}
       >
@@ -119,100 +121,47 @@ export function CampusSearchBar({
               gap: theme.spacing.sm,
             },
           ]}
-          pointerEvents="box-none"
         >
           <MaterialSymbol
             icon={msSearch}
             size={22}
             color={theme.color.primary}
           />
-          <TextInput
-            value={query}
-            onChangeText={onChangeQuery}
-            placeholder="Search buildings"
-            placeholderTextColor={theme.color.text.subtle}
-            accessibilityLabel="Search campus buildings"
-            returnKeyType="search"
-            autoCorrect={false}
-            autoCapitalize="none"
-            clearButtonMode="while-editing"
-            underlineColorAndroid="transparent"
+          <Text
+            variant="body"
+            numberOfLines={1}
             style={[
-              styles.fieldInput,
+              styles.fieldPlaceholder,
               {
-                height: SEARCH_FIELD_HEIGHT,
-                fontSize: theme.typography.body.fontSize,
-                fontWeight: theme.typography.body.fontWeight,
-                color: theme.color.text.primary,
-                // iOS: omit lineHeight — large lineHeight drops glyphs toward the bottom.
-                ...(Platform.OS === 'android'
-                  ? {
-                      textAlignVertical: 'center' as const,
-                      includeFontPadding: false,
-                    }
-                  : null),
+                color: active ? theme.color.text.primary : theme.color.text.subtle,
+                fontWeight: active ? '600' : undefined,
               },
             ]}
-          />
+          >
+            {active ? value : placeholder}
+          </Text>
+          {/*
+            Clearing the category is not the same as opening search, so it
+            gets its own hit target inside the field rather than riding the
+            field's own press.
+          */}
+          {active && onClear ? (
+            <Pressable
+              onPress={onClear}
+              accessibilityRole="button"
+              accessibilityLabel={`Clear ${value}`}
+              hitSlop={10}
+              style={({ pressed }) => [
+                styles.clearButton,
+                { backgroundColor: theme.color.backgroundSubtle, opacity: pressed ? 0.6 : 1 },
+              ]}
+            >
+              <MaterialSymbol icon={msClose} size={14} color={theme.color.text.secondary} />
+            </Pressable>
+          ) : null}
         </View>
       </View>
-      {showResults ? (
-        <View
-          style={[
-            styles.resultsShell,
-            radiusStyle(resultsRadius),
-            { marginTop: theme.spacing.sm, maxHeight: 280 },
-          ]}
-        >
-          <GlassChrome />
-          <View style={styles.resultsForeground}>
-            {results.length === 0 ? (
-              <Text
-                variant="bodySmall"
-                color="secondary"
-                style={{ padding: theme.spacing.md }}
-              >
-                No buildings match that search.
-              </Text>
-            ) : (
-              <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
-                {results.map((building, index) => (
-                  <Pressable
-                    key={building.id}
-                    onPress={() => onSelectBuilding(building)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${building.code}, ${building.name}`}
-                    style={({ pressed }) => ({
-                      paddingHorizontal: theme.spacing.md,
-                      paddingVertical: theme.spacing.sm,
-                      backgroundColor: pressed
-                        ? 'rgba(0,0,0,0.06)'
-                        : 'transparent',
-                      borderBottomWidth:
-                        index < results.length - 1
-                          ? StyleSheet.hairlineWidth
-                          : 0,
-                      borderBottomColor: 'rgba(0,0,0,0.12)',
-                    })}
-                  >
-                    <Text variant="body" color="primary">
-                      {building.code}
-                      {' · '}
-                      {building.name}
-                    </Text>
-                    {building.address ? (
-                      <Text variant="caption" color="secondary">
-                        {building.address}
-                      </Text>
-                    ) : null}
-                  </Pressable>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-        </View>
-      ) : null}
-    </View>
+    </Pressable>
   );
 }
 
@@ -226,21 +175,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
   },
-  fieldInput: {
+  fieldPlaceholder: {
     flex: 1,
-    margin: 0,
-    paddingTop: 0,
-    paddingBottom: 0,
-    paddingHorizontal: 0,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
   },
-  resultsShell: {
-    width: '100%',
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  resultsForeground: {
-    zIndex: 1,
+  clearButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

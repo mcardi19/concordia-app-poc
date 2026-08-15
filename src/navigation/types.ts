@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
+import type { CampusMapFilter } from '@/services/campus/buildingPresentation';
 
 export type RootStackParamList = {
   Main: undefined;
@@ -38,7 +39,16 @@ export type ScheduleStackParamList = {
 };
 
 export type CampusStackParamList = {
-  CampusHome: undefined;
+  /**
+   * Params are how Campus search hands its result back: a place hit selects
+   * that building and flies the camera; a category chip sets the map filter
+   * and puts its label in the field, which opens the results drawer. All are
+   * cleared once applied so returning to the tab does not re-fire them.
+   */
+  CampusHome:
+    | { focusBuildingId?: string; mapFilter?: CampusMapFilter; searchLabel?: string }
+    | undefined;
+  CampusSearch: undefined;
   ShuttleSchedule: undefined;
   ShuttleTracker: undefined;
   Events: undefined;

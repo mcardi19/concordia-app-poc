@@ -8,7 +8,6 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { GlassView } from 'expo-glass-effect';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -21,7 +20,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
-import { HEADER_BAR_BUTTON_SIZE, HEADER_ICON_SIZE } from '@/navigation/HeaderIconButton';
 import {
   MaterialSymbol,
   msBookmark,
@@ -54,19 +52,30 @@ import {
   openBuildingWebsite,
 } from '@/services/campus/placeActions';
 import { CAMPUS_MAP_DEFAULTS, type BuildingSummary } from '@/types/campus';
+import {
+  GlassIconButton,
+  SHEET_CORNER_RADIUS,
+  SHEET_DISMISS_DISTANCE,
+  SHEET_EXPANDED_HEIGHT_RATIO,
+  SHEET_PEEK_HEIGHT_RATIO,
+  SHEET_SPRING,
+  SheetGlass,
+  sheetShadow,
+} from './campusSheet';
 
 type Props = {
   building: BuildingSummary | null;
   onClose: () => void;
 };
 
-const DISMISS_DISTANCE = 120;
-const SPRING = { damping: 22, stiffness: 220, mass: 0.9 };
-const PEEK_HEIGHT_RATIO = 0.38;
-const EXPANDED_HEIGHT_RATIO = 0.78;
-const SHEET_GLASS_TINT = 'rgba(255,255,255,0.55)';
-/** Larger than `theme.radius.xl` (12) so the sheet reads as a rounded iOS panel. */
-const SHEET_CORNER_RADIUS = 32;
+/*
+  Sheet chrome and metrics come from `campusSheet` — the search results drawer
+  is the same panel over the same map, so neither owns these.
+*/
+const DISMISS_DISTANCE = SHEET_DISMISS_DISTANCE;
+const SPRING = SHEET_SPRING;
+const PEEK_HEIGHT_RATIO = SHEET_PEEK_HEIGHT_RATIO;
+const EXPANDED_HEIGHT_RATIO = SHEET_EXPANDED_HEIGHT_RATIO;
 
 const WHATS_HERE_BADGE: Record<string, string> = {
   venues: 'VEN',
@@ -109,109 +118,6 @@ function amenityIcon(id: string): MsIconDefinition {
     default:
       return msStorefront;
   }
-}
-
-function SheetGlass({ radius }: { radius: number }) {
-  const useGlass = useMemo(() => canUseLiquidGlass(), []);
-
-  if (useGlass) {
-    return (
-      <GlassView
-        pointerEvents="none"
-        isInteractive={false}
-        glassEffectStyle="regular"
-        colorScheme="light"
-        tintColor={SHEET_GLASS_TINT}
-        style={[
-          StyleSheet.absoluteFillObject,
-          {
-            borderTopLeftRadius: radius,
-            borderTopRightRadius: radius,
-            borderCurve: 'continuous',
-          },
-        ]}
-      />
-    );
-  }
-
-  if (Platform.OS === 'ios') {
-    return (
-      <BlurView
-        pointerEvents="none"
-        intensity={72}
-        tint="systemChromeMaterialLight"
-        style={[
-          StyleSheet.absoluteFillObject,
-          {
-            borderTopLeftRadius: radius,
-            borderTopRightRadius: radius,
-            borderCurve: 'continuous',
-          },
-        ]}
-      />
-    );
-  }
-
-  return (
-    <View
-      pointerEvents="none"
-      style={[
-        StyleSheet.absoluteFillObject,
-        {
-          backgroundColor: 'rgba(255,255,255,0.94)',
-          borderTopLeftRadius: radius,
-          borderTopRightRadius: radius,
-          borderCurve: 'continuous',
-        },
-      ]}
-    />
-  );
-}
-
-function GlassIconButton({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: MsIconDefinition;
-  label: string;
-  onPress: () => void;
-}) {
-  const theme = useTheme();
-  const useGlass = useMemo(() => canUseLiquidGlass(), []);
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.iconButtonOuter,
-        { transform: [{ scale: pressed ? 0.94 : 1 }] },
-      ]}
-    >
-      {useGlass ? (
-        <GlassView
-          isInteractive
-          glassEffectStyle="regular"
-          colorScheme="light"
-          tintColor="rgba(255,255,255,0.35)"
-          style={styles.iconButtonSurface}
-        >
-          <MaterialSymbol icon={icon} size={HEADER_ICON_SIZE} color={theme.color.text.brand} />
-        </GlassView>
-      ) : (
-        <View
-          style={[
-            styles.iconButtonSurface,
-            { backgroundColor: 'rgba(255,255,255,0.82)' },
-          ]}
-        >
-          <MaterialSymbol icon={icon} size={HEADER_ICON_SIZE} color={theme.color.text.brand} />
-        </View>
-      )}
-    </Pressable>
-  );
 }
 
 const ACTION_TILE_RADIUS = 16;
@@ -511,15 +417,7 @@ export function BuildingDrawer({ building, onClose }: Props) {
             borderTopRightRadius: SHEET_CORNER_RADIUS,
             borderCurve: 'continuous',
             overflow: 'visible',
-            ...Platform.select({
-              ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: -4 },
-                shadowOpacity: 0.12,
-                shadowRadius: 16,
-              },
-              android: { elevation: 12 },
-            }),
+            ...sheetShadow,
           },
         ]}
       >
@@ -855,20 +753,6 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     gap: 8,
-  },
-  iconButtonOuter: {
-    width: HEADER_BAR_BUTTON_SIZE,
-    height: HEADER_BAR_BUTTON_SIZE,
-    borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
-  },
-  iconButtonSurface: {
-    width: HEADER_BAR_BUTTON_SIZE,
-    height: HEADER_BAR_BUTTON_SIZE,
-    borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
   },
   quickInfo: {
     gap: 0,
