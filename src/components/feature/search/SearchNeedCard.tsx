@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   question: {
-    fontSize: 18,
+    fontSize: 16,
     lineHeight: QUESTION_LINE_HEIGHT,
     fontWeight: '600',
     letterSpacing: -0.2,
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
   destination: {
     flex: 1,
     minWidth: 0,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     fontWeight: '600',
   },
 });

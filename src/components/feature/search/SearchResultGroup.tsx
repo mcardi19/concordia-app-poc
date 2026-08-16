@@ -174,8 +174,8 @@ const styles = StyleSheet.create({
   },
   label: {
     // Matches Today section meta (14) rather than the denser caption role.
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     fontWeight: '600',
     // Sentence case does not need the tracking uppercase does to stay legible.
     letterSpacing: 0,
@@ -186,8 +186,8 @@ const styles = StyleSheet.create({
     color: searchTheme.eyebrowCount,
   },
   action: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     fontWeight: '600',
   },
   card: {
@@ -231,14 +231,14 @@ const styles = StyleSheet.create({
   },
   // Same title/meta scale as TodayAttentionList list rows.
   rowTitle: {
-    fontSize: 18,
-    lineHeight: 18 * 1.2,
+    fontSize: 16,
+    lineHeight: 16 * 1.25,
     fontWeight: '600',
     color: searchTheme.headingText,
   },
   rowSubtitle: {
-    fontSize: 15,
-    lineHeight: 15 * 1.45,
+    fontSize: 13.5,
+    lineHeight: 13.5 * 1.4,
     color: searchTheme.metaText,
     marginTop: 2,
   },
@@ -254,8 +254,8 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   statusText: {
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: '600',
   },
 });

@@ -1,5 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Animated as RNAnimated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Easing,
@@ -12,6 +19,11 @@ import { GlassView } from 'expo-glass-effect';
 import { MIN_TOUCH_TARGET_SIZE } from '@/accessibility';
 import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
+import {
+  CURTAIN_FADE_DEPTH,
+  CURTAIN_FADE_IN,
+  ScrollCurtain,
+} from '@/components/design-system/ScrollCurtain';
 import { SearchSurface } from '@/components/feature/search';
 import {
   MaterialSymbol,
@@ -128,6 +140,29 @@ export function CampusSearchScreen({ navigation }: Props) {
       cancelled = true;
     };
   }, [getCurrentCoords]);
+
+  /*
+    The field floats over the list so results scroll under a curtain rather
+    than stopping at a hard edge — Home's chrome, applied here. This is the
+    height the list has to clear.
+  */
+  const fieldRowHeight = insets.top + theme.spacing.sm + FIELD_HEIGHT + 12;
+
+  /*
+    Scroll-driven, like Home's. A curtain drawn at full strength while nothing
+    has scrolled veils the top of the list for no reason — it only has a job
+    once content is passing under the chrome.
+  */
+  const scrollY = useRef(new RNAnimated.Value(0)).current;
+  const curtainOpacity = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [...CURTAIN_FADE_IN, 9999],
+        outputRange: [0, 1, 1],
+        extrapolate: 'clamp',
+      }),
+    [scrollY],
+  );
 
   const trimmed = query.trim();
   const searched = trimmed.length > 0;
@@ -284,7 +319,7 @@ export function CampusSearchScreen({ navigation }: Props) {
   );
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + theme.spacing.sm }]}>
+    <View style={styles.root}>
       {/*
         Field + Cancel only. Unlike the app-wide Search screen there is no
         separate back control: this arrives as the map fading into search, so
@@ -292,7 +327,14 @@ export function CampusSearchScreen({ navigation }: Props) {
         query. The field's offset, height and radius track the map's field
         exactly — that is what the cross-fade is hiding behind.
       */}
-      <View style={styles.fieldWrap}>
+      <ScrollCurtain
+        color={searchTheme.pageBackground}
+        height={fieldRowHeight + CURTAIN_FADE_DEPTH}
+        blurred
+        opacity={curtainOpacity}
+      />
+
+      <View style={[styles.fieldWrap, { paddingTop: insets.top + theme.spacing.sm }]}>
         <View style={styles.fieldRow}>
           {glass ? (
             <GlassView
@@ -334,10 +376,18 @@ export function CampusSearchScreen({ navigation }: Props) {
         </View>
       </View>
 
-      <ScrollView
+      <RNAnimated.ScrollView
+        onScroll={RNAnimated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+        scrollEventThrottle={16}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
+        contentContainerStyle={{
+          paddingTop: fieldRowHeight,
+          paddingBottom: tabBarPadding + 24,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {!searched ? (
@@ -382,7 +432,7 @@ export function CampusSearchScreen({ navigation }: Props) {
             </View>
           ))
         )}
-      </ScrollView>
+      </RNAnimated.ScrollView>
     </View>
   );
 }
@@ -733,7 +783,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: searchTheme.pageBackground,
   },
+  /** Floats over the list; the curtain behind it is what hides scrolled rows. */
   fieldWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 11,
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingBottom: 12,
   },
@@ -771,8 +827,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelLabel: {
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 13.5,
+    lineHeight: 18,
     fontWeight: '600',
     color: '#912238',
   },
@@ -790,8 +846,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   chipLabel: {
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 13.5,
+    lineHeight: 18,
     fontWeight: '600',
     color: searchTheme.bodyText,
   },
@@ -811,15 +867,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionLabel: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     fontWeight: '600',
     letterSpacing: 0,
     color: searchTheme.eyebrowText,
   },
   sectionAction: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     fontWeight: '600',
   },
   recentRow: {
@@ -831,8 +887,8 @@ const styles = StyleSheet.create({
   },
   recentLabel: {
     flex: 1,
-    fontSize: 18,
-    lineHeight: 18 * 1.2,
+    fontSize: 16,
+    lineHeight: 16 * 1.25,
     fontWeight: '500',
     color: searchTheme.bodyText,
   },
@@ -853,13 +909,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   favouriteCode: {
-    fontSize: 22,
-    lineHeight: 27,
+    fontSize: 21,
+    lineHeight: 26,
     fontWeight: '600',
   },
   favouriteName: {
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: '500',
     color: searchTheme.headingText,
     marginTop: 7,
@@ -885,8 +941,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activityTitle: {
-    fontSize: 18,
-    lineHeight: 18 * 1.2,
+    fontSize: 16,
+    lineHeight: 16 * 1.25,
     fontWeight: '600',
     color: searchTheme.headingText,
   },
@@ -897,8 +953,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   activityActionLabel: {
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: '600',
     color: '#FFFFFF',
   },
@@ -913,15 +969,15 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   groupLabel: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     fontWeight: '600',
     letterSpacing: 0,
     color: searchTheme.eyebrowText,
   },
   groupCount: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     fontWeight: '700',
     color: searchTheme.eyebrowCount,
   },
@@ -959,14 +1015,14 @@ const styles = StyleSheet.create({
   },
   // Same title/meta scale as Today attention rows and app-wide Search.
   rowTitle: {
-    fontSize: 18,
-    lineHeight: 18 * 1.2,
+    fontSize: 16,
+    lineHeight: 16 * 1.25,
     fontWeight: '600',
     color: searchTheme.headingText,
   },
   rowMeta: {
-    fontSize: 15,
-    lineHeight: 15 * 1.45,
+    fontSize: 13.5,
+    lineHeight: 13.5 * 1.4,
     color: searchTheme.metaText,
     marginTop: 2,
   },
@@ -977,8 +1033,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   onMapLabel: {
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: '600',
   },
   emptyBlock: {
@@ -998,16 +1054,16 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   emptyTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 21,
+    lineHeight: 26,
     fontWeight: '600',
     letterSpacing: -0.3,
     color: searchTheme.headingText,
     textAlign: 'center',
   },
   emptyBody: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 13.5,
+    lineHeight: 21,
     color: searchTheme.metaText,
     textAlign: 'center',
     marginTop: 8,

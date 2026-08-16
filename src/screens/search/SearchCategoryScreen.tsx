@@ -181,8 +181,8 @@ const styles = StyleSheet.create({
     color: searchTheme.headingText,
   },
   subtitle: {
-    fontSize: 15,
-    lineHeight: 15 * 1.45,
+    fontSize: 13.5,
+    lineHeight: 13.5 * 1.4,
     color: searchTheme.metaText,
     marginTop: 3,
   },
@@ -196,8 +196,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(145, 34, 56, 0.06)',
   },
   bannerText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     color: searchTheme.bodyText,
   },
   bannerLink: {
@@ -215,8 +215,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   emptyText: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 13.5,
+    lineHeight: 21,
     color: searchTheme.metaText,
   },
   missing: {

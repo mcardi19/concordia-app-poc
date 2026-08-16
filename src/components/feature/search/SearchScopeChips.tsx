@@ -75,6 +75,21 @@ export function SearchScopeChips({ scopes, active, onSelect }: Props) {
   );
 }
 
+const ROW_PADDING_TOP = 12;
+const ROW_PADDING_BOTTOM = 4;
+const CHIP_PADDING_VERTICAL = 8;
+const CHIP_LABEL_LINE_HEIGHT = 18;
+
+/**
+ * The rail's laid-out height, derived from the same numbers the styles use.
+ *
+ * The search screens pin this row under a floating field, so they need to
+ * pad their list by exactly this much — measuring it with `onLayout` would
+ * mean a frame of wrong padding every time the row appears.
+ */
+export const SEARCH_SCOPE_CHIP_ROW_HEIGHT =
+  ROW_PADDING_TOP + CHIP_PADDING_VERTICAL * 2 + CHIP_LABEL_LINE_HEIGHT + ROW_PADDING_BOTTOM;
+
 const styles = StyleSheet.create({
   /*
     The rail sits between the field and the results list in a flex column, so
@@ -93,29 +108,29 @@ const styles = StyleSheet.create({
     // their own label.
     alignItems: 'center',
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingTop: ROW_PADDING_TOP,
+    paddingBottom: ROW_PADDING_BOTTOM,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: CHIP_PADDING_VERTICAL,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     // Keep lineHeight above the font's own metrics so descenders in
     // "Buildings" are not clipped.
-    lineHeight: 19,
+    lineHeight: CHIP_LABEL_LINE_HEIGHT,
     fontWeight: '600',
   },
   count: {
-    fontSize: 12.5,
-    lineHeight: 19,
+    fontSize: 11.5,
+    lineHeight: 18,
     fontWeight: '500',
     opacity: 0.75,
   },

@@ -196,8 +196,8 @@ export function CampusResultsDrawer({
               style={{
                 paddingHorizontal: theme.spacing.lg,
                 paddingTop: theme.spacing.md,
-                fontSize: 15,
-                lineHeight: 15 * 1.45,
+                fontSize: 13.5,
+                lineHeight: 13.5 * 1.4,
               }}
             >
               Nothing on this campus matches that yet.
@@ -243,7 +243,7 @@ export function CampusResultsDrawer({
                       numberOfLines={1}
                       style={[
                         styles.rowTitle,
-                        { fontSize: 18, lineHeight: 18 * 1.2 },
+                        { fontSize: 16, lineHeight: 16 * 1.25 },
                       ]}
                     >
                       {building.name}
@@ -252,7 +252,7 @@ export function CampusResultsDrawer({
                       variant="body"
                       color="secondary"
                       numberOfLines={1}
-                      style={{ fontSize: 15, lineHeight: 15 * 1.45, marginTop: 2 }}
+                      style={{ fontSize: 13.5, lineHeight: 13.5 * 1.4, marginTop: 2 }}
                     >
                       {meta(building, coords)}
                     </Text>
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   codeLabel: {
     fontWeight: '700',
-    fontSize: 15,
+    fontSize: 13.5,
   },
   rowText: {
     flex: 1,

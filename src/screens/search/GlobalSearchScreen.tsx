@@ -1,5 +1,13 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Keyboard, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Animated as RNAnimated,
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Easing,
@@ -10,6 +18,11 @@ import Animated, {
 import { GlassView } from 'expo-glass-effect';
 import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
+import {
+  CURTAIN_FADE_DEPTH,
+  CURTAIN_FADE_IN,
+  ScrollCurtain,
+} from '@/components/design-system/ScrollCurtain';
 import {
   MaterialSymbol,
   msArrowBack,
@@ -32,6 +45,7 @@ import {
   SearchResultGroup,
   SearchResultRow,
   SearchScopeChips,
+  SEARCH_SCOPE_CHIP_ROW_HEIGHT,
   SearchSurface,
   type SearchScope,
 } from '@/components/feature/search';
@@ -41,7 +55,10 @@ import { useBuildings } from '@/hooks/useBuildings';
 import { useServicesSearch } from '@/hooks/useServicesSearch';
 import { horizontalCarouselProps } from '@/components/feature/today';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
-import { CURATED_BOOKS, LIBRARY_LOANS } from '@/components/feature/library/libraryData';
+import {
+  CURATED_BOOKS,
+  LIBRARY_LOANS,
+} from '@/components/feature/library/libraryData';
 import type { SearchScreenProps } from '@/navigation/types';
 import {
   CATEGORY_LABEL,
@@ -93,6 +110,22 @@ export function GlobalSearchScreen({ navigation }: Props) {
   // The services feed is per-campus; SGW carries the bulk of them.
   const { results: services, isLoading } = useServicesSearch('sgw', query);
 
+  /*
+    Scroll-driven, like Home's. A curtain drawn at full strength while nothing
+    has scrolled veils the top of the list for no reason — it only has a job
+    once content is passing under the chrome.
+  */
+  const scrollY = useRef(new RNAnimated.Value(0)).current;
+  const curtainOpacity = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [...CURTAIN_FADE_IN, 9999],
+        outputRange: [0, 1, 1],
+        extrapolate: 'clamp',
+      }),
+    [scrollY],
+  );
+
   const trimmed = query.trim();
   const searched = trimmed.length > 0;
 
@@ -123,7 +156,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
         count: counts[c],
       })),
     ],
-    [hits.length, counts],
+    [hits.length, counts]
   );
 
   /**
@@ -176,7 +209,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
         easing: Easing.out(Easing.cubic),
       });
     },
-    [cancelProgress],
+    [cancelProgress]
   );
 
   /** Query lives in state (results need it) and a ref (the handlers do). */
@@ -192,21 +225,21 @@ export function GlobalSearchScreen({ navigation }: Props) {
       // Reached without focusing the field — tapping a task or a recent.
       revealCancel(next.length > 0);
     },
-    [updateQuery, revealCancel],
+    [updateQuery, revealCancel]
   );
 
   /* Stable, so `ZeroState`'s memo actually holds. */
   const clearRecents = useCallback(() => setRecents([]), []);
   const openCategory = useCallback(
-    (key: string) => navigation.navigate('SearchCategory', { categoryKey: key }),
-    [navigation],
+    (key: string) =>
+      navigation.navigate('SearchCategory', { categoryKey: key }),
+    [navigation]
   );
 
   const remember = useCallback((label: string, icon: typeof msSearch) => {
-    setRecents((prev) => [
-      { label, icon },
-      ...prev.filter((r) => r.label !== label),
-    ].slice(0, 4));
+    setRecents((prev) =>
+      [{ label, icon }, ...prev.filter((r) => r.label !== label)].slice(0, 4)
+    );
   }, []);
 
   /**
@@ -241,7 +274,8 @@ export function GlobalSearchScreen({ navigation }: Props) {
   const cancelStyle = useAnimatedStyle(() => ({
     // The row's gap is pulled back too, or the field stays a gap short of the
     // full width while Cancel is hidden.
-    marginRight: -(cancelWidth.value + FIELD_ROW_GAP) * (1 - cancelProgress.value),
+    marginRight:
+      -(cancelWidth.value + FIELD_ROW_GAP) * (1 - cancelProgress.value),
     opacity: cancelProgress.value,
   }));
 
@@ -264,69 +298,117 @@ export function GlobalSearchScreen({ navigation }: Props) {
     </>
   );
 
+  /*
+    The field floats over the list rather than sitting above it, so results
+    scroll under a curtain instead of stopping at a hard edge — the same
+    chrome Home uses. Its height is what the list has to clear.
+  */
+  const fieldRowHeight =
+    insets.top +
+    12 +
+    searchFieldHeight +
+    12 +
+    (searched ? SEARCH_SCOPE_CHIP_ROW_HEIGHT : 0);
+
   return (
-    <View style={[styles.root, { paddingTop: insets.top + 12 }]}>
+    <View style={styles.root}>
       {/*
         Search is pushed by a header action rather than being a tab, and it
         renders with `headerShown: false` so the field keeps the top of the
         screen — this row carries the only visible way back. Matches the back
         control on SearchCategory.
       */}
-      <View style={styles.fieldWrap}>
-        <View style={styles.fieldRow}>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-            hitSlop={8}
-          >
-            <SearchSurface style={styles.backButton} radius={22}>
-              <MaterialSymbol icon={msArrowBack} size={20} color={theme.color.primary} />
-            </SearchSurface>
-          </Pressable>
+      <ScrollCurtain
+        color={searchTheme.pageBackground}
+        height={fieldRowHeight + CURTAIN_FADE_DEPTH}
+        blurred
+        opacity={curtainOpacity}
+      />
 
-          {glass ? (
-            <GlassView
-              isInteractive
-              glassEffectStyle="regular"
-              colorScheme="light"
-              style={styles.field}
-            >
-              {field}
-            </GlassView>
-          ) : (
-            <View style={[styles.field, styles.fieldFallback]}>{field}</View>
-          )}
-
-          <Animated.View style={cancelStyle}>
+      <View style={[styles.fieldWrap, { paddingTop: insets.top + 12 }]}>
+        {/*
+          The inset lives on this row, not the wrapper: the chips below carry
+          their own screen margin, and a padded wrapper would add a second one.
+        */}
+        <View style={styles.fieldRowInset}>
+          <View style={styles.fieldRow}>
             <Pressable
-              onPress={cancelSearch}
+              onPress={() => navigation.goBack()}
               accessibilityRole="button"
-              accessibilityLabel="Cancel search"
-              hitSlop={6}
-              // Into a shared value, not state — this must not cause a render.
-              onLayout={(e) => {
-                cancelWidth.value = e.nativeEvent.layout.width;
-              }}
-              style={({ pressed }) => [styles.cancel, { opacity: pressed ? 0.5 : 1 }]}
+              accessibilityLabel="Back"
+              hitSlop={8}
             >
-              <Text variant="bodySmall" numberOfLines={1} style={styles.cancelLabel}>
-                Cancel
-              </Text>
+              <SearchSurface style={styles.backButton} radius={22}>
+                <MaterialSymbol
+                  icon={msArrowBack}
+                  size={20}
+                  color={theme.color.primary}
+                />
+              </SearchSurface>
             </Pressable>
-          </Animated.View>
+
+            {glass ? (
+              <GlassView
+                isInteractive
+                glassEffectStyle="regular"
+                colorScheme="light"
+                style={styles.field}
+              >
+                {field}
+              </GlassView>
+            ) : (
+              <View style={[styles.field, styles.fieldFallback]}>{field}</View>
+            )}
+
+            <Animated.View style={cancelStyle}>
+              <Pressable
+                onPress={cancelSearch}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel search"
+                hitSlop={6}
+                // Into a shared value, not state — this must not cause a render.
+                onLayout={(e) => {
+                  cancelWidth.value = e.nativeEvent.layout.width;
+                }}
+                style={({ pressed }) => [
+                  styles.cancel,
+                  { opacity: pressed ? 0.5 : 1 },
+                ]}
+              >
+                <Text
+                  variant="bodySmall"
+                  numberOfLines={1}
+                  style={styles.cancelLabel}
+                >
+                  Cancel
+                </Text>
+              </Pressable>
+            </Animated.View>
+          </View>
         </View>
+
+        {searched ? (
+          <SearchScopeChips
+            scopes={scopes}
+            active={scope}
+            onSelect={setScope}
+          />
+        ) : null}
       </View>
 
-      {searched ? (
-        <SearchScopeChips scopes={scopes} active={scope} onSelect={setScope} />
-      ) : null}
-
-      <ScrollView
+      <RNAnimated.ScrollView
+        onScroll={RNAnimated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+        scrollEventThrottle={16}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         // No tab bar to clear on this screen — just the home indicator.
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{
+          paddingTop: fieldRowHeight,
+          paddingBottom: insets.bottom + 24,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {!searched ? (
@@ -355,7 +437,12 @@ export function GlobalSearchScreen({ navigation }: Props) {
                     icon={categoryIcon(bestMatch.category)}
                     highlight={trimmed}
                     last
-                    onPress={() => remember(bestMatch.title, categoryIcon(bestMatch.category))}
+                    onPress={() =>
+                      remember(
+                        bestMatch.title,
+                        categoryIcon(bestMatch.category)
+                      )
+                    }
                   />
                 </SearchResultGroup>
               </View>
@@ -375,14 +462,16 @@ export function GlobalSearchScreen({ navigation }: Props) {
                     icon={categoryIcon(hit.category)}
                     highlight={trimmed}
                     last={i === group.hits.length - 1}
-                    onPress={() => remember(hit.title, categoryIcon(hit.category))}
+                    onPress={() =>
+                      remember(hit.title, categoryIcon(hit.category))
+                    }
                   />
                 ))}
               </SearchResultGroup>
             ))}
           </>
         )}
-      </ScrollView>
+      </RNAnimated.ScrollView>
     </View>
   );
 }
@@ -409,10 +498,15 @@ const ZeroState = React.memo(function ZeroState({
 
   const pages = useMemo(
     () =>
-      Array.from({ length: Math.ceil(SERVICE_CATEGORIES.length / CATEGORY_PAGE_SIZE) }, (_, i) =>
-        SERVICE_CATEGORIES.slice(i * CATEGORY_PAGE_SIZE, i * CATEGORY_PAGE_SIZE + CATEGORY_PAGE_SIZE),
+      Array.from(
+        { length: Math.ceil(SERVICE_CATEGORIES.length / CATEGORY_PAGE_SIZE) },
+        (_, i) =>
+          SERVICE_CATEGORIES.slice(
+            i * CATEGORY_PAGE_SIZE,
+            i * CATEGORY_PAGE_SIZE + CATEGORY_PAGE_SIZE
+          )
       ),
-    [],
+    []
   );
 
   return (
@@ -455,13 +549,24 @@ const ZeroState = React.memo(function ZeroState({
               key={recent.label}
               onPress={() => onRunSearch(recent.label)}
               accessibilityRole="button"
-              style={({ pressed }) => [styles.recentRow, { opacity: pressed ? 0.6 : 1 }]}
+              style={({ pressed }) => [
+                styles.recentRow,
+                { opacity: pressed ? 0.6 : 1 },
+              ]}
             >
-              <MaterialSymbol icon={msHistory} size={22} color={searchTheme.metaText} />
+              <MaterialSymbol
+                icon={msHistory}
+                size={22}
+                color={searchTheme.metaText}
+              />
               <Text variant="body" style={styles.recentLabel}>
                 {recent.label}
               </Text>
-              <MaterialSymbol icon={msNorthEast} size={18} color={searchTheme.chevron} />
+              <MaterialSymbol
+                icon={msNorthEast}
+                size={18}
+                color={searchTheme.chevron}
+              />
             </Pressable>
           ))}
         </View>
@@ -490,15 +595,26 @@ const ZeroState = React.memo(function ZeroState({
                   ]}
                 >
                   <View
-                    style={[styles.categoryIcon, { backgroundColor: `${theme.color.primary}0E` }]}
+                    style={[
+                      styles.categoryIcon,
+                      { backgroundColor: `${theme.color.primary}0E` },
+                    ]}
                   >
-                    <MaterialSymbol icon={category.icon} size={22} color={theme.color.primary} />
+                    <MaterialSymbol
+                      icon={category.icon}
+                      size={22}
+                      color={theme.color.primary}
+                    />
                   </View>
                   <View style={styles.categoryText}>
                     <Text variant="body" style={styles.categoryLabel}>
                       {category.label}
                     </Text>
-                    <Text variant="body" numberOfLines={1} style={styles.categoryBlurb}>
+                    <Text
+                      variant="body"
+                      numberOfLines={1}
+                      style={styles.categoryBlurb}
+                    >
                       {category.blurb}
                     </Text>
                   </View>
@@ -511,21 +627,34 @@ const ZeroState = React.memo(function ZeroState({
 
       <View style={styles.section}>
         <SearchResultGroupLabelRow label="Not sure where to start?" />
-        <SearchNeedRail needs={SEARCH_NEEDS} onSelect={(need) => onRunSearch(need.query)} />
+        <SearchNeedRail
+          needs={SEARCH_NEEDS}
+          onSelect={(need) => onRunSearch(need.query)}
+        />
       </View>
     </>
   );
 });
 
 /** Nothing matched — offer a correction and a way back to browsing. */
-function NoResults({ query, onRunSearch }: { query: string; onRunSearch: (q: string) => void }) {
+function NoResults({
+  query,
+  onRunSearch,
+}: {
+  query: string;
+  onRunSearch: (q: string) => void;
+}) {
   const suggestion = nearestSuggestion(query);
 
   return (
     <>
       <View style={styles.emptyBlock}>
         <View style={styles.emptyIcon}>
-          <MaterialSymbol icon={msSearchOff} size={26} color={searchTheme.eyebrowCount} />
+          <MaterialSymbol
+            icon={msSearchOff}
+            size={26}
+            color={searchTheme.eyebrowCount}
+          />
         </View>
         <Text variant="heading3" style={styles.emptyTitle}>
           {`No results for “${query}”`}
@@ -542,7 +671,8 @@ function NoResults({ query, onRunSearch }: { query: string; onRunSearch: (q: str
           style={styles.didYouMean}
         >
           <Text variant="body" style={styles.didYouMeanText}>
-            Did you mean <Text style={styles.didYouMeanTerm}>{suggestion}</Text>?
+            Did you mean <Text style={styles.didYouMeanTerm}>{suggestion}</Text>
+            ?
           </Text>
         </Pressable>
       ) : null}
@@ -569,7 +699,10 @@ function NoResults({ query, onRunSearch }: { query: string; onRunSearch: (q: str
 
       <View style={styles.section}>
         <SearchResultGroupLabelRow label="Not sure what it's called? Browse by need" />
-        <SearchNeedRail needs={SEARCH_NEEDS} onSelect={(need) => onRunSearch(need.query)} />
+        <SearchNeedRail
+          needs={SEARCH_NEEDS}
+          onSelect={(need) => onRunSearch(need.query)}
+        />
       </View>
     </>
   );
@@ -581,11 +714,22 @@ function ResultSkeleton() {
     <View style={styles.section}>
       <SearchSurface style={styles.skeletonCard}>
         {[0, 1, 2].map((i) => (
-          <View key={i} style={[styles.recentRow, i < 2 ? styles.recentDivider : null]}>
+          <View
+            key={i}
+            style={[styles.recentRow, i < 2 ? styles.recentDivider : null]}
+          >
             <View style={styles.skeletonIcon} />
             <View style={styles.recentLabelWrap}>
-              <View style={[styles.skeletonLine, { width: `${70 - i * 8}%` }]} />
-              <View style={[styles.skeletonLine, styles.skeletonLineSmall, { width: `${40 + i * 5}%` }]} />
+              <View
+                style={[styles.skeletonLine, { width: `${70 - i * 8}%` }]}
+              />
+              <View
+                style={[
+                  styles.skeletonLine,
+                  styles.skeletonLineSmall,
+                  { width: `${40 + i * 5}%` },
+                ]}
+              />
             </View>
           </View>
         ))}
@@ -615,7 +759,8 @@ function matchScore(title: string, query: string): number {
   const t = title.toLowerCase();
   const q = query.toLowerCase();
   if (t.startsWith(q)) return SCORE_TITLE_PREFIX;
-  if (t.split(/[^a-z0-9]+/).some((word) => word.startsWith(q))) return SCORE_WORD_PREFIX;
+  if (t.split(/[^a-z0-9]+/).some((word) => word.startsWith(q)))
+    return SCORE_WORD_PREFIX;
   return t.includes(q) ? SCORE_CONTAINS : 0;
 }
 
@@ -632,7 +777,12 @@ function nearestSuggestion(query: string): string | null {
     let score = 0;
     for (const word of t.split(/\s+/)) {
       let shared = 0;
-      while (shared < word.length && shared < q.length && word[shared] === q[shared]) shared += 1;
+      while (
+        shared < word.length &&
+        shared < q.length &&
+        word[shared] === q[shared]
+      )
+        shared += 1;
       score = Math.max(score, shared);
     }
     if (score >= 3 && (!best || score > best.score)) best = { term, score };
@@ -645,9 +795,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: searchTheme.pageBackground,
   },
+  /** Floats over the list; the curtain behind it is what hides scrolled rows. */
   fieldWrap: {
-    paddingHorizontal: semanticSpacing.screenHorizontal,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 11,
     paddingBottom: 12,
+  },
+  fieldRowInset: {
+    paddingHorizontal: semanticSpacing.screenHorizontal,
   },
   fieldRow: {
     flexDirection: 'row',
@@ -661,8 +819,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelLabel: {
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 13.5,
+    lineHeight: 18,
     fontWeight: '600',
     color: '#912238',
   },
@@ -700,8 +858,8 @@ const styles = StyleSheet.create({
   summary: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 14,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     color: searchTheme.metaText,
   },
   bestMatch: {
@@ -714,8 +872,8 @@ const styles = StyleSheet.create({
   sectionLabel: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     marginBottom: 11,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     fontWeight: '600',
     letterSpacing: 0,
     color: searchTheme.eyebrowText,
@@ -731,8 +889,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   taskLabel: {
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 13.5,
+    lineHeight: 18,
     fontWeight: '600',
     color: searchTheme.bodyText,
   },
@@ -753,8 +911,8 @@ const styles = StyleSheet.create({
   },
   recentLabel: {
     flex: 1,
-    fontSize: 18,
-    lineHeight: 18 * 1.2,
+    fontSize: 16,
+    lineHeight: 16 * 1.25,
     fontWeight: '500',
     color: searchTheme.bodyText,
   },
@@ -791,14 +949,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   categoryLabel: {
-    fontSize: 18,
-    lineHeight: 18 * 1.2,
+    fontSize: 16,
+    lineHeight: 16 * 1.25,
     fontWeight: '600',
     color: searchTheme.headingText,
   },
   categoryBlurb: {
-    fontSize: 15,
-    lineHeight: 15 * 1.45,
+    fontSize: 13.5,
+    lineHeight: 13.5 * 1.4,
     color: searchTheme.metaText,
     marginTop: 2,
   },
@@ -819,16 +977,16 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   emptyTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 21,
+    lineHeight: 26,
     fontWeight: '600',
     letterSpacing: -0.3,
     color: searchTheme.headingText,
     textAlign: 'center',
   },
   emptyBody: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 13.5,
+    lineHeight: 21,
     color: searchTheme.metaText,
     textAlign: 'center',
     marginTop: 8,
@@ -844,8 +1002,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(145, 34, 56, 0.06)',
   },
   didYouMeanText: {
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 13.5,
+    lineHeight: 18,
     color: searchTheme.bodyText,
   },
   didYouMeanTerm: {

@@ -1,6 +1,10 @@
 export { SearchSurface } from './SearchSurface';
 export { SearchResultGroup, SearchResultRow, SearchGroupLabel } from './SearchResultGroup';
-export { SearchScopeChips, type SearchScope } from './SearchScopeChips';
+export {
+  SearchScopeChips,
+  SEARCH_SCOPE_CHIP_ROW_HEIGHT,
+  type SearchScope,
+} from './SearchScopeChips';
 export { SearchNeedRail } from './SearchNeedCard';
 export {
   CATEGORY_PAGE_SIZE,
