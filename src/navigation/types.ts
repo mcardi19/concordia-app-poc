@@ -32,6 +32,8 @@ export type MeRoutes = {
 
 export type TodayStackParamList = SearchRoutes & {
   Today: undefined;
+  /** Reached from the shield action in the Home header. */
+  Emergency: undefined;
 };
 
 export type ScheduleStackParamList = {

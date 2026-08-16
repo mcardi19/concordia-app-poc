@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackHeaderItem } from '@react-navigation/native-stack';
 import { TodayScreen } from '@/screens/today/TodayScreen';
+import { EmergencyScreen } from '@/screens/today/EmergencyScreen';
 import { useTheme } from '@/design-system/theme';
 import { searchScreens } from './searchRoutes';
 import { useStackScreenOptions } from './screenOptions';
@@ -28,15 +29,15 @@ export function TodayStack() {
    * segmented control.
    */
   const headerRightItems = useCallback(
-    (openSearch: () => void): NativeStackHeaderItem[] => [
+    (openSearch: () => void, openEmergency: () => void): NativeStackHeaderItem[] => [
       {
         type: 'button',
         label: '',
         icon: { type: 'image', source: HEADER_ICONS.security, tinted: true },
         sharesBackground: false,
         tintColor: theme.color.primary,
-        accessibilityLabel: 'Security',
-        onPress: () => {},
+        accessibilityLabel: 'Emergency and crisis help',
+        onPress: openEmergency,
       },
       {
         type: 'button',
@@ -66,15 +67,26 @@ export function TodayStack() {
                 headerLargeTitleEnabled: false,
                 headerTitle: '',
                 unstable_headerRightItems: () =>
-                  headerRightItems(() => navigation.navigate('Search')),
+                  headerRightItems(
+                    () => navigation.navigate('Search'),
+                    () => navigation.navigate('Emergency'),
+                  ),
               }
             : {
                 title: 'Home',
                 headerRight: () => (
-                  <TodayHeaderActions onSearchPress={() => navigation.navigate('Search')} />
+                  <TodayHeaderActions
+                    onSearchPress={() => navigation.navigate('Search')}
+                    onSecurityPress={() => navigation.navigate('Emergency')}
+                  />
                 ),
               }),
         })}
+      />
+      <Stack.Screen
+        name="Emergency"
+        component={EmergencyScreen}
+        options={{ title: 'Emergency & crisis' }}
       />
       {searchScreens(Stack)}
     </Stack.Navigator>
