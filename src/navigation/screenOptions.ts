@@ -11,6 +11,18 @@ export function useStackContentStyle() {
   return { backgroundColor: theme.color.background };
 }
 
+/**
+ * Back arrow for the native header, replacing the system chevron.
+ *
+ * A template PNG rather than a `MaterialSymbol`: the back button is a real
+ * UIBarButtonItem, so it takes an image source, not a React view — and going
+ * through `headerLeft` instead would put a control on every stack root, which
+ * has nothing to go back to. Rendered from the same Material Symbols rounded
+ * `arrow_back` glyph the in-screen back controls use, at the 22/44/66 sizes
+ * the other header assets use.
+ */
+const HEADER_BACK_IMAGE = require('../../assets/header/back.png');
+
 /** Shared stack options — native chrome tinted with Concordia brand tokens. */
 export function useStackScreenOptions(): NativeStackNavigationOptions {
   const contentStyle = useStackContentStyle();
@@ -31,6 +43,7 @@ export function useStackScreenOptions(): NativeStackNavigationOptions {
       color: theme.color.text.primary,
     },
     headerBackButtonDisplayMode: 'minimal',
+    headerBackImageSource: HEADER_BACK_IMAGE,
   };
 }
 

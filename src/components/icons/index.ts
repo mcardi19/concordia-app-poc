@@ -58,6 +58,7 @@ export {
   msDirectionsBus,
   msNorthEast,
   msArrowForward,
+  msArrowBack,
   msSearchOff,
   msHistory,
 } from './symbols';

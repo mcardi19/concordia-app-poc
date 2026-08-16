@@ -30,6 +30,7 @@ export function SearchScopeChips({ scopes, active, onSelect }: Props) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.rail}
       contentContainerStyle={styles.row}
       keyboardShouldPersistTaps="handled"
     >
@@ -75,6 +76,17 @@ export function SearchScopeChips({ scopes, active, onSelect }: Props) {
 }
 
 const styles = StyleSheet.create({
+  /*
+    The rail sits between the field and the results list in a flex column, so
+    it inherits `flexShrink: 1` and the list below squeezes it — which crops
+    the chips rather than the list, because a horizontal ScrollView clips its
+    content instead of scrolling it vertically. Pinning both flex factors
+    makes it hug its own height.
+  */
+  rail: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   row: {
     gap: 6,
     // Without this the chips stretch to the rail's height instead of hugging

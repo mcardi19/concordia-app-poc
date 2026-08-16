@@ -25,10 +25,13 @@ import {
   CAMPUS_FILTER_LABEL,
   type CampusMapFilter,
 } from '@/services/campus/buildingPresentation';
+import { PulsingStatusDot } from '@/components/design-system/PulsingStatusDot';
 import { CardGlass } from './campusSheet';
 
 const CARD_RADIUS = 24;
 const PILL_RADIUS = 999;
+/** Smaller than the session badge's 10 — this dot sits in a pill, not a badge. */
+const STATUS_DOT_SIZE = 8;
 
 type AmenityPill = {
   id: CampusMapFilter;
@@ -122,18 +125,19 @@ export function CampusQuickCard({
           >
             <GlassPillSurface radius={PILL_RADIUS}>
               <View style={[glassPillStyles.content, { gap: theme.spacing.sm }]}>
-                <View
-                  style={[
-                    styles.statusDot,
-                    {
-                      backgroundColor:
-                        shuttleMinutes != null
-                          ? theme.color.success
-                          : theme.color.text.subtle,
-                    },
-                  ]}
-                />
-                <Text variant="body" numberOfLines={1} style={glassPillStyles.labelCompact}>
+                {/*
+                  Pulses only while there is a departure to count down to —
+                  a halo on "no service today" would advertise liveness that
+                  isn't there.
+                */}
+                {shuttleMinutes != null ? (
+                  <PulsingStatusDot color={theme.color.success} size={STATUS_DOT_SIZE} />
+                ) : (
+                  <View
+                    style={[styles.statusDot, { backgroundColor: theme.color.text.subtle }]}
+                  />
+                )}
+                <Text variant="body" numberOfLines={1} style={glassPillStyles.label}>
                   {shuttleLabel}
                 </Text>
               </View>
@@ -168,7 +172,7 @@ export function CampusQuickCard({
                       size={GLASS_PILL_ICON_SIZE}
                       color={theme.color.text.brand}
                     />
-                    <Text variant="body" numberOfLines={1} style={glassPillStyles.labelCompact}>
+                    <Text variant="body" numberOfLines={1} style={glassPillStyles.label}>
                       {label}
                     </Text>
                   </View>
@@ -231,9 +235,10 @@ const styles = StyleSheet.create({
   pillPressable: {
     flexShrink: 0,
   },
+  /** Only the resting (no-service) dot; the live one is `PulsingStatusDot`. */
   statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: STATUS_DOT_SIZE,
+    height: STATUS_DOT_SIZE,
+    borderRadius: STATUS_DOT_SIZE / 2,
   },
 });

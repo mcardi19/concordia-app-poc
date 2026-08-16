@@ -11,6 +11,7 @@ import { MeStack } from './MeStack';
 import { meNotificationCount } from '@/screens/me/accountData';
 import { NAV_TAB_INACTIVE } from './screenOptions';
 import { useTabBarMinimizeStore } from './tabBarMinimize';
+import { useTabBarHidden } from './tabBarVisibility';
 import type { MainTabParamList } from './types';
 
 const Tab = createNativeBottomTabNavigator<MainTabParamList>();
@@ -46,26 +47,41 @@ const TAB_IMAGES = {
 } as const;
 
 /**
- * Search is pushed into a tab's stack rather than being a tab, so it reads as
- * a screen you come in to and back out of — the bar goes away while it is up.
+ * The tab bar belongs to the five roots. Anything pushed on top of one — a
+ * search screen, a meal plan, a course — is somewhere you go and come back
+ * from, so the bar goes away and the header's back arrow is the way out.
  *
- * Read off the tab's focused route instead of the screen toggling
- * `tabBarStyle` on focus: that route's blur fires when it pushes
- * SearchCategory, which would flash the bar back mid-transition.
+ * Expressed as the root each tab shows rather than a list of screens that
+ * hide the bar: a new pushed screen then hides it by default instead of
+ * having to be remembered here.
+ *
+ * Read off the tab's focused route instead of each screen toggling
+ * `tabBarStyle` on focus — that route's blur fires when it pushes a child,
+ * which would flash the bar back mid-transition.
  */
-const BAR_FREE_ROUTES = new Set(['Search', 'SearchCategory']);
+const TAB_ROOT_ROUTE: Record<keyof MainTabParamList, string> = {
+  Today: 'Today',
+  Schedule: 'Schedule',
+  Campus: 'CampusHome',
+  Library: 'AcademicsHome',
+  Me: 'MeHome',
+};
 
 export function MainTabs() {
   const theme = useTheme();
   const minimizeBehavior = useTabBarMinimizeStore((s) => s.behavior);
+  /** Screens covering the bar with their own bottom sheet — Campus's drawers. */
+  const hiddenByScreen = useTabBarHidden();
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => {
         const name = route.name as keyof MainTabParamList;
         const images = TAB_IMAGES[name];
+        // Undefined until the stack navigates — it is still showing its root.
         const nested = getFocusedRouteNameFromRoute(route);
-        const hideBar = nested != null && BAR_FREE_ROUTES.has(nested);
+        const atRoot = nested == null || nested === TAB_ROOT_ROUTE[name];
+        const hideBar = hiddenByScreen || !atRoot;
         return {
           headerShown: false,
           tabBarLabelVisibilityMode: 'labeled',

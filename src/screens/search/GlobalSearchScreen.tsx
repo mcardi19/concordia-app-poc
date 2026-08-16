@@ -12,7 +12,7 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
-  msChevronLeft,
+  msArrowBack,
   msDirectionsBus,
   msHistory,
   msLocalLibrary,
@@ -281,7 +281,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
             hitSlop={8}
           >
             <SearchSurface style={styles.backButton} radius={22}>
-              <MaterialSymbol icon={msChevronLeft} size={20} color={theme.color.primary} />
+              <MaterialSymbol icon={msArrowBack} size={20} color={theme.color.primary} />
             </SearchSurface>
           </Pressable>
 

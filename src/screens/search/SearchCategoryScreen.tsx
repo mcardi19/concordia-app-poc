@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
-import { MaterialSymbol, msChevronLeft } from '@/components/icons';
+import { MaterialSymbol, msArrowBack } from '@/components/icons';
 import {
   SERVICE_CATEGORIES,
   SearchResultRow,
@@ -74,7 +74,7 @@ export function SearchCategoryScreen({ route, navigation }: Props) {
           hitSlop={8}
         >
           <SearchSurface style={styles.backButton} radius={18}>
-            <MaterialSymbol icon={msChevronLeft} size={20} color={theme.color.primary} />
+            <MaterialSymbol icon={msArrowBack} size={20} color={theme.color.primary} />
           </SearchSurface>
         </Pressable>
       </View>

@@ -10,7 +10,7 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
-  msChevronLeft,
+  msArrowBack,
   msNotifications,
   msSearch,
   msSettings,
@@ -281,7 +281,7 @@ export function MeHeaderChrome({
     >
       {onBackPress ? (
         <ChromeGlass style={styles.chromeRound}>
-          <ChromeHit icon={msChevronLeft} label="Back" onPress={onBackPress} />
+          <ChromeHit icon={msArrowBack} label="Back" onPress={onBackPress} />
         </ChromeGlass>
       ) : null}
 

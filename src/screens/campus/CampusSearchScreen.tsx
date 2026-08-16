@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -28,7 +28,6 @@ import { useCampusUserLocation } from '@/hooks/useCampusUserLocation';
 import { useNow } from '@/hooks';
 import { useServicesSearch } from '@/hooks/useServicesSearch';
 import { useShuttleTracker } from '@/hooks/useShuttleTracker';
-import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import { getDayKey } from '@/components/feature/schedule/scheduleUtils';
 import { CURATED_BOOKS, LIBRARY_LOANS } from '@/components/feature/library/libraryData';
@@ -101,7 +100,6 @@ export function CampusSearchScreen({ navigation }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const now = useNow();
-  const tabBarPadding = useTabBarContentPadding();
   const glass = useMemo(() => canUseLiquidGlass(), []);
 
   const [query, setQuery] = useState('');
@@ -146,6 +144,25 @@ export function CampusSearchScreen({ navigation }: Props) {
   }, [searched, trimmed, buildings, coords, services]);
 
   const groups = useMemo(() => groupCampusHits(hits), [hits]);
+
+  /*
+    Focused once the push has finished, not with `autoFocus`.
+
+    `autoFocus` runs on mount, which under react-native-screens is before the
+    screen is in the window hierarchy — iOS refuses first responder to an
+    off-screen view, so the keyboard never came up and the field needed a
+    second tap. Waiting for `transitionEnd` also puts the keyboard's rise
+    after the cross-fade instead of fighting it.
+  */
+  const inputRef = useRef<TextInput>(null);
+
+  useEffect(
+    () =>
+      navigation.addListener('transitionEnd', (event) => {
+        if (!event.data.closing) inputRef.current?.focus();
+      }),
+    [navigation],
+  );
 
   /*
     Cancel slides in from behind the right edge, so the field arrives exactly
@@ -248,9 +265,9 @@ export function CampusSearchScreen({ navigation }: Props) {
     <>
       <MaterialSymbol icon={msSearch} size={22} color={theme.color.primary} />
       <TextInput
+        ref={inputRef}
         value={query}
         onChangeText={setQuery}
-        autoFocus
         placeholder="Search campus"
         placeholderTextColor={searchTheme.metaText}
         autoCorrect={false}
@@ -317,7 +334,9 @@ export function CampusSearchScreen({ navigation }: Props) {
       <ScrollView
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
+        // The tab bar is hidden while this screen is up — only the home
+        // indicator to clear, same as the app-wide Search screen.
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
       >
         {!searched ? (

@@ -78,16 +78,6 @@ export const glassPillStyles = StyleSheet.create({
   },
   label: {
     fontWeight: '500',
-    fontSize: 17,
-    lineHeight: 17 * 1.2,
-  },
-  /**
-   * One step down, for rails that have more pills to get through than Today's
-   * pinned row — the capsule and its insets are unchanged, so the two still
-   * read as the same control.
-   */
-  labelCompact: {
-    fontWeight: '500',
     fontSize: 15.5,
     lineHeight: 15.5 * 1.2,
   },

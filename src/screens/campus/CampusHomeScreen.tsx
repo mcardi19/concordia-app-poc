@@ -4,7 +4,6 @@ import {
   Alert,
   Keyboard,
   Linking,
-  Platform,
   StyleSheet,
   View,
 } from 'react-native';
@@ -25,6 +24,7 @@ import {
   HEADER_ICON_SIZE,
 } from '@/navigation/HeaderIconButton';
 import { useTabBarOverlayInset } from '@/navigation/tabBarInset';
+import { useHideTabBar } from '@/navigation/tabBarVisibility';
 import type { CampusStackScreenProps } from '@/navigation/types';
 import { getBuildingCatalogRecord } from '@/data/buildings';
 import {
@@ -49,14 +49,6 @@ function regionForBuilding(building: BuildingSummary): Region {
     latitudeDelta: MAP_FOCUS_DELTA,
     longitudeDelta: MAP_FOCUS_DELTA,
   };
-}
-
-/** Matches MainTabs default so liquid glass is restored after a temporary hide. */
-function defaultTabBarStyle(backgroundColor: string) {
-  return Platform.select({
-    ios: undefined,
-    android: { backgroundColor },
-  });
 }
 
 export function CampusHomeScreen({ navigation, route }: Props) {
@@ -129,25 +121,13 @@ export function CampusHomeScreen({ navigation, route }: Props) {
    * selection). The results drawer needs this as much as the building drawer:
    * both are anchored to the bottom edge and would otherwise be clipped by
    * the bar at their peek height.
+   *
+   * Through the shared flag rather than `getParent().setOptions` — an
+   * imperative override outranks the navigator's own `screenOptions`, so
+   * setting the bar back here also undid the route rule that hides it for
+   * Campus search.
    */
-  const sheetOpen = selectedBuilding != null || searchLabel != null;
-
-  useEffect(() => {
-    const tabNavigation = navigation.getParent();
-    if (!tabNavigation) {
-      return;
-    }
-    tabNavigation.setOptions({
-      tabBarStyle: sheetOpen
-        ? { display: 'none' }
-        : defaultTabBarStyle(theme.color.background),
-    });
-    return () => {
-      tabNavigation.setOptions({
-        tabBarStyle: defaultTabBarStyle(theme.color.background),
-      });
-    };
-  }, [navigation, sheetOpen, theme.color.background]);
+  useHideTabBar(selectedBuilding != null || searchLabel != null);
 
   const selectBuilding = useCallback((building: BuildingSummary) => {
     swallowNextMapPressRef.current = true;

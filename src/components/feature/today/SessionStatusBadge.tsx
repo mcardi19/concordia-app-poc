@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, View, type StyleProp, type ViewStyle } from 'react-native';
+import React from 'react';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from '@/components/design-system';
+import { PulsingStatusDot } from '@/components/design-system/PulsingStatusDot';
 import { useTheme } from '@/design-system/theme';
 
 type Props = {
@@ -61,58 +62,6 @@ export function SessionStatusBadgeOnLight({ label, style }: Props) {
       >
         {label}
       </Text>
-    </View>
-  );
-}
-
-function PulsingStatusDot({ color }: { color: string }) {
-  const pulse = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.timing(pulse, {
-        toValue: 1,
-        duration: 1400,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [pulse]);
-
-  const haloScale = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 2.6],
-  });
-  const haloOpacity = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.7, 0],
-  });
-
-  return (
-    <View style={{ width: 10, height: 10, alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: 10,
-          height: 10,
-          borderRadius: 5,
-          borderCurve: 'continuous',
-          backgroundColor: color,
-          opacity: haloOpacity,
-          transform: [{ scale: haloScale }],
-        }}
-      />
-      <View
-        style={{
-          width: 10,
-          height: 10,
-          borderRadius: 5,
-          borderCurve: 'continuous',
-          backgroundColor: color,
-        }}
-      />
     </View>
   );
 }
