@@ -1,5 +1,7 @@
+import { useNavigationState } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/design-system/theme';
+import { useTabBarHidden } from './tabBarVisibility';
 
 /**
  * Native tab bar height, excluding the home-indicator safe area.
@@ -8,6 +10,28 @@ import { useTheme } from '@/design-system/theme';
  * this app uses `createNativeBottomTabNavigator`, which does not.
  */
 const NATIVE_TAB_BAR_HEIGHT = 49;
+
+/**
+ * Whether the tab bar is actually on screen for the calling screen.
+ *
+ * Mirrors what `MainTabs` decides: the bar belongs to each stack's root, and a
+ * screen covering it with its own bottom sheet takes it away. Reserving its
+ * height unconditionally left a dead 49pt strip under every pushed screen.
+ *
+ * `state.index === 0` is this stack showing its root. A root that has pushed a
+ * child reports a non-zero index too, but it is covered at that point and
+ * re-renders on the way back.
+ */
+export function useTabBarVisible(): boolean {
+  const hiddenByScreen = useTabBarHidden();
+  const atRoot = useNavigationState((state) => state.index === 0);
+  return !hiddenByScreen && atRoot;
+}
+
+/** The bar's height where it is showing, and nothing where it is not. */
+function useTabBarHeight(): number {
+  return useTabBarVisible() ? NATIVE_TAB_BAR_HEIGHT : 0;
+}
 
 /**
  * Extra scroll padding above the native tab bar.
@@ -29,7 +53,7 @@ export function useTabBarScrollInset(): number {
 export function useTabBarOverlayInset(): number {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  return NATIVE_TAB_BAR_HEIGHT + insets.bottom + theme.spacing.sm;
+  return useTabBarHeight() + insets.bottom + theme.spacing.sm;
 }
 
 /**
@@ -41,7 +65,7 @@ export function useTabBarOverlayInset(): number {
 export function useTabBarContentPadding(): number {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  return NATIVE_TAB_BAR_HEIGHT + insets.bottom + theme.spacing.lg;
+  return useTabBarHeight() + insets.bottom + theme.spacing.lg;
 }
 
 /** @deprecated Prefer `useTabBarScrollInset`. */

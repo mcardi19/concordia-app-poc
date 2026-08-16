@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { Text } from '@/components/design-system';
 import { MeGlassCard } from '@/components/feature/me';
 import {
@@ -51,6 +52,7 @@ const KIND_ICON: Record<AcademicKind, Parameters<typeof MaterialSymbol>[0]['icon
 export function AcademicCalendarScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const tabBarPadding = useTabBarContentPadding();
 
   const [activeFilter, setActiveFilter] = useState('all');
   const [showPast, setShowPast] = useState(false);
@@ -94,9 +96,7 @@ export function AcademicCalendarScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
-        // Pushed screen, so there is no tab bar to clear — just the home
-        // indicator.
-        contentContainerStyle={{ paddingBottom: insets.bottom + theme.spacing.lg + 24 }}
+        contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
       >
         {/* Term masthead */}
         <LinearGradient

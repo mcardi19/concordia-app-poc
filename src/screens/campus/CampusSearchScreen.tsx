@@ -28,6 +28,7 @@ import { useCampusUserLocation } from '@/hooks/useCampusUserLocation';
 import { useNow } from '@/hooks';
 import { useServicesSearch } from '@/hooks/useServicesSearch';
 import { useShuttleTracker } from '@/hooks/useShuttleTracker';
+import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import { getDayKey } from '@/components/feature/schedule/scheduleUtils';
 import { CURATED_BOOKS, LIBRARY_LOANS } from '@/components/feature/library/libraryData';
@@ -101,6 +102,8 @@ export function CampusSearchScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const now = useNow();
   const glass = useMemo(() => canUseLiquidGlass(), []);
+  // Zero bar height here — the hook knows this screen is pushed.
+  const tabBarPadding = useTabBarContentPadding();
 
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState(SEED_RECENTS);
@@ -334,9 +337,7 @@ export function CampusSearchScreen({ navigation }: Props) {
       <ScrollView
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
-        // The tab bar is hidden while this screen is up — only the home
-        // indicator to clear, same as the app-wide Search screen.
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
         showsVerticalScrollIndicator={false}
       >
         {!searched ? (
