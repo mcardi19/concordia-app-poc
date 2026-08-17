@@ -9,7 +9,10 @@ export type AmenityRow = {
 export type WhatsHereRow = {
   id: string;
   label: string;
-  detail: string;
+  /** Chip labels for Venues / Services / Departments. Empty for About. */
+  items: string[];
+  /** Prose body for About. List tabs leave this unset. */
+  detail?: string;
 };
 
 const WALKING_SPEED_KMH = 5;
@@ -45,11 +48,7 @@ function uniqueLabels(values: string[]): string[] {
   return next;
 }
 
-function joinDetail(items: string[], limit = 4): string {
-  return items.slice(0, limit).join(' · ');
-}
-
-/** Map catalog + services into amenity chips for the drawer grid. */
+/** Map catalog + services into amenity chips for the drawer rail. */
 export function buildAmenityRows(
   catalog: BuildingCatalogRecord | undefined,
   services: string[]
@@ -140,7 +139,7 @@ export function buildingMatchesMapFilter(
   return MAP_FILTER_MATCH[filter].test(haystack);
 }
 
-/** Group venues, services, and departments into scrollable “What’s here” rows. */
+/** Group venues, services, and departments into “What’s here” tab rows. */
 export function buildWhatsHereRows(
   catalog: BuildingCatalogRecord | undefined,
   services: string[],
@@ -148,11 +147,12 @@ export function buildWhatsHereRows(
 ): WhatsHereRow[] {
   const rows: WhatsHereRow[] = [];
 
-  if (catalog?.venues?.length) {
+  const venueChunks = uniqueLabels(catalog?.venues ?? []);
+  if (venueChunks.length) {
     rows.push({
       id: 'venues',
       label: 'Venues',
-      detail: joinDetail(catalog.venues, 5),
+      items: venueChunks,
     });
   }
 
@@ -161,7 +161,7 @@ export function buildWhatsHereRows(
     rows.push({
       id: 'services',
       label: 'Services',
-      detail: joinDetail(serviceChunks, 5),
+      items: serviceChunks,
     });
   }
 
@@ -170,7 +170,7 @@ export function buildWhatsHereRows(
     rows.push({
       id: 'departments',
       label: 'Departments',
-      detail: joinDetail(departmentChunks, 4),
+      items: departmentChunks,
     });
   }
 
@@ -178,6 +178,7 @@ export function buildWhatsHereRows(
     rows.push({
       id: 'overview',
       label: 'About',
+      items: [],
       detail: catalog.overview,
     });
   }

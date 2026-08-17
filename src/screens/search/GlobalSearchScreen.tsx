@@ -50,7 +50,11 @@ import {
   type SearchScope,
 } from '@/components/feature/search';
 import { useTheme } from '@/design-system/theme';
-import { searchFieldHeight, semanticSpacing } from '@/design-system/tokens';
+import {
+  searchFieldFontSize,
+  searchFieldHeight,
+  semanticSpacing,
+} from '@/design-system/tokens';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useServicesSearch } from '@/hooks/useServicesSearch';
 import { horizontalCarouselProps } from '@/components/feature/today';
@@ -853,7 +857,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: searchFieldFontSize,
     padding: 0,
   },
   summary: {

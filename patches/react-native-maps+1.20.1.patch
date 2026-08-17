@@ -1,3 +1,59 @@
+diff --git a/node_modules/react-native-maps/ios/AirMaps/AIRMap.m b/node_modules/react-native-maps/ios/AirMaps/AIRMap.m
+index 07a4638..95efd0c 100644
+--- a/node_modules/react-native-maps/ios/AirMaps/AIRMap.m
++++ b/node_modules/react-native-maps/ios/AirMaps/AIRMap.m
+@@ -49,6 +49,9 @@ - (void)updateZoomEnabled;
+ @implementation AIRMap
+ {
+     UIView *_legalLabel;
++    // The Apple logo beside the legal link. MapKit keeps it as its own
++    // subview, so moving only the label splits the attribution in two.
++    UIView *_appleLogo;
+     BOOL _initialRegionSet;
+     BOOL _initialCameraSet;
+     
+@@ -70,13 +73,16 @@ - (instancetype)init
+         _hasStartedRendering = NO;
+         _reactSubviews = [NSMutableArray new];
+         
+-        // Find Apple link label
++        // Find Apple link label, and the logo that belongs with it.
++        // Only MapKit's own subviews exist at init — React children are added
++        // later — so the first image view here is the attribution logo.
+         for (UIView *subview in self.subviews) {
+             if ([NSStringFromClass(subview.class) isEqualToString:@"MKAttributionLabel"]) {
+                 // This check is super hacky, but the whole premise of moving around
+                 // Apple's internal subviews is super hacky
+                 _legalLabel = subview;
+-                break;
++            } else if (!_appleLogo && [subview isKindOfClass:[UIImageView class]]) {
++                _appleLogo = subview;
+             }
+         }
+         
+@@ -621,6 +627,7 @@ - (void)updateLegalLabelInsets {
+     if (_legalLabel) {
+         dispatch_async(dispatch_get_main_queue(), ^{
+             CGRect frame = self->_legalLabel.frame;
++            CGPoint origin = frame.origin;
+             if (self->_legalLabelInsets.left) {
+                 frame.origin.x = self->_legalLabelInsets.left;
+             } else if (self->_legalLabelInsets.right) {
+@@ -632,6 +639,14 @@ - (void)updateLegalLabelInsets {
+                 frame.origin.y = self.frame.size.height - self->_legalLabelInsets.bottom - frame.size.height;
+             }
+             self->_legalLabel.frame = frame;
++
++            // Carry the logo by the same delta so the two stay one unit.
++            if (self->_appleLogo) {
++                CGRect logoFrame = self->_appleLogo.frame;
++                logoFrame.origin.x += frame.origin.x - origin.x;
++                logoFrame.origin.y += frame.origin.y - origin.y;
++                self->_appleLogo.frame = logoFrame;
++            }
+         });
+     }
+ }
 diff --git a/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m b/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m
 index 8c17ac7..9026ff9 100644
 --- a/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m

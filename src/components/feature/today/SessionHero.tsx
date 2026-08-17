@@ -394,6 +394,8 @@ const styles = StyleSheet.create({
     gap: 16,
     padding: SESSION_HERO_CONTENT_PAD,
     backgroundColor: 'transparent',
+    borderTopWidth: 1,
+    borderTopColor: todayTheme.sessionButton,
   },
   rightCell: {
     flex: 1,

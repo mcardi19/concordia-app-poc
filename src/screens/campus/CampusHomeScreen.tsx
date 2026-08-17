@@ -15,7 +15,10 @@ import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
 import { CampusQuickCard } from '@/components/feature/campus/CampusQuickCard';
 import { CampusResultsDrawer } from '@/components/feature/campus/CampusResultsDrawer';
 import { SHEET_PEEK_HEIGHT_RATIO } from '@/components/feature/campus/campusSheet';
-import { CampusSearchBar } from '@/components/feature/campus/CampusSearchBar';
+import {
+  CAMPUS_SEARCH_FIELD_HEIGHT,
+  CampusSearchBar,
+} from '@/components/feature/campus/CampusSearchBar';
 import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 import { MaterialSymbol, msMyLocation } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
@@ -140,19 +143,41 @@ export function CampusHomeScreen({ navigation, route }: Props) {
   useHideTabBar(sheetOpen);
 
   /*
-    Apple requires its logo and the Legal link to stay visible, and both sit in
-    the map's bottom-left — under the floating card, and under either sheet.
+    Apple requires its logo and the Legal link to stay visible. They are
+    anchored to the map's bottom-left, and `mapPadding` — MKMapView's
+    `layoutMargins` — only holds them off that edge, so the inset lifts them
+    clear of whatever is docked there.
 
-    `mapPadding` sets MKMapView's `layoutMargins`, which is Apple's own API for
-    this: MapKit lays its ornaments out inside the margins, so the logo and the
-    label both move. `legalLabelInsets` is the other option and the wrong one —
-    it reaches into a private `MKAttributionLabel` subview by class name and
-    moves only the label, leaving the logo where it was.
+    It cannot put them under the search field. That needs an inset of nearly
+    the whole screen, and `setRegion:` measures its centre against the margins
+    too: the camera then centres in the thin strip left above the inset, which
+    is why a building tapped from the list landed near the top of the map
+    instead of the middle. The logo's position is not worth every camera move
+    being wrong.
 
-    `layoutMargins` also tells MapKit where the usable map is, so flying to a
-    building centres it above whatever is docked instead of behind it.
+    So the attribution is placed by `legalLabelInsets` instead, which sets the
+    label's frame origin directly and never touches the camera. The trade is
+    that it reaches into a private `MKAttributionLabel` subview by class name —
+    the library's own code calls that "super hacky" — so it can stop working on
+    an iOS update. `mapPadding` below still lifts whatever it does not move
+    clear of the docked card, so nothing is covered either way.
   */
   const { height: windowHeight } = useWindowDimensions();
+
+  /** Just under the search field, aligned to the app's left margin. */
+  const legalLabelInsets = useMemo(
+    () => ({
+      top:
+        insets.top +
+        theme.spacing.sm +
+        CAMPUS_SEARCH_FIELD_HEIGHT +
+        theme.spacing.md,
+      left: theme.spacing.screenHorizontal,
+      right: 0,
+      bottom: 0,
+    }),
+    [insets.top, theme.spacing.sm, theme.spacing.md, theme.spacing.screenHorizontal]
+  );
 
   const mapPadding = useMemo(
     () => ({
@@ -317,6 +342,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
           showsMyLocationButton={false}
           showsCompass={false}
           mapPadding={mapPadding}
+          legalLabelInsets={legalLabelInsets}
           followsUserLocation={false}
           toolbarEnabled={false}
           moveOnMarkerPress={false}
@@ -371,6 +397,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
               <Text
                 variant="caption"
                 color="secondary"
+                pointerEvents="none"
                 style={[
                   styles.statusChip,
                   {
@@ -390,6 +417,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
               <Text
                 variant="caption"
                 color="secondary"
+                pointerEvents="none"
                 style={[
                   styles.statusChip,
                   {

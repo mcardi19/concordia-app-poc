@@ -7,6 +7,8 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
 import { GlassView } from 'expo-glass-effect';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -77,13 +79,6 @@ const SPRING = SHEET_SPRING;
 const PEEK_HEIGHT_RATIO = SHEET_PEEK_HEIGHT_RATIO;
 const EXPANDED_HEIGHT_RATIO = SHEET_EXPANDED_HEIGHT_RATIO;
 
-const WHATS_HERE_BADGE: Record<string, string> = {
-  venues: 'VEN',
-  services: 'SVC',
-  departments: 'DEP',
-  overview: 'INFO',
-};
-
 function formatStatusLine(
   hoursSummary: string | null,
   accessHours: string[] | undefined
@@ -121,6 +116,29 @@ function amenityIcon(id: string): MsIconDefinition {
 }
 
 const ACTION_TILE_RADIUS = 16;
+
+/** One clipped row of chips — same rail as the What’s here tabs. */
+function ChipRail({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      nestedScrollEnabled
+      bounces={false}
+      showsHorizontalScrollIndicator={false}
+      style={[styles.chipRail, style]}
+      contentContainerStyle={styles.chipRailContent}
+      keyboardShouldPersistTaps="handled"
+    >
+      {children}
+    </ScrollView>
+  );
+}
 
 function PrimaryAction({
   label,
@@ -244,7 +262,12 @@ function LibrarySection({
       {hours.length > 0 ? (
         <View style={{ gap: 4, marginTop: theme.spacing.sm }}>
           {hours.map((row) => (
-            <Text key={row.service} variant="bodySmall" color="secondary">
+            <Text
+              key={row.service}
+              variant="bodySmall"
+              color="secondary"
+              numberOfLines={1}
+            >
               {row.service}: {row.text}
             </Text>
           ))}
@@ -254,17 +277,17 @@ function LibrarySection({
       {hasComputers && computerCampus ? (
         <View style={{ gap: 4, marginTop: theme.spacing.sm }}>
           {computerCampus.Laptops ? (
-            <Text variant="bodySmall" color="secondary">
+            <Text variant="bodySmall" color="secondary" numberOfLines={1}>
               Laptops: {computerCampus.Laptops}
             </Text>
           ) : null}
           {computerCampus.Tablets ? (
-            <Text variant="bodySmall" color="secondary">
+            <Text variant="bodySmall" color="secondary" numberOfLines={1}>
               Tablets: {computerCampus.Tablets}
             </Text>
           ) : null}
           {desktopEntries.map(([room, count]) => (
-            <Text key={room} variant="bodySmall" color="secondary">
+            <Text key={room} variant="bodySmall" color="secondary" numberOfLines={1}>
               {room}: {count} desktops
             </Text>
           ))}
@@ -274,7 +297,7 @@ function LibrarySection({
       {rooms.length > 0 ? (
         <View style={{ gap: 4, marginTop: theme.spacing.sm }}>
           {rooms.map((room) => (
-            <Text key={room.name} variant="bodySmall" color="secondary">
+            <Text key={room.name} variant="bodySmall" color="secondary" numberOfLines={1}>
               {room.name}
             </Text>
           ))}
@@ -301,6 +324,7 @@ export function BuildingDrawer({ building, onClose }: Props) {
   const dragStartY = useSharedValue(0);
   const [displayed, setDisplayed] = useState<BuildingSummary | null>(building);
   const [saved, setSaved] = useState(false);
+  const [whatsHereTab, setWhatsHereTab] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const librarySectionY = useRef(0);
 
@@ -310,11 +334,13 @@ export function BuildingDrawer({ building, onClose }: Props) {
   const finishHide = useCallback(() => {
     setDisplayed(null);
     setSaved(false);
+    setWhatsHereTab(null);
   }, []);
 
   useEffect(() => {
     if (building) {
       setDisplayed(building);
+      setWhatsHereTab(null);
       translateY.value = withSpring(collapsedOffset, SPRING);
       return;
     }
@@ -375,6 +401,8 @@ export function BuildingDrawer({ building, onClose }: Props) {
     () => buildWhatsHereRows(place.catalog, place.services, place.departments),
     [place.catalog, place.departments, place.services]
   );
+  const selectedWhatsHere =
+    whatsHereRows.find((row) => row.id === whatsHereTab) ?? whatsHereRows[0];
 
   if (!displayed) {
     return null;
@@ -512,6 +540,7 @@ export function BuildingDrawer({ building, onClose }: Props) {
                   <Text
                     variant="bodySmall"
                     color="secondary"
+                    numberOfLines={1}
                     style={{ marginTop: 4 }}
                   >
                     {statusLine.kind === 'open' ? (
@@ -639,56 +668,88 @@ export function BuildingDrawer({ building, onClose }: Props) {
                 <Text variant="caption" color="secondary" style={styles.sectionLabel}>
                   Amenities
                 </Text>
-                <View style={styles.amenityGrid}>
+                <ChipRail>
                   {amenityRows.map((row) => (
-                    <View key={row.id} style={styles.amenityCell}>
+                    <View
+                      key={row.id}
+                      style={[
+                        styles.amenityChip,
+                        { backgroundColor: theme.color.backgroundSubtle },
+                      ]}
+                    >
                       <MaterialSymbol
                         icon={amenityIcon(row.id)}
                         size={18}
                         color={theme.color.text.secondary}
                       />
-                      <Text variant="bodySmall" color="primary" style={{ flex: 1 }}>
+                      <Text variant="bodySmall" color="primary" numberOfLines={1}>
                         {row.label}
                       </Text>
                     </View>
                   ))}
-                </View>
+                </ChipRail>
               </View>
             ) : null}
 
-            {whatsHereRows.length > 0 ? (
+            {whatsHereRows.length > 0 && selectedWhatsHere ? (
               <View style={{ marginTop: theme.spacing.lg }}>
                 <Text variant="caption" color="secondary" style={styles.sectionLabel}>
                   What&apos;s here
                 </Text>
-                <View style={{ marginTop: theme.spacing.sm }}>
-                  {whatsHereRows.map((row, index) => (
-                    <View
-                      key={row.id}
-                      style={[
-                        styles.whatsHereRow,
-                        index > 0 && {
-                          borderTopWidth: StyleSheet.hairlineWidth,
-                          borderTopColor: theme.color.border,
-                        },
-                      ]}
-                    >
-                      <View
+                <ChipRail>
+                  {whatsHereRows.map((row) => {
+                    const on = row.id === selectedWhatsHere.id;
+                    return (
+                      <Pressable
+                        key={row.id}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: on }}
+                        accessibilityLabel={row.label}
+                        onPress={() => setWhatsHereTab(row.id)}
                         style={[
-                          styles.whatsHereBadge,
+                          styles.whatsHereChip,
+                          on
+                            ? { backgroundColor: theme.color.primary }
+                            : { backgroundColor: theme.color.backgroundSubtle },
+                        ]}
+                      >
+                        <Text
+                          variant="caption"
+                          numberOfLines={1}
+                          color={on ? 'inverse' : 'brand'}
+                          style={{ fontWeight: '700' }}
+                        >
+                          {row.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ChipRail>
+                {selectedWhatsHere.items.length > 0 ? (
+                  <ChipRail style={{ marginTop: theme.spacing.sm }}>
+                    {selectedWhatsHere.items.map((item) => (
+                      <View
+                        key={item}
+                        style={[
+                          styles.whatsHereChip,
                           { backgroundColor: theme.color.backgroundSubtle },
                         ]}
                       >
-                        <Text variant="caption" color="brand" style={{ fontWeight: '700' }}>
-                          {WHATS_HERE_BADGE[row.id] ?? row.label.slice(0, 3).toUpperCase()}
+                        <Text variant="bodySmall" color="secondary" numberOfLines={1}>
+                          {item}
                         </Text>
                       </View>
-                      <Text variant="bodySmall" color="secondary" style={{ flex: 1 }}>
-                        {row.detail}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
+                    ))}
+                  </ChipRail>
+                ) : selectedWhatsHere.detail ? (
+                  <Text
+                    variant="bodySmall"
+                    color="secondary"
+                    style={{ marginTop: theme.spacing.sm }}
+                  >
+                    {selectedWhatsHere.detail}
+                  </Text>
+                ) : null}
               </View>
             ) : null}
 
@@ -809,30 +870,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.2,
   },
-  amenityGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10,
-  },
-  amenityCell: {
-    width: '50%',
+  amenityChip: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    paddingRight: 8,
-  },
-  whatsHereRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    paddingVertical: 12,
-  },
-  whatsHereBadge: {
-    minWidth: 36,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     borderRadius: 8,
+    borderCurve: 'continuous',
+  },
+  chipRail: {
+    flexGrow: 0,
+    flexShrink: 0,
+    marginTop: 10,
+  },
+  chipRailContent: {
+    flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'nowrap',
+    gap: 6,
+  },
+  whatsHereChip: {
+    flexShrink: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

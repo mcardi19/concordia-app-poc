@@ -35,7 +35,11 @@ import {
   msSearchOff,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
-import { searchFieldHeight, semanticSpacing } from '@/design-system/tokens';
+import {
+  searchFieldFontSize,
+  searchFieldHeight,
+  semanticSpacing,
+} from '@/design-system/tokens';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useCampusUserLocation } from '@/hooks/useCampusUserLocation';
 import { useNow } from '@/hooks';
@@ -843,7 +847,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: searchFieldFontSize,
     padding: 0,
   },
   cancel: {

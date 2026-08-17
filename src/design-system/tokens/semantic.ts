@@ -149,3 +149,12 @@ export const touchTargetMinSize = 48;
  * a small corner radius reads as a text box rather than a search field.
  */
 export const searchFieldHeight = 52;
+
+/**
+ * Query and placeholder size in that field. Shared for the same reason as the
+ * height: the map's field cross-fades into the search screen's, so a
+ * difference here shows up as the text jumping mid-transition.
+ *
+ * Never below 16 — iOS zooms the page when a focused input is smaller.
+ */
+export const searchFieldFontSize = 18;
