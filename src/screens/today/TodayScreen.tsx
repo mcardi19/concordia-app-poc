@@ -30,7 +30,6 @@ import {
 import { useTheme } from '@/design-system/theme';
 import { HomeCompactTitle, HomeLargeTitle } from '@/navigation/HomeHeaderTitle';
 import {
-  largeHomeOpacityForScroll,
   nextTopBaseline,
   scrollDistanceFromTop,
 } from '@/navigation/homeScrollTitle';
@@ -57,7 +56,6 @@ export function TodayScreen({ navigation }: Props) {
   const lastTabMinimizeYRef = useRef(0);
   const insetTopRef = useRef(0);
   const topBaselineRef = useRef<number | null>(null);
-  const [largeHomeOpacity, setLargeHomeOpacity] = useState(1);
   const [isPinnedEditing, setIsPinnedEditing] = useState(false);
   const [pinnedChips, setPinnedChips] = useState(PINNED_CHIPS);
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
@@ -82,6 +80,14 @@ export function TodayScreen({ navigation }: Props) {
       headerTransparent: true,
       headerShadowVisible: false,
       headerStyle: undefined,
+      /*
+        iOS 26 blurs content passing under the header itself. `headerBlurEffect`
+        is the alternative and gives the bar a real material — better for the
+        compact title, but it draws over this screen's own large-title overlay,
+        which lives beneath the native header. Documented as conflicting, so
+        only one; this is the one that keeps both states working.
+      */
+      scrollEdgeEffects: { top: 'soft' },
       headerTitle: () => (
         <HomeCompactTitle color={theme.color.text.primary} scrollY={scrollY} />
       ),
@@ -91,8 +97,18 @@ export function TodayScreen({ navigation }: Props) {
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentInset, adjustedContentInset } = event.nativeEvent;
-      const reportedInset = adjustedContentInset?.top ?? contentInset?.top ?? 0;
+      const { contentOffset, contentInset } = event.nativeEvent;
+      /*
+        iOS reports `adjustedContentInset` — safe area and transparent header
+        folded in — but React Native's typings omit it. It is the value that
+        matters: `contentInset` alone is 0 under automatic inset adjustment.
+      */
+      const adjusted = (
+        event.nativeEvent as NativeScrollEvent & {
+          adjustedContentInset?: { top?: number };
+        }
+      ).adjustedContentInset;
+      const reportedInset = adjusted?.top ?? contentInset?.top ?? 0;
       if (reportedInset > 0) {
         insetTopRef.current = reportedInset;
       }
@@ -106,11 +122,9 @@ export function TodayScreen({ navigation }: Props) {
         insetTopRef.current,
         topBaselineRef.current,
       );
+      // The only per-frame write. Both titles interpolate off this value, so
+      // scrolling drives the fade without re-rendering the screen.
       scrollY.setValue(y);
-      const nextOpacity = largeHomeOpacityForScroll(y);
-      setLargeHomeOpacity((prev) =>
-        Math.abs(prev - nextOpacity) < 0.02 ? prev : nextOpacity,
-      );
 
       reportTabBarScrollOffset(y, lastTabMinimizeYRef.current);
       lastTabMinimizeYRef.current = y;
@@ -235,7 +249,12 @@ export function TodayScreen({ navigation }: Props) {
 
         <ScrollCurtain color={PAGE_BG} height={gradientHeight} opacity={gradientOpacity} />
 
-        {Platform.OS === 'ios' && largeHomeOpacity > 0.02 ? (
+        {/*
+          Mounted for the life of the screen, not while it happens to be
+          visible. Gating on opacity unmounted and remounted it mid-scroll,
+          rebuilding its animated nodes at the moment they were being driven.
+        */}
+        {Platform.OS === 'ios' ? (
           <View
             pointerEvents="none"
             style={{
@@ -251,7 +270,6 @@ export function TodayScreen({ navigation }: Props) {
             <HomeLargeTitle
               color={theme.color.text.primary}
               scrollY={scrollY}
-              opacity={largeHomeOpacity}
             />
           </View>
         ) : null}

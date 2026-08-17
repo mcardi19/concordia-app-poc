@@ -17,20 +17,20 @@ export const COMPACT_HOME_FADE_RANGE = [
 
 /**
  * Large Home title — screen overlay.
- * Prefer `opacity` (React state) so fade cannot stick when native Animated
- * nodes fail to update; `scrollY` remains for translate.
+ *
+ * Opacity comes from `scrollY`, like the translate. It briefly took a
+ * React-state opacity instead, to stop the fade sticking; that made every
+ * scroll frame a re-render of the whole screen, and the sticking was really
+ * the overlay being unmounted and remounted as it faded.
  */
 export function HomeLargeTitle({
   color,
   scrollY,
-  opacity: opacityProp,
 }: {
   color: string;
   scrollY: ScrollY;
-  /** 0–1 from scroll distance. When set, drives visibility reliably. */
-  opacity?: number;
 }) {
-  const animatedOpacity = scrollY.interpolate({
+  const opacity = scrollY.interpolate({
     inputRange: [...LARGE_HOME_FADE_RANGE],
     outputRange: [1, 0],
     extrapolate: 'clamp',
@@ -40,8 +40,6 @@ export function HomeLargeTitle({
     outputRange: [0, -8],
     extrapolate: 'clamp',
   });
-
-  const opacity = opacityProp ?? animatedOpacity;
 
   return (
     <Animated.View
