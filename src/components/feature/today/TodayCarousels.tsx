@@ -7,7 +7,8 @@ import { TodaySurfaceFill } from './TodaySurface';
 
 const UPDATE_CARD_WIDTH = 294;
 const UPDATE_IMAGE_HEIGHT = 152;
-const CAMPUS_CARD_WIDTH = 170;
+const CAMPUS_CARD_WIDTH = 228;
+const CAMPUS_IMAGE_HEIGHT = 106;
 const CAROUSEL_GAP = 14;
 
 /** Shared so other flows' carousels snap identically to Home's. */
@@ -147,7 +148,7 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
           key={item.id}
           onPress={() => onPress?.(item)}
           accessibilityRole="button"
-          accessibilityLabel={item.title}
+          accessibilityLabel={`${item.title}, ${item.location}, ${item.time}`}
           style={{
             width: CAMPUS_CARD_WIDTH,
             borderRadius: theme.radius.lg,
@@ -159,12 +160,13 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
 
           <Image
             source={item.image}
-            style={{ width: CAMPUS_CARD_WIDTH, height: 79 }}
+            style={{ width: CAMPUS_CARD_WIDTH, height: CAMPUS_IMAGE_HEIGHT }}
             resizeMode="cover"
           />
           <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
             <Text
               variant="body"
+              numberOfLines={2}
               style={{
                 fontWeight: '600',
                 fontSize: 17,
@@ -177,14 +179,28 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
             <Text
               variant="body"
               color="subtle"
+              numberOfLines={1}
               style={{
                 fontWeight: '400',
                 fontSize: 14,
-                lineHeight: 14 * 1.45,
-                marginTop: 4,
+                lineHeight: 14 * 1.3,
+                marginTop: 6,
               }}
             >
-              {item.meta}
+              {item.location}
+            </Text>
+            <Text
+              variant="body"
+              color="subtle"
+              numberOfLines={1}
+              style={{
+                fontWeight: '400',
+                fontSize: 14,
+                lineHeight: 14 * 1.3,
+                marginTop: 2,
+              }}
+            >
+              {item.time}
             </Text>
           </View>
         </Pressable>

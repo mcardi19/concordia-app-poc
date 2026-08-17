@@ -68,8 +68,11 @@ export type CampusContextCard = {
   eyebrow: string;
   title: string;
   detail?: string;
-  /** Short facts under the title; the first is emphasised. */
-  meta: string[];
+  /** Location and time as two facts — never concatenated, so they cannot wrap as one line. */
+  meta: {
+    location: string;
+    time: string;
+  };
   primaryAction: string;
   /** Where the map should fly, and what Directions should target. */
   building?: BuildingSummary;
@@ -158,7 +161,10 @@ const timeToGo: Provider = (input) => {
     eyebrow: 'Time to go',
     title: slack < 0 ? 'Leave now to make it on time' : 'Time to leave',
     detail: `${event.courseCode} starts at ${formatClock(event.startMinutes)}`,
-    meta: [event.room ?? building.code, `${walkMinutes} min walk`],
+    meta: {
+      location: event.room ?? building.code,
+      time: `${walkMinutes} min walk`,
+    },
     primaryAction: 'Directions',
     building,
   };
@@ -182,12 +188,12 @@ const upNext: Provider = (input) => {
     priority: 2,
     tone: 'brand',
     eyebrow: 'Up next · calendar',
-    title: `${event.courseCode} — ${event.room ?? 'room TBA'}`,
+    title: event.courseCode,
     detail: `Starts in ${formatGap(minutesUntilStart)}`,
-    meta: [
-      event.room ?? building?.code ?? '',
-      walkMinutes != null ? `${walkMinutes} min walk` : formatClock(event.startMinutes),
-    ].filter(Boolean),
+    meta: {
+      location: event.room ?? building?.code ?? 'Room TBA',
+      time: walkMinutes != null ? `${walkMinutes} min walk` : formatClock(event.startMinutes),
+    },
     primaryAction: 'Directions',
     building,
   };

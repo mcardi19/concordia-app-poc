@@ -55,10 +55,29 @@ index 07a4638..95efd0c 100644
      }
  }
 diff --git a/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m b/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m
-index 8c17ac7..9026ff9 100644
+index 8c17ac7..266a3c2 100644
 --- a/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m
 +++ b/node_modules/react-native-maps/ios/AirMaps/AIRMapMarker.m
-@@ -112,6 +112,9 @@ - (MKAnnotationView *)getAnnotationView
+@@ -96,6 +96,8 @@ - (MKAnnotationView *)getAnnotationView
+ 
+             _pinView.draggable = self.draggable;
+             _pinView.layer.zPosition = self.zIndex;
++            // Opt out of MapKit's decluttering — see the marker path below.
++            _pinView.displayPriority = MKFeatureDisplayPriorityRequired;
+ 
+             return _pinView;
+         }
+@@ -109,9 +111,19 @@ - (MKAnnotationView *)getAnnotationView
+ 
+         _markerView.draggable = self.draggable;
+         _markerView.layer.zPosition = self.zIndex;
++        /*
++          MapKit hides annotations that collide unless they are Required, so
++          zooming out silently dropped most pins. A campus map is a set of
++          known places — a building that vanishes reads as missing data, not
++          as decluttering — so every marker is kept and allowed to overlap.
++        */
++        _markerView.displayPriority = MKFeatureDisplayPriorityRequired;
          _markerView.markerTintColor = self.pinColor;
          _markerView.titleVisibility = self.titleVisibility ?: MKFeatureVisibilityHidden;
          _markerView.subtitleVisibility = self.subtitleVisibility ?: MKFeatureVisibilityHidden;
@@ -68,7 +87,15 @@ index 8c17ac7..9026ff9 100644
  
          }
          return _markerView ?: _pinView;
-@@ -171,8 +174,12 @@ - (void)showCalloutView
+@@ -121,6 +133,7 @@ - (MKAnnotationView *)getAnnotationView
+         // In either case, we want to return the AIRMapMarker since it is both an MKAnnotation and an
+         // MKAnnotationView all at the same time.
+         self.layer.zPosition = self.zIndex;
++        self.displayPriority = MKFeatureDisplayPriorityRequired;
+         return self;
+     }
+ }
+@@ -171,8 +184,12 @@ - (void)showCalloutView
  
      MKAnnotationView *annotationView = [self getAnnotationView];
  
@@ -83,7 +110,7 @@ index 8c17ac7..9026ff9 100644
  
      id event = @{
              @"action": @"marker-select",
-@@ -281,7 +288,9 @@ - (void)_handleTap:(UITapGestureRecognizer *)recognizer {
+@@ -281,7 +298,9 @@ - (void)_handleTap:(UITapGestureRecognizer *)recognizer {
      if (marker.onPress) marker.onPress(event);
      if (marker.map.onMarkerPress) marker.map.onMarkerPress(event);
  
@@ -94,7 +121,7 @@ index 8c17ac7..9026ff9 100644
  }
  
  - (void)hideCalloutView
-@@ -291,8 +300,10 @@ - (void)hideCalloutView
+@@ -291,8 +310,10 @@ - (void)hideCalloutView
      // hide the callout view
      [self.map.calloutView dismissCalloutAnimated:YES];
  
@@ -107,7 +134,7 @@ index 8c17ac7..9026ff9 100644
  
      id event = @{
              @"action": @"marker-deselect",
-@@ -315,7 +326,19 @@ - (void)setCalloutOffset:(CGPoint)calloutOffset
+@@ -315,7 +336,19 @@ - (void)setCalloutOffset:(CGPoint)calloutOffset
  
  - (BOOL)shouldShowCalloutView
  {
@@ -128,7 +155,7 @@ index 8c17ac7..9026ff9 100644
  }
  
  - (BOOL)shouldUsePinView
-@@ -376,6 +399,25 @@ - (BOOL)isSelected {
+@@ -376,6 +409,25 @@ - (BOOL)isSelected {
    return _isPreselected || [super isSelected];
  }
  

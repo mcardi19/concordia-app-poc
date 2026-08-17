@@ -14,6 +14,7 @@ import { GlassActionButton, Screen, Text } from '@/components/design-system';
 import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
 import { CampusQuickCard } from '@/components/feature/campus/CampusQuickCard';
 import { CampusContextCard } from '@/components/feature/campus/CampusContextCard';
+import { CampusShuttleDrawer } from '@/components/feature/campus/CampusShuttleDrawer';
 import { CampusResultsDrawer } from '@/components/feature/campus/CampusResultsDrawer';
 import { SHEET_PEEK_HEIGHT_RATIO } from '@/components/feature/campus/campusSheet';
 import {
@@ -44,7 +45,11 @@ import {
   type CampusMapFilter,
 } from '@/services/campus/buildingPresentation';
 import { SHUTTLE_STOPS } from '@/services/shuttle/shuttleRoute';
-import { CAMPUS_MAP_DEFAULTS, type BuildingSummary } from '@/types/campus';
+import {
+  CAMPUS_MAP_DEFAULTS,
+  type BuildingSummary,
+  type ShuttleCampus,
+} from '@/types/campus';
 
 type Props = CampusStackScreenProps<'CampusHome'>;
 
@@ -52,12 +57,11 @@ const DEFAULT_CAMPUS = CAMPUS_MAP_DEFAULTS.sgw;
 
 const MAP_FOCUS_DELTA = 0.004;
 
-const SHUTTLE_EDGE_PADDING = {
-  top: 140,
-  right: 48,
-  bottom: 220,
-  left: 48,
-};
+/** Side breathing room when framing pins; top and bottom come from the chrome. */
+const FIT_SIDE_PADDING = 48;
+
+/** Below this there is nothing to frame — one pin is a focus, not a fit. */
+const FIT_MIN_POINTS = 2;
 
 function regionForBuilding(building: BuildingSummary): Region {
   return {
@@ -88,6 +92,12 @@ export function CampusHomeScreen({ navigation, route }: Props) {
   const [isLocating, setIsLocating] = useState(false);
   const [mapFilter, setMapFilter] = useState<CampusMapFilter>('buildings');
   const [showShuttle, setShowShuttle] = useState(false);
+  /**
+   * Which direction the shuttle drawer is showing. Held here, not in the
+   * drawer, because the map pins only the stop you board at — the other one is
+   * where this bus is going, not where you catch it.
+   */
+  const [shuttleFrom, setShuttleFrom] = useState<ShuttleCampus>('sgw');
   /**
    * The category showing in the field. Separate from `mapFilter` because
    * `buildings` is both "no filter" and a category a student can pick — only
@@ -143,19 +153,6 @@ export function CampusHomeScreen({ navigation, route }: Props) {
     );
   }, [buildings, mapFilter, coords, showShuttle]);
 
-  useEffect(() => {
-    if (!showShuttle) return;
-    const id = requestAnimationFrame(() => {
-      mapRef.current?.fitToCoordinates(
-        [SHUTTLE_STOPS.sgw, SHUTTLE_STOPS.loy],
-        {
-          animated: true,
-          edgePadding: SHUTTLE_EDGE_PADDING,
-        }
-      );
-    });
-    return () => cancelAnimationFrame(id);
-  }, [showShuttle]);
 
   /**
    * Hide the native tab bar while either sheet is open so the in-screen sheet
@@ -169,7 +166,8 @@ export function CampusHomeScreen({ navigation, route }: Props) {
    * setting the bar back here also undid the route rule that hides it for
    * Campus search.
    */
-  const sheetOpen = selectedBuilding != null || searchLabel != null;
+  const sheetOpen =
+    selectedBuilding != null || searchLabel != null || showShuttle;
 
   useHideTabBar(sheetOpen);
 
@@ -210,16 +208,64 @@ export function CampusHomeScreen({ navigation, route }: Props) {
     [insets.top, theme.spacing.sm, theme.spacing.md, theme.spacing.screenHorizontal]
   );
 
+  const dockedBottomInset = sheetOpen
+    ? windowHeight * SHEET_PEEK_HEIGHT_RATIO
+    : tabBarOverlayInset + quickCardHeight;
+
+  /*
+    Keep every relevant pin in frame.
+
+    Markers do not move themselves into view, so at the wrong zoom or after a
+    pan you had to hunt for them — most obviously the two shuttle stops, which
+    are six kilometres apart and never both visible by accident.
+
+    Keyed on which set is showing rather than on the coordinates: the live bus
+    moves every ten seconds and a location fix re-sorts the buildings, and
+    re-framing on either would yank the camera out from under you. A selected
+    building is skipped outright — that view is deliberately focused.
+  */
+  const fitKey = showShuttle
+    ? 'shuttle'
+    : `${mapFilter}|${searchLabel ?? ''}|${visibleBuildings.length}`;
+
+  useEffect(() => {
+    if (selectedBuilding) return;
+
+    const points = showShuttle
+      ? [SHUTTLE_STOPS.sgw, SHUTTLE_STOPS.loy]
+      : visibleBuildings.map((building) => ({
+          latitude: building.lat,
+          longitude: building.lng,
+        }));
+    if (points.length < FIT_MIN_POINTS) return;
+
+    const id = requestAnimationFrame(() => {
+      mapRef.current?.fitToCoordinates(points, {
+        animated: true,
+        /*
+          The bottom is NOT the docked inset. `mapPadding` already sets
+          `layoutMargins`, and MapKit insets the usable area by those before
+          applying this — adding the dock again reserved it twice and left
+          almost no height to fit into, which pushed the far stop off screen.
+
+          The top still needs stating: `mapPadding.top` is 0, so nothing has
+          reserved the floating search field.
+        */
+        edgePadding: {
+          top: insets.top + CAMPUS_SEARCH_FIELD_HEIGHT + theme.spacing.lg,
+          bottom: FIT_SIDE_PADDING,
+          left: FIT_SIDE_PADDING,
+          right: FIT_SIDE_PADDING,
+        },
+      });
+    });
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitKey, selectedBuilding]);
+
   const mapPadding = useMemo(
-    () => ({
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: sheetOpen
-        ? windowHeight * SHEET_PEEK_HEIGHT_RATIO
-        : tabBarOverlayInset + quickCardHeight,
-    }),
-    [sheetOpen, windowHeight, tabBarOverlayInset, quickCardHeight]
+    () => ({ top: 0, left: 0, right: 0, bottom: dockedBottomInset }),
+    [dockedBottomInset]
   );
 
   const selectBuilding = useCallback((building: BuildingSummary) => {
@@ -238,11 +284,19 @@ export function CampusHomeScreen({ navigation, route }: Props) {
     focusBuildingId,
     mapFilter: requestedFilter,
     searchLabel: requestedLabel,
+    showShuttle: requestedShuttle,
   } = route.params ?? {};
 
   useEffect(() => {
-    if (!focusBuildingId && !requestedFilter && !requestedLabel) {
+    if (!focusBuildingId && !requestedFilter && !requestedLabel && !requestedShuttle) {
       return;
+    }
+    if (requestedShuttle) {
+      // Shuttle owns the map while it is up, so the category browse stands down.
+      setShowShuttle(true);
+      setSearchLabel(null);
+      setMapFilter('buildings');
+      setSelectedBuilding(null);
     }
     if (requestedFilter) {
       setMapFilter(requestedFilter);
@@ -266,11 +320,13 @@ export function CampusHomeScreen({ navigation, route }: Props) {
       focusBuildingId: undefined,
       mapFilter: undefined,
       searchLabel: undefined,
+      showShuttle: undefined,
     });
   }, [
     focusBuildingId,
     requestedFilter,
     requestedLabel,
+    requestedShuttle,
     buildings,
     navigation,
     selectBuilding,
@@ -311,6 +367,41 @@ export function CampusHomeScreen({ navigation, route }: Props) {
     selectBuilding(target);
     openAppleMapsDirections(target.lat, target.lng, `${target.code} ${target.name}`);
   }, [contextCard, selectBuilding]);
+
+  /**
+   * One bus, not the fleet: the one nearest the stop you are boarding at.
+   *
+   * The live feed gives positions and ids only — no bearing, no route — so a
+   * bus cannot be told to be "going to Loyola" from one snapshot. Nearest to
+   * your stop is the one that matters to someone standing at it, and it is
+   * derivable without guessing at a heading.
+   */
+  const relevantBus = useMemo(() => {
+    const buses = shuttleLive?.vehicles ?? [];
+    if (buses.length === 0) return null;
+    const stop = SHUTTLE_STOPS[shuttleFrom];
+    const from = { lat: stop.latitude, lng: stop.longitude };
+    return buses.reduce((closest, bus) =>
+      walkMinutesFromCoords(from, { lat: bus.latitude, lng: bus.longitude }) <
+      walkMinutesFromCoords(from, { lat: closest.latitude, lng: closest.longitude })
+        ? bus
+        : closest
+    );
+  }, [shuttleLive, shuttleFrom]);
+
+  /** Fly to the boarding stop rather than handing off to another maps app. */
+  const showShuttleStop = useCallback(() => {
+    const stop = SHUTTLE_STOPS[shuttleFrom];
+    mapRef.current?.animateToRegion(
+      {
+        latitude: stop.latitude,
+        longitude: stop.longitude,
+        latitudeDelta: MAP_FOCUS_DELTA,
+        longitudeDelta: MAP_FOCUS_DELTA,
+      },
+      400
+    );
+  }, [shuttleFrom]);
 
   const clearCategory = useCallback(() => {
     setSearchLabel(null);
@@ -434,17 +525,34 @@ export function CampusHomeScreen({ navigation, route }: Props) {
           })}
           {showShuttle ? (
             <>
+              {/*
+                Both ends of the route stay pinned, and each carries its code
+                rather than a default pin — a callout only appears on tap, so
+                an unlabelled pin leaves you guessing which end you are
+                looking at.
+              */}
               {(shuttleLive?.stops ?? []).map((stop) => (
                 <Marker
                   key={stop.id}
                   coordinate={{ latitude: stop.latitude, longitude: stop.longitude }}
                   identifier={`stop-${stop.id}`}
                   title={stop.title}
-                  pinColor={theme.color.primary}
+                  anchor={{ x: 0.5, y: 0.5 }}
                   stopPropagation
-                />
+                >
+                  <View
+                    style={[
+                      styles.stopMarker,
+                      { backgroundColor: theme.color.primary },
+                    ]}
+                  >
+                    <Text variant="caption" style={styles.stopMarkerLabel}>
+                      {stop.id.toUpperCase()}
+                    </Text>
+                  </View>
+                </Marker>
               ))}
-              {(shuttleLive?.vehicles ?? []).map((bus) => (
+              {(relevantBus ? [relevantBus] : []).map((bus) => (
                 <Marker
                   key={bus.id}
                   coordinate={{ latitude: bus.latitude, longitude: bus.longitude }}
@@ -608,11 +716,13 @@ export function CampusHomeScreen({ navigation, route }: Props) {
             the map shows when it has nothing to say.
           */}
           {sheetOpen || !contextCard ? null : (
-            <CampusContextCard
-              card={contextCard}
-              onPrimaryPress={onContextDirections}
-              onDismiss={() => setDismissedContextId(contextCard.id)}
-            />
+            <View style={{ marginHorizontal: -theme.spacing.sm }}>
+              <CampusContextCard
+                card={contextCard}
+                onPrimaryPress={onContextDirections}
+                onDismiss={() => setDismissedContextId(contextCard.id)}
+              />
+            </View>
           )}
 
           {/* Yields to either sheet — both draw over this overlay, not in it. */}
@@ -642,6 +752,15 @@ export function CampusHomeScreen({ navigation, route }: Props) {
           building from the results hands over to its drawer, and closing that
           hands back.
         */}
+        <CampusShuttleDrawer
+          open={showShuttle && selectedBuilding == null}
+          from={shuttleFrom}
+          onSelectFrom={setShuttleFrom}
+          onShowStop={showShuttleStop}
+          liveError={shuttleLiveError}
+          onClose={() => setShowShuttle(false)}
+        />
+
         <CampusResultsDrawer
           title={selectedBuilding ? null : searchLabel}
           buildings={visibleBuildings}
@@ -676,6 +795,24 @@ const styles = StyleSheet.create({
   },
   statusChip: {
     overflow: 'hidden',
+  },
+  stopMarker: {
+    minWidth: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  stopMarkerLabel: {
+    fontSize: 12,
+    lineHeight: 15,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    color: '#FFFFFF',
   },
   shuttleMarker: {
     width: 32,

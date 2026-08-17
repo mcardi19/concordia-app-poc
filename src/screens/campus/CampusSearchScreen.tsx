@@ -413,7 +413,9 @@ export function CampusSearchScreen({ navigation }: Props) {
             onClearRecents={clearRecents}
             onShowLayer={showLayer}
             onShowOnMap={showOnMap}
-            onTrackShuttle={() => navigation.navigate('ShuttleTracker')}
+            // Back to the map, not a pushed screen: the shuttle's answer is
+            // where the buses are, which only the map can show.
+            onTrackShuttle={() => navigation.popTo('CampusHome', { showShuttle: true })}
           />
         ) : isLoading && hits.length === 0 ? (
           <ResultSkeleton />

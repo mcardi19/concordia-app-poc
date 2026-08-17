@@ -63,7 +63,8 @@ export type UpdateItem = {
 export type CampusTodayItem = {
   id: string;
   title: string;
-  meta: string;
+  location: string;
+  time: string;
   image: ImageSourcePropType;
 };
 
@@ -136,25 +137,29 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
   {
     id: '1',
     title: 'Spring Career Fair',
-    meta: 'EV Building · 11 AM–4 PM',
+    location: 'EV Building',
+    time: '11 AM–4 PM',
     image: campusImage1,
   },
   {
     id: '2',
     title: 'Free coffee at the Hive',
-    meta: 'EV Building · 11 AM–4 PM',
+    location: 'EV Building',
+    time: '11 AM–4 PM',
     image: campusImage2,
   },
   {
     id: '3',
     title: 'Wellness Wednesdays',
-    meta: 'SGW Hall Building · 12–2 PM',
+    location: 'SGW Hall Building',
+    time: '12–2 PM',
     image: campusImage1,
   },
   {
     id: '4',
     title: 'Open mic at the Hive',
-    meta: 'Loyola Campus Centre · 5–7 PM',
+    location: 'Loyola Campus Centre',
+    time: '5–7 PM',
     image: campusImage2,
   },
 ];

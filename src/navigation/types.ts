@@ -48,7 +48,13 @@ export type CampusStackParamList = {
    * cleared once applied so returning to the tab does not re-fire them.
    */
   CampusHome:
-    | { focusBuildingId?: string; mapFilter?: CampusMapFilter; searchLabel?: string }
+    | {
+        focusBuildingId?: string;
+        mapFilter?: CampusMapFilter;
+        searchLabel?: string;
+        /** Open the shuttle drawer and put the route on the map. */
+        showShuttle?: boolean;
+      }
     | undefined;
   CampusSearch: undefined;
   ShuttleSchedule: undefined;

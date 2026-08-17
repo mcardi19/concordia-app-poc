@@ -42,7 +42,7 @@ export function CampusContextCard({ card, onPrimaryPress, onDismiss }: Props) {
   const icon = card.eyebrow.startsWith('Time to go') ? msScheduleClock : msDirectionsWalk;
 
   return (
-    <View style={[todayShadowMedium, radiusStyle(CARD_RADIUS)]}>
+    <View style={[styles.card, todayShadowMedium, radiusStyle(CARD_RADIUS)]}>
       <View style={[styles.clip, radiusStyle(CARD_RADIUS)]}>
         <CardGlass radius={CARD_RADIUS} />
 
@@ -79,29 +79,23 @@ export function CampusContextCard({ card, onPrimaryPress, onDismiss }: Props) {
           </Pressable>
         </View>
 
-        {card.meta.length > 0 ? (
-          <View style={[styles.metaRow, { backgroundColor: `${accent}0F` }]}>
-            {card.meta.map((item, index) => (
-              <React.Fragment key={item}>
-                {index > 0 ? (
-                  <View style={[styles.metaDot, { backgroundColor: theme.color.border }]} />
-                ) : null}
-                <Text
-                  variant="caption"
-                  numberOfLines={1}
-                  style={[
-                    styles.metaText,
-                    index === 0
-                      ? { color: accent, fontWeight: '700' }
-                      : { color: theme.color.text.secondary },
-                  ]}
-                >
-                  {item}
-                </Text>
-              </React.Fragment>
-            ))}
-          </View>
-        ) : null}
+        <View style={[styles.metaRow, { backgroundColor: `${accent}0F` }]}>
+          <Text
+            variant="caption"
+            numberOfLines={1}
+            style={[styles.metaText, { color: accent, fontWeight: '700' }]}
+          >
+            {card.meta.location}
+          </Text>
+          <View style={[styles.metaRule, { backgroundColor: theme.color.border }]} />
+          <Text
+            variant="caption"
+            numberOfLines={1}
+            style={[styles.metaText, { color: theme.color.text.secondary }]}
+          >
+            {card.meta.time}
+          </Text>
+        </View>
 
         <Pressable
           onPress={onPrimaryPress}
@@ -123,6 +117,10 @@ export function CampusContextCard({ card, onPrimaryPress, onDismiss }: Props) {
 }
 
 const styles = StyleSheet.create({
+  card: {
+    alignSelf: 'stretch',
+    width: '100%',
+  },
   clip: {
     overflow: 'hidden',
   },
@@ -130,7 +128,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 18,
   },
   icon: {
@@ -168,30 +166,31 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginTop: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 10,
     borderCurve: 'continuous',
   },
-  metaDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
+  metaRule: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: 'stretch',
+    marginHorizontal: 12,
+    marginVertical: 2,
   },
   metaText: {
-    fontSize: 12,
-    lineHeight: 15,
-    flexShrink: 1,
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '600',
   },
   action: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginTop: 12,
     marginBottom: 16,
     paddingVertical: 12,

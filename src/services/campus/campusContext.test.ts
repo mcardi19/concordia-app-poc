@@ -41,7 +41,7 @@ describe('resolveCampusContext', () => {
   it('announces the next class once it is inside the window', () => {
     const card = resolveCampusContext({ ...base, now: monday(8), coords: NEAR });
     expect(card?.eyebrow).toBe('Up next · calendar');
-    expect(card?.title).toBe('PHIL 232 — H-407');
+    expect(card?.title).toBe('PHIL 232');
     expect(card?.building?.code).toBe('H');
   });
 
@@ -55,14 +55,14 @@ describe('resolveCampusContext', () => {
     // 9 min walk, 15 min until start — inside the buffer, so no escalation.
     const card = resolveCampusContext({ ...base, now: monday(8, 30), coords: MID });
     expect(card?.eyebrow).toBe('Up next · calendar');
-    expect(card?.meta).toContain('9 min walk');
+    expect(card?.meta.time).toBe('9 min walk');
   });
 
   it('stays silent on leave-now without a location fix, rather than guessing', () => {
     const card = resolveCampusContext({ ...base, now: monday(8, 30), coords: null });
     expect(card?.eyebrow).toBe('Up next · calendar');
     // No walk to show, so it falls back to the start time.
-    expect(card?.meta).toContain('8:45 AM');
+    expect(card?.meta.time).toBe('8:45 AM');
   });
 
   it('says nothing once the day has no classes left', () => {

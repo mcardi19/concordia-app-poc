@@ -5,13 +5,23 @@ import {
 } from '@/services/shuttle/shuttleData';
 import type { ShuttleCampus } from '@/types/campus';
 
-/** Advertised door-to-door run time between the two campuses. */
-export const SHUTTLE_TRIP_MINUTES = 28;
+/** "The ride is approximately 30 minutes" — Concordia's own shuttle page. */
+export const SHUTTLE_TRIP_MINUTES = 30;
 
-export const SHUTTLE_STOP_NAME: Record<ShuttleCampus, string> = {
-  sgw: 'Mackay St.',
-  loy: 'W. Broadway',
-};
+/**
+ * The real pickup points, from the university's shuttle page. The design
+ * mockup names "Mackay St." and "W. Broadway"; neither is a stop.
+ */
+export const SHUTTLE_STOP = {
+  sgw: {
+    name: 'Henry F. Hall Building',
+    detail: 'Front doors · 1455 De Maisonneuve Blvd. W.',
+  },
+  loy: {
+    name: 'Loyola Chapel',
+    detail: '7137 Sherbrooke St. W.',
+  },
+} as const satisfies Record<ShuttleCampus, { name: string; detail: string }>;
 
 export const SHUTTLE_CAMPUS_NAME: Record<ShuttleCampus, string> = {
   sgw: 'SGW',

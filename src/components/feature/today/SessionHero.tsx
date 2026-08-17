@@ -284,8 +284,8 @@ function SessionHeroOverlay({
     <View pointerEvents="box-none" style={[absoluteFill, contentStyle]}>
       <LinearGradient
         pointerEvents="none"
-        colors={['transparent', 'rgba(0, 0, 0, 0.72)']}
-        locations={[0.38, 1]}
+        colors={['transparent', 'rgba(0, 0, 0, 0.58)', 'rgba(0, 0, 0, 0.94)']}
+        locations={[0.36, 0.68, 1]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.scrim}
@@ -327,8 +327,8 @@ function SessionHeroOverlay({
         </View>
 
         <View style={styles.meta}>
-          <MetaField label={session.timeLabel} value={session.timeValue} />
           <MetaField label="Room" value={session.room} />
+          <MetaField label={session.timeLabel} value={session.timeValue} />
           <Animated.View style={[styles.rightCell, rightCellTransform]}>
             {showProfessor ? (
               <Animated.View
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     padding: SESSION_HERO_CONTENT_PAD,
     backgroundColor: 'transparent',
     borderTopWidth: 1,
-    borderTopColor: todayTheme.sessionButton,
+    borderTopColor: todayTheme.sessionMetaRule,
   },
   rightCell: {
     flex: 1,
@@ -429,14 +429,12 @@ export function SessionHeroActions({
   /** @deprecated Location CTA removed from the homepage primary card. */
   onLocationPress?: () => void;
 }) {
-  const theme = useTheme();
-
   const label = (
     <Text
       variant="body"
       style={{
         fontWeight: '600',
-        color: theme.color.text.inverse,
+        color: todayTheme.sessionButtonLabel,
         fontSize: 16,
         lineHeight: 16 * 1.2,
       }}
