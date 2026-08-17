@@ -857,8 +857,18 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    /*
+      Fills the field's height. With only `flex: 1` the input collapses to the
+      text's own line box inside a centre-aligned row, so barely 20pt of the
+      52pt field was tappable — a band across the middle. The glass around it
+      still showed a press state, which made it look like the tap landed.
+    */
+    alignSelf: 'stretch',
     fontSize: searchFieldFontSize,
     padding: 0,
+    // Android has to be told to centre in the taller box; iOS already does.
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   summary: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
