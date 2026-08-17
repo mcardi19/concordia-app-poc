@@ -11,13 +11,13 @@ import {
 } from '@/components/design-system/GlassPill';
 import {
   MaterialSymbol,
-  msGridView,
-  msLocalCafe,
-  msLocalParking,
-  msLocationOn,
-  msMeetingRoom,
-  msPedalBike,
-  msPrint,
+  msGridViewFill,
+  msLocalCafeFill,
+  msLocalParkingFill,
+  msLocationOnFill,
+  msMeetingRoomFill,
+  msPedalBikeFill,
+  msPrintFill,
 } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import { useShuttleTracker } from '@/hooks/useShuttleTracker';
@@ -38,14 +38,18 @@ type AmenityPill = {
   icon: MsIconDefinition;
 };
 
-/** Labels come from `CAMPUS_FILTER_LABEL`; only the icon is local to this card. */
+/**
+ * Labels come from `CAMPUS_FILTER_LABEL`; only the icon is local to this card.
+ * Filled rather than outlined — at 18pt on glass the outlined weights read as
+ * hairlines against the map behind them.
+ */
 const AMENITY_PILLS: AmenityPill[] = [
-  { id: 'buildings', icon: msGridView },
-  { id: 'cafe', icon: msLocalCafe },
-  { id: 'study', icon: msMeetingRoom },
-  { id: 'print', icon: msPrint },
-  { id: 'parking', icon: msLocalParking },
-  { id: 'bike', icon: msPedalBike },
+  { id: 'buildings', icon: msGridViewFill },
+  { id: 'cafe', icon: msLocalCafeFill },
+  { id: 'study', icon: msMeetingRoomFill },
+  { id: 'print', icon: msPrintFill },
+  { id: 'parking', icon: msLocalParkingFill },
+  { id: 'bike', icon: msPedalBikeFill },
 ];
 
 type Props = {
@@ -81,15 +85,9 @@ export function CampusQuickCard({
     <View style={[todayShadowMedium, radiusStyle(CARD_RADIUS)]}>
       <View style={[styles.clip, radiusStyle(CARD_RADIUS)]}>
         <CardGlass radius={CARD_RADIUS} />
-        <View style={styles.handleRow}>
-          <View
-            style={[styles.handle, { backgroundColor: theme.color.border }]}
-          />
-        </View>
-
         <View style={styles.locationRow}>
           <MaterialSymbol
-            icon={msLocationOn}
+            icon={msLocationOnFill}
             size={20}
             color={theme.color.text.brand}
           />
@@ -190,22 +188,15 @@ const styles = StyleSheet.create({
   clip: {
     overflow: 'hidden',
   },
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-  },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    // Generous on both sides: with the handle gone this line is the card's
+    // top edge, and the divider under it needs the same air.
+    paddingTop: 20,
+    paddingBottom: 16,
   },
   locationText: {
     fontSize: 16,

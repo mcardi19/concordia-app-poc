@@ -6,11 +6,13 @@ import { useTheme } from '@/design-system/theme';
 
 type Props = {
   label: string;
+  /** Status dot colour — the card's state decides it. */
+  tone?: string;
   style?: StyleProp<ViewStyle>;
 };
 
 /** White pill badge for photo / gradient surfaces (homepage primary card). */
-export function SessionStatusBadge({ label, style }: Props) {
+export function SessionStatusBadge({ label, tone = '#00C853', style }: Props) {
   return (
     <View
       style={[
@@ -28,7 +30,7 @@ export function SessionStatusBadge({ label, style }: Props) {
         style,
       ]}
     >
-      <PulsingStatusDot color="#00C853" />
+      <PulsingStatusDot color={tone} />
       <Text
         variant="body"
         style={{

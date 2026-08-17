@@ -13,7 +13,7 @@ import { msEventFill } from '@material-symbols-react-native/rounded-400/msEventF
 import { msRestaurantFill } from '@material-symbols-react-native/rounded-400/msRestaurantFill';
 
 /* eslint-disable @typescript-eslint/no-require-imports -- Metro static image assets */
-export const sessionHeroImage = require('../../../../assets/today/session-hero.png') as ImageSourcePropType;
+export const sessionHeroImage = require('../../../../assets/today/session-hero.jpg') as ImageSourcePropType;
 export const updateImage1 = require('../../../../assets/today/update-1.png') as ImageSourcePropType;
 export const updateImage2 = require('../../../../assets/today/update-2.png') as ImageSourcePropType;
 export const campusImage1 = require('../../../../assets/today/campus-1.png') as ImageSourcePropType;
@@ -23,7 +23,12 @@ export type TodaySession = {
   courseCode: string;
   title: string;
   statusLabel: string;
-  ends: string;
+  /** Dot colour for the status pill — see `todaySession`'s tones. */
+  statusTone: string;
+  state: import('./todaySession').TodaySessionState;
+  /** "Ends" while a class is running, "Starts" before it. */
+  timeLabel: string;
+  timeValue: string;
   room: string;
   professor: string;
   image: ImageSourcePropType;
@@ -60,16 +65,6 @@ export type CampusTodayItem = {
   title: string;
   meta: string;
   image: ImageSourcePropType;
-};
-
-export const TODAY_SESSION: TodaySession = {
-  courseCode: 'CEBD 1251',
-  title: 'Music and data exploration',
-  statusLabel: 'In session · 48 min left',
-  ends: '3:45 PM',
-  room: 'LB-625',
-  professor: 'I. Ashwell',
-  image: sessionHeroImage,
 };
 
 export const PINNED_CHIPS: PinnedChip[] = [

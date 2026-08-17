@@ -1,12 +1,14 @@
 import type { MsIconDefinition } from 'material-symbols-react-native';
 import {
   msDirectionsBus,
-  msLocalCafe,
-  msLocalParking,
+  msGridViewFill,
+  msLocalCafeFill,
+  msLocalParkingFill,
   msLocationOn,
+  msMeetingRoomFill,
   msMenuBook,
-  msPedalBike,
-  msPrint,
+  msPedalBikeFill,
+  msPrintFill,
   msSchool,
   msSupportAgent,
 } from '@/components/icons';
@@ -155,12 +157,12 @@ export type CampusBrowseChip = {
 
 /** Labels come from `CAMPUS_FILTER_LABEL` — the chip puts one in the field. */
 export const CAMPUS_BROWSE_CHIPS: CampusBrowseChip[] = [
-  { icon: msLocationOn, filter: 'buildings' },
-  { icon: msLocalCafe, filter: 'cafe' },
-  { icon: msMenuBook, filter: 'study' },
-  { icon: msPrint, filter: 'print' },
-  { icon: msLocalParking, filter: 'parking' },
-  { icon: msPedalBike, filter: 'bike' },
+  { icon: msGridViewFill, filter: 'buildings' },
+  { icon: msLocalCafeFill, filter: 'cafe' },
+  { icon: msMeetingRoomFill, filter: 'study' },
+  { icon: msPrintFill, filter: 'print' },
+  { icon: msLocalParkingFill, filter: 'parking' },
+  { icon: msPedalBikeFill, filter: 'bike' },
 ];
 
 /** Codes the favourites row shows before a student has pinned their own. */

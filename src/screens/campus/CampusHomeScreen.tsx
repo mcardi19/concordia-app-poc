@@ -6,6 +6,7 @@ import {
   Linking,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +14,7 @@ import { GlassActionButton, Screen, Text } from '@/components/design-system';
 import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
 import { CampusQuickCard } from '@/components/feature/campus/CampusQuickCard';
 import { CampusResultsDrawer } from '@/components/feature/campus/CampusResultsDrawer';
+import { SHEET_PEEK_HEIGHT_RATIO } from '@/components/feature/campus/campusSheet';
 import { CampusSearchBar } from '@/components/feature/campus/CampusSearchBar';
 import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 import { MaterialSymbol, msMyLocation } from '@/components/icons';
@@ -77,6 +79,12 @@ export function CampusHomeScreen({ navigation, route }: Props) {
    */
   const [searchLabel, setSearchLabel] = useState<string | null>(null);
   const [coords, setCoords] = useState<UserCoords | null>(null);
+  /**
+   * Measured rather than derived from a constant: the card's padding and its
+   * contents have moved more than once, and a stale number here puts Apple's
+   * logo back under it.
+   */
+  const [quickCardHeight, setQuickCardHeight] = useState(0);
 
   const initialRegion = useMemo<Region>(
     () => ({
@@ -127,7 +135,36 @@ export function CampusHomeScreen({ navigation, route }: Props) {
    * setting the bar back here also undid the route rule that hides it for
    * Campus search.
    */
-  useHideTabBar(selectedBuilding != null || searchLabel != null);
+  const sheetOpen = selectedBuilding != null || searchLabel != null;
+
+  useHideTabBar(sheetOpen);
+
+  /*
+    Apple requires its logo and the Legal link to stay visible, and both sit in
+    the map's bottom-left — under the floating card, and under either sheet.
+
+    `mapPadding` sets MKMapView's `layoutMargins`, which is Apple's own API for
+    this: MapKit lays its ornaments out inside the margins, so the logo and the
+    label both move. `legalLabelInsets` is the other option and the wrong one —
+    it reaches into a private `MKAttributionLabel` subview by class name and
+    moves only the label, leaving the logo where it was.
+
+    `layoutMargins` also tells MapKit where the usable map is, so flying to a
+    building centres it above whatever is docked instead of behind it.
+  */
+  const { height: windowHeight } = useWindowDimensions();
+
+  const mapPadding = useMemo(
+    () => ({
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: sheetOpen
+        ? windowHeight * SHEET_PEEK_HEIGHT_RATIO
+        : tabBarOverlayInset + quickCardHeight,
+    }),
+    [sheetOpen, windowHeight, tabBarOverlayInset, quickCardHeight]
+  );
 
   const selectBuilding = useCallback((building: BuildingSummary) => {
     swallowNextMapPressRef.current = true;
@@ -278,6 +315,8 @@ export function CampusHomeScreen({ navigation, route }: Props) {
           initialRegion={initialRegion}
           showsUserLocation={permissionGranted}
           showsMyLocationButton={false}
+          showsCompass={false}
+          mapPadding={mapPadding}
           followsUserLocation={false}
           toolbarEnabled={false}
           moveOnMarkerPress={false}
@@ -328,43 +367,6 @@ export function CampusHomeScreen({ navigation, route }: Props) {
               style={{ marginBottom: theme.spacing.sm }}
             />
 
-            <View
-              pointerEvents="box-none"
-              style={[styles.locateRow, { marginBottom: theme.spacing.sm }]}
-            >
-              <View
-                style={[
-                  todayShadowSoft,
-                  radiusStyle(HEADER_BAR_BUTTON_SIZE / 2),
-                ]}
-              >
-                <GlassActionButton
-                  accessibilityLabel="Go to current location"
-                  accessibilityState={{ busy: isLocating }}
-                  colorScheme="light"
-                  tintColor="rgba(255,255,255,0.35)"
-                  fallbackBackgroundColor="rgba(255,255,255,0.82)"
-                  disabled={isLocating}
-                  onPress={() => {
-                    void goToCurrentLocation();
-                  }}
-                  style={[
-                    styles.locateButton,
-                    radiusStyle(HEADER_BAR_BUTTON_SIZE / 2),
-                  ]}
-                >
-                  {isLocating ? (
-                    <ActivityIndicator color={theme.color.primary} />
-                  ) : (
-                    <MaterialSymbol
-                      icon={msMyLocation}
-                      size={HEADER_ICON_SIZE}
-                      color={theme.color.text.brand}
-                    />
-                  )}
-                </GlassActionButton>
-              </View>
-            </View>
             {showLoadingChip ? (
               <Text
                 variant="caption"
@@ -407,14 +409,66 @@ export function CampusHomeScreen({ navigation, route }: Props) {
 
           <View style={styles.overlaySpacer} pointerEvents="none" />
 
+          {/*
+            Above the card and hard right, which leaves the map's bottom-left
+            free for Apple's logo — the two now sit either side of the card's
+            top edge rather than fighting for the same corner.
+          */}
+            <View
+              pointerEvents="box-none"
+              style={[styles.locateRow, { marginBottom: theme.spacing.sm }]}
+            >
+              <View
+                style={[
+                  todayShadowSoft,
+                  radiusStyle(HEADER_BAR_BUTTON_SIZE / 2),
+                ]}
+              >
+                <GlassActionButton
+                  accessibilityLabel="Go to current location"
+                  accessibilityState={{ busy: isLocating }}
+                  colorScheme="light"
+                  tintColor="rgba(255,255,255,0.35)"
+                  fallbackBackgroundColor="rgba(255,255,255,0.82)"
+                  disabled={isLocating}
+                  onPress={() => {
+                    void goToCurrentLocation();
+                  }}
+                  style={[
+                    styles.locateButton,
+                    radiusStyle(HEADER_BAR_BUTTON_SIZE / 2),
+                  ]}
+                >
+                  {isLocating ? (
+                    <ActivityIndicator color={theme.color.primary} />
+                  ) : (
+                    <MaterialSymbol
+                      icon={msMyLocation}
+                      size={HEADER_ICON_SIZE}
+                      color={theme.color.text.brand}
+                    />
+                  )}
+                </GlassActionButton>
+              </View>
+            </View>
+
           {/* Yields to either sheet — both draw over this overlay, not in it. */}
-          {selectedBuilding || searchLabel ? null : (
+          {sheetOpen ? null : (
+            <View
+              onLayout={(event) => {
+                const { height } = event.nativeEvent.layout;
+                setQuickCardHeight((current) =>
+                  Math.abs(current - height) < 1 ? current : height
+                );
+              }}
+            >
             <CampusQuickCard
               campusName="SGW campus"
               activeFilter={mapFilter}
               onPressShuttle={onPressShuttle}
               onPressFilter={onPressFilter}
             />
+            </View>
           )}
         </View>
 
@@ -450,7 +504,7 @@ const styles = StyleSheet.create({
   },
   locateRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
   },
   locateButton: {
     width: HEADER_BAR_BUTTON_SIZE,

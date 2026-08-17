@@ -24,6 +24,7 @@ import {
   CURTAIN_FADE_IN,
   ScrollCurtain,
 } from '@/components/design-system/ScrollCurtain';
+import { PulsingStatusDot } from '@/components/design-system/PulsingStatusDot';
 import { SearchSurface } from '@/components/feature/search';
 import {
   MaterialSymbol,
@@ -45,6 +46,10 @@ import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData
 import { getDayKey } from '@/components/feature/schedule/scheduleUtils';
 import { CURATED_BOOKS, LIBRARY_LOANS } from '@/components/feature/library/libraryData';
 import { searchTheme } from '@/screens/search/searchTheme';
+import {
+  SECTION_ACTION_TEXT,
+  SECTION_HEADING_TEXT,
+} from '@/components/feature/today/TodaySectionHeader';
 import {
   CAMPUS_FILTER_LABEL,
   type CampusMapFilter,
@@ -69,6 +74,9 @@ const CAMPUS_ID = 'sgw';
 
 /** Gap between the field and Cancel. */
 const FIELD_ROW_GAP = 10;
+
+/** Matches the map rail's live dot. */
+const STATUS_DOT_SIZE = 8;
 
 /** Matched to the Campus map field so the cross-fade lands the bar in place. */
 const FIELD_HEIGHT = Math.max(MIN_TOUCH_TARGET_SIZE, searchFieldHeight);
@@ -411,10 +419,10 @@ export function CampusSearchScreen({ navigation }: Props) {
           groups.map((group) => (
             <View key={group.group} style={styles.group}>
               <View style={styles.groupHead}>
-                <Text variant="bodySmall" style={styles.groupLabel}>
+                <Text variant="heading3" style={styles.groupLabel}>
                   {CAMPUS_GROUP_LABEL[group.group]}
                 </Text>
-                <Text variant="bodySmall" style={styles.groupCount}>
+                <Text variant="caption" style={styles.groupCount}>
                   {group.hits.length}
                 </Text>
               </View>
@@ -533,21 +541,37 @@ function RestingState({
         contentContainerStyle={styles.chipRail}
         keyboardShouldPersistTaps="handled"
       >
-        {shuttleMinutes != null ? (
-          <Pressable
-            onPress={onTrackShuttle}
-            accessibilityRole="button"
-            accessibilityLabel={`Shuttle, next departure in ${shuttleMinutes} minutes`}
-            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-          >
-            <SearchSurface style={styles.chip} radius={999}>
-              <View style={[styles.liveDot, { backgroundColor: searchTheme.statusOpen }]} />
-              <Text variant="bodySmall" style={styles.chipLabel}>
-                {`Shuttle · ${shuttleMinutes} min`}
-              </Text>
-            </SearchSurface>
-          </Pressable>
-        ) : null}
+        {/*
+          Always present, like the map's own rail — the shuttle is a place you
+          go whether or not one is departing. Only the countdown and the live
+          dot are conditional; outside service hours it is a plain pill to the
+          tracker rather than a chip that vanishes on weekends.
+        */}
+        <Pressable
+          onPress={onTrackShuttle}
+          accessibilityRole="button"
+          accessibilityLabel={
+            shuttleMinutes != null
+              ? `Shuttle, next departure in ${shuttleMinutes} minutes`
+              : 'Shuttle'
+          }
+          style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+        >
+          <SearchSurface style={styles.chip} radius={999}>
+            {shuttleMinutes != null ? (
+              <PulsingStatusDot color={searchTheme.statusOpen} size={STATUS_DOT_SIZE} />
+            ) : (
+              <MaterialSymbol
+                icon={shuttleIcon}
+                size={17}
+                color={theme.color.primary}
+              />
+            )}
+            <Text variant="bodySmall" style={styles.chipLabel}>
+              {shuttleMinutes != null ? `Shuttle · ${shuttleMinutes} min` : 'Shuttle'}
+            </Text>
+          </SearchSurface>
+        </Pressable>
 
         {CAMPUS_BROWSE_CHIPS.map((chip) => (
           <Pressable
@@ -712,12 +736,12 @@ function SectionHead({
 }) {
   return (
     <View style={styles.sectionHead}>
-      <Text variant="bodySmall" style={styles.sectionLabel}>
+      <Text variant="heading3" style={styles.sectionLabel}>
         {label}
       </Text>
       {action ? (
         <Pressable onPress={onActionPress} accessibilityRole="button" hitSlop={8}>
-          <Text variant="bodySmall" color="brand" style={styles.sectionAction}>
+          <Text variant="caption" color="brand" style={styles.sectionAction}>
             {action}
           </Text>
         </Pressable>
@@ -851,11 +875,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: searchTheme.bodyText,
   },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
   section: {
     paddingTop: 22,
   },
@@ -867,15 +886,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionLabel: {
-    fontSize: 13,
-    lineHeight: 17,
-    fontWeight: '600',
-    letterSpacing: 0,
-    color: searchTheme.eyebrowText,
+    ...SECTION_HEADING_TEXT,
+    color: searchTheme.headingText,
   },
   sectionAction: {
-    fontSize: 13,
-    lineHeight: 17,
+    ...SECTION_ACTION_TEXT,
     fontWeight: '600',
   },
   recentRow: {
@@ -969,15 +984,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   groupLabel: {
-    fontSize: 13,
-    lineHeight: 17,
-    fontWeight: '600',
-    letterSpacing: 0,
-    color: searchTheme.eyebrowText,
+    ...SECTION_HEADING_TEXT,
+    color: searchTheme.headingText,
   },
   groupCount: {
-    fontSize: 13,
-    lineHeight: 17,
+    ...SECTION_ACTION_TEXT,
     fontWeight: '700',
     color: searchTheme.eyebrowCount,
   },
@@ -1054,8 +1065,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   emptyTitle: {
-    fontSize: 21,
-    lineHeight: 26,
+    ...SECTION_HEADING_TEXT,
     fontWeight: '600',
     letterSpacing: -0.3,
     color: searchTheme.headingText,

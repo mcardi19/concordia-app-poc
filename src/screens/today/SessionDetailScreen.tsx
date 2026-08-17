@@ -560,8 +560,6 @@ export function SessionDetailScreen({ navigation }: Props) {
 
   /**
    * Fade out the card CTA; do not replace it with Prof in the detail hero.
-   * Safe as opacity again now that the control is flat rather than liquid
-   * glass — a visual effect view here could not survive partial alpha.
    */
   const cardActionsOpacityStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
@@ -651,7 +649,7 @@ export function SessionDetailScreen({ navigation }: Props) {
           >
             <Text variant="heading3">Class details</Text>
             <Text variant="body" color="secondary">
-              {session.courseCode} · {session.title}. Ends at {session.ends} in{' '}
+              {session.courseCode} · {session.title}. {session.timeLabel} at {session.timeValue} in{' '}
               {session.room} with {session.professor}.
             </Text>
           </View>

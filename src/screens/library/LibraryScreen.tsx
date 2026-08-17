@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Screen, Text } from '@/components/design-system';
+import { SECTION_HEADING_TEXT } from '@/components/feature/today/TodaySectionHeader';
 import {
   CURATED_BOOKS,
   CURATED_BY,
@@ -165,7 +166,7 @@ export function LibraryScreen() {
             marginBottom: theme.spacing.sm,
           }}
         >
-          <Text variant="heading3" style={{ fontSize: 22, lineHeight: 26 }}>
+          <Text variant="heading3" style={SECTION_HEADING_TEXT}>
             On loan
           </Text>
           <Text variant="caption" color="secondary" style={{ letterSpacing: 0.4 }}>
@@ -193,7 +194,7 @@ export function LibraryScreen() {
             marginBottom: theme.spacing.md,
           }}
         >
-          <Text variant="heading3" style={{ fontSize: 22, lineHeight: 26 }}>
+          <Text variant="heading3" style={SECTION_HEADING_TEXT}>
             For {CURATED_COURSE}
           </Text>
           <Text

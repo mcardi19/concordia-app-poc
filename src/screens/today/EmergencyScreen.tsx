@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { MeGlassCard } from '@/components/feature/me';
+import { SECTION_HEADING_TEXT } from '@/components/feature/today/TodaySectionHeader';
 import { MaterialSymbol, msCall, msChevronRight, msNorthEast } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -362,10 +363,8 @@ const styles = StyleSheet.create({
     paddingTop: 26,
   },
   sectionLabel: {
+    ...SECTION_HEADING_TEXT,
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '600',
     color: meTheme.headingText,
     marginBottom: 12,
   },

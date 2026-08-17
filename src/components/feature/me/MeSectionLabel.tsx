@@ -1,6 +1,10 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
+import {
+  SECTION_ACTION_TEXT,
+  SECTION_HEADING_TEXT,
+} from '@/components/feature/today/TodaySectionHeader';
 
 type Props = {
   children: string;
@@ -10,7 +14,9 @@ type Props = {
 };
 
 /**
- * Section heading — matches Home (`TodaySectionHeader`) type and spacing.
+ * Section heading — Home's (`TodaySectionHeader`), from the same constants
+ * rather than a second copy of its numbers, which is how this one ended up a
+ * step heavier than Home when that changed.
  */
 export function MeSectionLabel({ children, action, onActionPress }: Props) {
   return (
@@ -18,8 +24,7 @@ export function MeSectionLabel({ children, action, onActionPress }: Props) {
       <Text
         variant="heading3"
         style={{
-          fontSize: 22,
-          lineHeight: 22,
+          ...SECTION_HEADING_TEXT,
           ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
         }}
       >
@@ -30,12 +35,7 @@ export function MeSectionLabel({ children, action, onActionPress }: Props) {
           <Text
             variant="caption"
             color="brand"
-            style={{
-              fontWeight: '600',
-              letterSpacing: -0.1,
-              fontSize: 14,
-              lineHeight: 22,
-            }}
+            style={SECTION_ACTION_TEXT}
           >
             {action}
           </Text>

@@ -60,6 +60,13 @@ export {
   msArrowForward,
   msArrowBack,
   msCall,
+  msGridViewFill,
+  msLocationOnFill,
+  msLocalCafeFill,
+  msMeetingRoomFill,
+  msPrintFill,
+  msLocalParkingFill,
+  msPedalBikeFill,
   msSearchOff,
   msHistory,
 } from './symbols';

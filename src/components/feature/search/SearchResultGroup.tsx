@@ -6,6 +6,10 @@ import { MaterialSymbol, msChevronRight } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { searchTheme } from '@/screens/search/searchTheme';
+import {
+  SECTION_ACTION_TEXT,
+  SECTION_HEADING_TEXT,
+} from '@/components/feature/today/TodaySectionHeader';
 import { SearchSurface } from './SearchSurface';
 
 /** Sentence-case label above a grouped card, with an optional count and action. */
@@ -22,13 +26,13 @@ export function SearchGroupLabel({
 }) {
   return (
     <View style={styles.labelRow}>
-      <Text variant="bodySmall" style={styles.label}>
+      <Text variant="heading3" style={styles.label}>
         {children}
         {count != null ? <Text style={styles.labelCount}>{`  ${count}`}</Text> : null}
       </Text>
       {action ? (
         <Pressable onPress={onActionPress} accessibilityRole="button" hitSlop={8}>
-          <Text variant="bodySmall" color="brand" style={styles.action}>
+          <Text variant="caption" color="brand" style={styles.action}>
             {action}
           </Text>
         </Pressable>
@@ -173,21 +177,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   label: {
-    // Matches Today section meta (14) rather than the denser caption role.
-    fontSize: 13,
-    lineHeight: 17,
-    fontWeight: '600',
-    // Sentence case does not need the tracking uppercase does to stay legible.
-    letterSpacing: 0,
-    color: searchTheme.eyebrowText,
+    ...SECTION_HEADING_TEXT,
+    color: searchTheme.headingText,
   },
   labelCount: {
     fontWeight: '700',
     color: searchTheme.eyebrowCount,
   },
   action: {
-    fontSize: 13,
-    lineHeight: 17,
+    ...SECTION_ACTION_TEXT,
     fontWeight: '600',
   },
   card: {

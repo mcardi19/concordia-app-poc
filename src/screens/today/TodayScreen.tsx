@@ -17,13 +17,13 @@ import {
   LATEST_UPDATES,
   PINNED_CHIP_CATALOG,
   PINNED_CHIPS,
-  TODAY_SESSION,
   TodayAttentionList,
   TodayCampusCarousel,
   TodayPinnedAddDrawer,
   TodayPinnedChips,
   TodaySectionHeader,
   TodaySessionCard,
+  useTodaySession,
   TodayUpdatesCarousel,
   type PinnedChip,
 } from '@/components/feature/today';
@@ -52,6 +52,7 @@ export function TodayScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarScrollInset();
   const inset = theme.spacing.screenHorizontal;
+  const todaySession = useTodaySession();
   const scrollY = useRef(new Animated.Value(0)).current;
   const lastTabMinimizeYRef = useRef(0);
   const insetTopRef = useRef(0);
@@ -194,7 +195,7 @@ export function TodayScreen({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ paddingHorizontal: inset }}>
-            <TodaySessionCard session={TODAY_SESSION} />
+            <TodaySessionCard session={todaySession} />
           </View>
 
           <View style={{ paddingHorizontal: inset }}>

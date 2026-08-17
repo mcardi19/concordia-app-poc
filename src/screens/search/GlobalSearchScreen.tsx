@@ -72,6 +72,7 @@ import {
   type SearchCategory,
 } from './globalSearch';
 import { searchTheme } from './searchTheme';
+import { SECTION_HEADING_TEXT } from '@/components/feature/today/TodaySectionHeader';
 
 type Props = SearchScreenProps<'Search'>;
 
@@ -741,7 +742,7 @@ function ResultSkeleton() {
 /** Standalone group label, for sections whose body is not a single card. */
 function SearchResultGroupLabelRow({ label }: { label: string }) {
   return (
-    <Text variant="bodySmall" style={styles.sectionLabel}>
+    <Text variant="heading3" style={styles.sectionLabel}>
       {label}
     </Text>
   );
@@ -870,13 +871,10 @@ const styles = StyleSheet.create({
   },
   /** Kept in step with `SearchGroupLabel`. */
   sectionLabel: {
+    ...SECTION_HEADING_TEXT,
     paddingHorizontal: semanticSpacing.screenHorizontal,
     marginBottom: 11,
-    fontSize: 13,
-    lineHeight: 17,
-    fontWeight: '600',
-    letterSpacing: 0,
-    color: searchTheme.eyebrowText,
+    color: searchTheme.headingText,
   },
   taskRail: {
     gap: 8,
@@ -977,8 +975,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   emptyTitle: {
-    fontSize: 21,
-    lineHeight: 26,
+    ...SECTION_HEADING_TEXT,
     fontWeight: '600',
     letterSpacing: -0.3,
     color: searchTheme.headingText,

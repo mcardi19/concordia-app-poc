@@ -12,13 +12,18 @@ export {
   sessionHeroSharedTransition,
 } from './sessionSharedTransition';
 export { SessionStatusBadge, SessionStatusBadgeOnLight } from './SessionStatusBadge';
-export { TodaySectionHeader } from './TodaySectionHeader';
+export {
+  TodaySectionHeader,
+  SECTION_HEADING_TEXT,
+  SECTION_ACTION_TEXT,
+} from './TodaySectionHeader';
+export { deriveTodaySession, useTodaySession } from './todaySession';
+export type { TodaySessionState } from './todaySession';
 export { TodayPinnedChips } from './TodayPinnedChips';
 export { TodayPinnedAddDrawer } from './TodayPinnedAddDrawer';
 export { TodayAttentionList } from './TodayAttentionList';
 export { TodayUpdatesCarousel, TodayCampusCarousel } from './TodayCarousels';
 export {
-  TODAY_SESSION,
   PINNED_CHIPS,
   PINNED_CHIP_CATALOG,
   ATTENTION_ITEMS,

@@ -7,6 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle,
   type SharedValue,
@@ -41,7 +42,7 @@ type Props = {
   session: TodaySession;
   /** When false, hides the in-session badge. */
   showStatusBadge?: boolean;
-  /** When false, hides View details. */
+  /** When false, hides View details. Never falls through to professor. */
   showActions?: boolean;
   /** Show professor field (used during expand to crossfade with CTA). */
   showProfessor?: boolean;
@@ -92,7 +93,6 @@ type Props = {
   onViewDetails?: () => void;
   onViewDetailsPressIn?: () => void;
   onViewDetailsPressOut?: () => void;
-  onLocationPress?: () => void;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
   /** Explicit height helps shared-element bounds differ between screens. */
@@ -189,10 +189,10 @@ export function SessionHero({
       >
         {image}
         <ProgressiveImageTreatment
-        source={session.image}
-        imageStyle={imageStyle}
-        {...treatment}
-      />
+          source={session.image}
+          imageStyle={imageStyle}
+          {...treatment}
+        />
         {overlay}
       </Animated.View>
     );
@@ -282,12 +282,21 @@ function SessionHeroOverlay({
 
   return (
     <View pointerEvents="box-none" style={[absoluteFill, contentStyle]}>
+      <LinearGradient
+        pointerEvents="none"
+        colors={['transparent', 'rgba(0, 0, 0, 0.72)']}
+        locations={[0.38, 1]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.scrim}
+      />
+
       {showStatusBadge ? (
         <Animated.View
           pointerEvents="none"
           style={[styles.badge, badgeTransform]}
         >
-          <SessionStatusBadge label={session.statusLabel} />
+          <SessionStatusBadge label={session.statusLabel} tone={session.statusTone} />
         </Animated.View>
       ) : null}
 
@@ -318,7 +327,7 @@ function SessionHeroOverlay({
         </View>
 
         <View style={styles.meta}>
-          <MetaField label="Ends" value={session.ends} />
+          <MetaField label={session.timeLabel} value={session.timeValue} />
           <MetaField label="Room" value={session.room} />
           <Animated.View style={[styles.rightCell, rightCellTransform]}>
             {showProfessor ? (
@@ -345,8 +354,6 @@ function SessionHeroOverlay({
                   onViewDetailsPressOut={onViewDetailsPressOut}
                 />
               </Animated.View>
-            ) : !showProfessor ? (
-              <MetaField label="Prof" value={session.professor} />
             ) : null}
           </Animated.View>
         </View>
@@ -360,6 +367,9 @@ function SessionHeroOverlay({
  * `opacity` on top of these, so no frame of it can dirty layout.
  */
 const styles = StyleSheet.create({
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
+  },
   badge: {
     position: 'absolute',
     top: SESSION_HERO_CONTENT_PAD,
@@ -383,7 +393,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 16,
     padding: SESSION_HERO_CONTENT_PAD,
-    backgroundColor: todayTheme.sessionMetaFooter,
+    backgroundColor: 'transparent',
   },
   rightCell: {
     flex: 1,

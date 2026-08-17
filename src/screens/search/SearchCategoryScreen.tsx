@@ -174,8 +174,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    fontSize: 24,
-    lineHeight: 29,
     fontWeight: '600',
     letterSpacing: -0.4,
     color: searchTheme.headingText,

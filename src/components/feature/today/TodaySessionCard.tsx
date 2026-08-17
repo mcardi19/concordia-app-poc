@@ -24,10 +24,8 @@ type Props = {
 
 /**
  * Distance the card is parked while the expand overlay stands in for it.
- * Deliberately a transform rather than `opacity: 0`: the "View details" control
- * is a GlassView, and a visual effect view held at alpha 0 renders incorrectly
- * for a frame when it comes back — which read as the button returning in a
- * pressed state and then settling.
+ * Deliberately a transform rather than `opacity: 0`: parking offscreen leaves
+ * the expand overlay as the only copy of the photo while it stands in.
  */
 const OFFSCREEN_PARK = Dimensions.get('window').width * 2;
 
@@ -160,6 +158,7 @@ export function TodaySessionCard({ session }: Props) {
         >
           <SessionHero
             session={session}
+            showActions
             onViewDetails={onPress}
             onViewDetailsPressIn={onPressIn}
             onViewDetailsPressOut={onPressOut}
