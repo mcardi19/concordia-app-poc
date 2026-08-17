@@ -7,17 +7,53 @@ import type { BuildingSummary, CampusCode } from '@/types/campus';
 /**
  * The campus map's contextual layer.
  *
- * The design draws nine of these cards, one per situation. Nine bespoke
- * layouts do not scale — the tenth frame, where several situations compete
- * and one wins the slot, is the part that does. So this is a list of
- * providers: each looks at the moment and returns a card or nothing, and the
- * map shows the highest-ranked one. A new situation is a provider, not a
- * screen.
+ * ---------------------------------------------------------------------------
+ * Why this is a ranker and not nine cards
+ * ---------------------------------------------------------------------------
  *
- * Only the two class providers are built. The rest of the design's set needs
- * feeds this app does not have — a facilities status for disruptions, a
- * safety feed for closures — or continuous location for geofenced arrival,
- * which is a permission and battery cost nobody has agreed to.
+ * The design (Contextual map experiences) draws nine cards, one per situation:
+ * going to class, leave-now, shuttle stop, arrived near a building,
+ * accessibility disruption, emergency closure, cross-campus commute, nearby
+ * discovery, and one showing several of them competing.
+ *
+ * Nine bespoke layouts do not scale — each has its own copy and its own
+ * actions, so a tenth situation means a tenth card. The frame worth keeping
+ * is the one that looks least like a feature: several situations compete,
+ * one wins the slot, the rest stand down. That generalises; the cards are
+ * just its instances.
+ *
+ * So this is a list of providers. Each looks at the moment and returns a card
+ * or nothing, and the map shows the highest-ranked. Adding a situation is a
+ * provider, not a screen.
+ *
+ * ---------------------------------------------------------------------------
+ * What is deliberately missing, and what it would take
+ * ---------------------------------------------------------------------------
+ *
+ * These are not oversights. Each needs something the app does not have, and a
+ * card for a trigger that can never fire is worse than no card:
+ *
+ *   Arrived near a building  Needs continuous location. Everything here uses
+ *                            one-shot `getCurrentPositionAsync`; a geofence
+ *                            means Always-permission and a battery cost.
+ *
+ *   Accessibility disruption Needs a facilities status feed. None exists.
+ *
+ *   Emergency closure        Needs a safety alert feed. None exists. This one
+ *                            is also Priority 1 and non-dismissible, so it
+ *                            should not ship until its source is trustworthy.
+ *
+ *   Happening nearby         `useFeaturedEvents` exists but carries no
+ *                            proximity, and the events screen already lists
+ *                            them. Low value until events are placed.
+ *
+ *   Shuttle                  Covered better by the map's own shuttle layer
+ *                            and the tracker screen than by a card.
+ *
+ * The two that are built are the two the map can answer better than anywhere
+ * else. Home already says what is up next; the map adds where it is and how
+ * long the walk takes. `timeToGo` in particular is the only genuinely new
+ * capability in the set — nothing else in the app tells you when to leave.
  */
 
 /** Lower wins. Mirrors the design's priority model, minus the tiers we cannot fill. */
