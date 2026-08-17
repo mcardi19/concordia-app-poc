@@ -34,6 +34,24 @@ export function walkMinutesFromCoords(
   return Math.max(1, Math.round((km / WALKING_SPEED_KMH) * 60));
 }
 
+/**
+ * The building a room sits in. Rooms read "H-820" / "LB 625" — the leading
+ * token is the building code, which is what turns a timetable entry into
+ * somewhere the map can point at.
+ */
+export function buildingForRoom<T extends { campusId: string; code: string }>(
+  room: string | undefined,
+  buildings: T[],
+  campusId: string
+): T | undefined {
+  const code = room?.trim().split(/[\s.-]/)[0]?.toUpperCase();
+  if (!code) return undefined;
+  return buildings.find(
+    (building) =>
+      building.campusId === campusId && building.code.toUpperCase() === code
+  );
+}
+
 function uniqueLabels(values: string[]): string[] {
   const seen = new Set<string>();
   const next: string[] = [];

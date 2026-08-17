@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassActionButton, Screen, Text } from '@/components/design-system';
 import { BuildingDrawer } from '@/components/feature/campus/BuildingDrawer';
 import { CampusQuickCard } from '@/components/feature/campus/CampusQuickCard';
+import { CampusContextCard } from '@/components/feature/campus/CampusContextCard';
 import { CampusResultsDrawer } from '@/components/feature/campus/CampusResultsDrawer';
 import { SHEET_PEEK_HEIGHT_RATIO } from '@/components/feature/campus/campusSheet';
 import {
@@ -20,10 +21,11 @@ import {
   CampusSearchBar,
 } from '@/components/feature/campus/CampusSearchBar';
 import { todayShadowSoft } from '@/components/feature/today/todayShadows';
-import { MaterialSymbol, msMyLocation } from '@/components/icons';
+import { MaterialSymbol, msDirectionsBus, msMyLocation } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import { useBuildings } from '@/hooks/useBuildings';
-import { useCampusUserLocation } from '@/hooks/useCampusUserLocation';
+import { useCampusUserLocation, type UserCoords } from '@/hooks/useCampusUserLocation';
+import { useShuttleLive } from '@/hooks/useShuttleLive';
 import {
   HEADER_BAR_BUTTON_SIZE,
   HEADER_ICON_SIZE,
@@ -32,13 +34,16 @@ import { useTabBarOverlayInset } from '@/navigation/tabBarInset';
 import { useHideTabBar } from '@/navigation/tabBarVisibility';
 import type { CampusStackScreenProps } from '@/navigation/types';
 import { getBuildingCatalogRecord } from '@/data/buildings';
+import { resolveCampusContext } from '@/services/campus/campusContext';
+import { openAppleMapsDirections } from '@/services/campus/placeActions';
+import { useNow } from '@/hooks';
 import {
   buildingMatchesMapFilter,
   CAMPUS_FILTER_LABEL,
   walkMinutesFromCoords,
   type CampusMapFilter,
 } from '@/services/campus/buildingPresentation';
-import type { UserCoords } from '@/hooks/useCampusUserLocation';
+import { SHUTTLE_STOPS } from '@/services/shuttle/shuttleRoute';
 import { CAMPUS_MAP_DEFAULTS, type BuildingSummary } from '@/types/campus';
 
 type Props = CampusStackScreenProps<'CampusHome'>;
@@ -46,6 +51,13 @@ type Props = CampusStackScreenProps<'CampusHome'>;
 const DEFAULT_CAMPUS = CAMPUS_MAP_DEFAULTS.sgw;
 
 const MAP_FOCUS_DELTA = 0.004;
+
+const SHUTTLE_EDGE_PADDING = {
+  top: 140,
+  right: 48,
+  bottom: 220,
+  left: 48,
+};
 
 function regionForBuilding(building: BuildingSummary): Region {
   return {
@@ -75,6 +87,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
   const { permissionGranted, getCurrentCoords } = useCampusUserLocation();
   const [isLocating, setIsLocating] = useState(false);
   const [mapFilter, setMapFilter] = useState<CampusMapFilter>('buildings');
+  const [showShuttle, setShowShuttle] = useState(false);
   /**
    * The category showing in the field. Separate from `mapFilter` because
    * `buildings` is both "no filter" and a category a student can pick — only
@@ -88,6 +101,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
    * logo back under it.
    */
   const [quickCardHeight, setQuickCardHeight] = useState(0);
+  const { data: shuttleLive, isError: shuttleLiveError } = useShuttleLive(showShuttle);
 
   const initialRegion = useMemo<Region>(
     () => ({
@@ -105,6 +119,9 @@ export function CampusHomeScreen({ navigation, route }: Props) {
    * is the nearest pin.
    */
   const visibleBuildings = useMemo(() => {
+    if (showShuttle) {
+      return [];
+    }
     const campus = buildings.filter((building) => building.campusId === 'sgw');
     const matching =
       mapFilter === 'buildings'
@@ -124,7 +141,21 @@ export function CampusHomeScreen({ navigation, route }: Props) {
         walkMinutesFromCoords(from, { lat: a.lat, lng: a.lng }) -
         walkMinutesFromCoords(from, { lat: b.lat, lng: b.lng })
     );
-  }, [buildings, mapFilter, coords]);
+  }, [buildings, mapFilter, coords, showShuttle]);
+
+  useEffect(() => {
+    if (!showShuttle) return;
+    const id = requestAnimationFrame(() => {
+      mapRef.current?.fitToCoordinates(
+        [SHUTTLE_STOPS.sgw, SHUTTLE_STOPS.loy],
+        {
+          animated: true,
+          edgePadding: SHUTTLE_EDGE_PADDING,
+        }
+      );
+    });
+    return () => cancelAnimationFrame(id);
+  }, [showShuttle]);
 
   /**
    * Hide the native tab bar while either sheet is open so the in-screen sheet
@@ -256,6 +287,31 @@ export function CampusHomeScreen({ navigation, route }: Props) {
     };
   }, [getCurrentCoords]);
 
+  /*
+    The contextual layer. `resolveCampusContext` ranks the situations that
+    apply right now and hands back at most one card; dismissing it suppresses
+    that card by id, so a new situation still gets through.
+  */
+  const now = useNow();
+  const [dismissedContextId, setDismissedContextId] = useState<string | null>(null);
+
+  const contextCard = useMemo(() => {
+    const card = resolveCampusContext({
+      now,
+      buildings,
+      coords,
+      campusId: 'sgw',
+    });
+    return card && card.id !== dismissedContextId ? card : null;
+  }, [now, buildings, coords, dismissedContextId]);
+
+  const onContextDirections = useCallback(() => {
+    if (!contextCard?.building) return;
+    const target = contextCard.building;
+    selectBuilding(target);
+    openAppleMapsDirections(target.lat, target.lng, `${target.code} ${target.name}`);
+  }, [contextCard, selectBuilding]);
+
   const clearCategory = useCallback(() => {
     setSearchLabel(null);
     setMapFilter('buildings');
@@ -312,8 +368,17 @@ export function CampusHomeScreen({ navigation, route }: Props) {
   }, [getCurrentCoords]);
 
   const onPressShuttle = useCallback(() => {
-    navigation.navigate('ShuttleTracker');
-  }, [navigation]);
+    setSelectedBuilding(null);
+    setSearchLabel(null);
+    setMapFilter('buildings');
+    setShowShuttle((open) => {
+      const next = !open;
+      if (!next) {
+        mapRef.current?.animateToRegion(initialRegion, 400);
+      }
+      return next;
+    });
+  }, [initialRegion]);
 
   /**
    * A pill on the overlay card does what the same pill does in search: fills
@@ -322,6 +387,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
    */
   const onPressFilter = useCallback(
     (filter: CampusMapFilter) => {
+      setShowShuttle(false);
       const clearing = searchLabel != null && mapFilter === filter;
       setMapFilter(clearing ? 'buildings' : filter);
       setSearchLabel(clearing ? null : CAMPUS_FILTER_LABEL[filter]);
@@ -366,6 +432,43 @@ export function CampusHomeScreen({ navigation, route }: Props) {
               />
             );
           })}
+          {showShuttle ? (
+            <>
+              {(shuttleLive?.stops ?? []).map((stop) => (
+                <Marker
+                  key={stop.id}
+                  coordinate={{ latitude: stop.latitude, longitude: stop.longitude }}
+                  identifier={`stop-${stop.id}`}
+                  title={stop.title}
+                  pinColor={theme.color.primary}
+                  stopPropagation
+                />
+              ))}
+              {(shuttleLive?.vehicles ?? []).map((bus) => (
+                <Marker
+                  key={bus.id}
+                  coordinate={{ latitude: bus.latitude, longitude: bus.longitude }}
+                  identifier={bus.id}
+                  title="Shuttle"
+                  anchor={{ x: 0.5, y: 0.5 }}
+                  stopPropagation
+                >
+                  <View
+                    style={[
+                      styles.shuttleMarker,
+                      { backgroundColor: theme.color.primary },
+                    ]}
+                  >
+                    <MaterialSymbol
+                      icon={msDirectionsBus}
+                      size={18}
+                      color={theme.color.text.inverse}
+                    />
+                  </View>
+                </Marker>
+              ))}
+            </>
+          ) : null}
         </MapView>
 
         <View
@@ -433,6 +536,26 @@ export function CampusHomeScreen({ navigation, route }: Props) {
                 Showing offline building list
               </Text>
             ) : null}
+            {showShuttle && shuttleLiveError ? (
+              <Text
+                variant="caption"
+                color="secondary"
+                pointerEvents="none"
+                style={[
+                  styles.statusChip,
+                  {
+                    marginTop: theme.spacing.sm,
+                    backgroundColor: theme.color.background,
+                    borderRadius: theme.radius.md,
+                    paddingHorizontal: theme.spacing.sm,
+                    paddingVertical: theme.spacing.xs,
+                    alignSelf: 'flex-start',
+                  },
+                ]}
+              >
+                Shuttle location unavailable
+              </Text>
+            ) : null}
           </View>
 
           <View style={styles.overlaySpacer} pointerEvents="none" />
@@ -480,8 +603,20 @@ export function CampusHomeScreen({ navigation, route }: Props) {
               </View>
             </View>
 
+          {/*
+            A live situation outranks the resting card: the quick card is what
+            the map shows when it has nothing to say.
+          */}
+          {sheetOpen || !contextCard ? null : (
+            <CampusContextCard
+              card={contextCard}
+              onPrimaryPress={onContextDirections}
+              onDismiss={() => setDismissedContextId(contextCard.id)}
+            />
+          )}
+
           {/* Yields to either sheet — both draw over this overlay, not in it. */}
-          {sheetOpen ? null : (
+          {sheetOpen || contextCard ? null : (
             <View
               onLayout={(event) => {
                 const { height } = event.nativeEvent.layout;
@@ -493,6 +628,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
             <CampusQuickCard
               campusName="SGW campus"
               activeFilter={mapFilter}
+              shuttleActive={showShuttle}
               onPressShuttle={onPressShuttle}
               onPressFilter={onPressFilter}
             />
@@ -540,5 +676,13 @@ const styles = StyleSheet.create({
   },
   statusChip: {
     overflow: 'hidden',
+  },
+  shuttleMarker: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

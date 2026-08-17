@@ -55,6 +55,7 @@ const AMENITY_PILLS: AmenityPill[] = [
 type Props = {
   campusName: string;
   activeFilter: CampusMapFilter;
+  shuttleActive?: boolean;
   onPressShuttle: () => void;
   onPressFilter: (filter: CampusMapFilter) => void;
 };
@@ -66,6 +67,7 @@ type Props = {
 export function CampusQuickCard({
   campusName,
   activeFilter,
+  shuttleActive = false,
   onPressShuttle,
   onPressFilter,
 }: Props) {
@@ -113,6 +115,7 @@ export function CampusQuickCard({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={shuttleLabel}
+            accessibilityState={{ selected: shuttleActive }}
             onPress={onPressShuttle}
             style={({ pressed }) => [
               styles.pillPressable,
@@ -121,7 +124,10 @@ export function CampusQuickCard({
               { transform: [{ scale: pressed ? GLASS_PILL_PRESSED_SCALE : 1 }] },
             ]}
           >
-            <GlassPillSurface radius={PILL_RADIUS}>
+            <GlassPillSurface
+              radius={PILL_RADIUS}
+              tintColor={shuttleActive ? `${theme.color.primary}24` : undefined}
+            >
               <View style={[glassPillStyles.content, { gap: theme.spacing.sm }]}>
                 {/*
                   Pulses only while there is a departure to count down to —

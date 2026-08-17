@@ -11,4 +11,5 @@ export { useBuildingEnrichment } from './useBuildingEnrichment';
 export { useCampusUserLocation } from './useCampusUserLocation';
 export { useFeaturedEvents } from './useFeaturedEvents';
 export { useShuttleTracker } from './useShuttleTracker';
+export { useShuttleLive } from './useShuttleLive';
 export { useNow } from './useNow';

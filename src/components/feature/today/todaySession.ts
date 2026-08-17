@@ -43,8 +43,12 @@ function formatClock(minutes: number): string {
   return `${h}:${String(m).padStart(2, '0')} ${suffix}`;
 }
 
-/** Classes only — a study block or a club is not what the card is announcing. */
-function classesOn(dayKey: string): ScheduleEvent[] {
+/**
+ * Classes only — a study block or a club is not what these cards announce.
+ * Exported so the Campus map's contextual cards select the same set; two
+ * definitions of "a class" would let Home and the map disagree.
+ */
+export function classesOn(dayKey: string): ScheduleEvent[] {
   return MOCK_WEEK_EVENTS.filter(
     (event) => event.dayKey === dayKey && event.kind !== 'study',
   ).sort((a, b) => a.startMinutes - b.startMinutes);

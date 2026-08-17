@@ -17,7 +17,7 @@ export {
   SECTION_HEADING_TEXT,
   SECTION_ACTION_TEXT,
 } from './TodaySectionHeader';
-export { deriveTodaySession, useTodaySession } from './todaySession';
+export { classesOn, deriveTodaySession, useTodaySession } from './todaySession';
 export type { TodaySessionState } from './todaySession';
 export { TodayPinnedChips } from './TodayPinnedChips';
 export { TodayPinnedAddDrawer } from './TodayPinnedAddDrawer';

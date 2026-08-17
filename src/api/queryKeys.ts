@@ -5,6 +5,7 @@ export const queryKeys = {
   services: (campus: string, query: string) => ['services', campus, query] as const,
   featuredEvents: ['featuredEvents'] as const,
   shuttleTracker: ['shuttleTracker'] as const,
+  shuttleLive: ['shuttleLive'] as const,
   buildings: ['buildings'] as const,
   campusServices: (campus: string) => ['campusServices', campus] as const,
   libraryHours: (dateIso: string) => ['libraryHours', dateIso] as const,
