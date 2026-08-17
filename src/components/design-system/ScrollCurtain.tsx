@@ -9,12 +9,20 @@ import { LinearGradient } from 'expo-linear-gradient';
  */
 export const CURTAIN_FADE_IN = [0, 20] as const;
 
+/** How far the colour fade runs past the chrome it sits behind. */
+export const CURTAIN_FADE_DEPTH = 40;
+
 /**
- * How far the fade runs past the chrome it sits behind. Generous — a short
- * ramp reads as a band with an edge, which is the thing the curtain exists to
- * avoid.
+ * How far the blur runs past it — much shorter than the colour fade, and
+ * deliberately so.
+ *
+ * A `BlurView` has a hard bottom edge whatever is drawn over it, so the trick
+ * is to end the blur while the colour wash above still has body: at this depth
+ * the gradient is around a fifth opaque where the blur stops, which covers the
+ * seam. Run the blur to the bottom of the fade instead and it ends exactly
+ * where the wash reaches zero, with nothing left to hide it.
  */
-export const CURTAIN_FADE_DEPTH = 56;
+export const CURTAIN_BLUR_DEPTH = 8;
 
 /**
  * Seven stops rather than two. A straight solid-to-transparent ramp leaves a
@@ -32,14 +40,19 @@ const LOCATIONS = [0, 0.22, 0.4, 0.58, 0.74, 0.88, 1] as const;
  * here — `react-native-svg` will not mask non-SVG content, which is the same
  * wall `ProgressiveImageTreatment` hit.
  *
- * So each layer covers a shorter run from the top than the one before it, and
- * the blur compounds where they overlap: strongest under the chrome, thinning
- * downward. Layers are kept weak and numerous because the cost of the trick is
- * a seam at every layer's bottom edge — small steps make those disappear, and
- * the colour gradient drawn over the stack hides the rest.
+ * Each layer covers a shorter run from the top than the one before, so the
+ * blur compounds where they overlap: strongest under the chrome, thinning
+ * downward.
+ *
+ * The intensities ramp rather than being equal, which is what makes it read as
+ * progressive. Only the first layer reaches the bottom, so its intensity *is*
+ * the discontinuity at the edge — with every layer equal, that edge was a full
+ * -strength blur stopping dead, which is the line you could see. Weakest at the
+ * bottom, strongest at the top.
  */
 const BLUR_LAYERS = 6;
-const BLUR_LAYER_INTENSITY = 8;
+const BLUR_BASE_INTENSITY = 3;
+const BLUR_INTENSITY_STEP = 4;
 
 function rgba(hex: string, alpha: number): string {
   const value = hex.replace('#', '');
@@ -60,6 +73,8 @@ type Props = {
   /** The page background the curtain fades out of, as a hex string. */
   color: string;
   height: number;
+  /** How far the blur reaches. Defaults to the full height. */
+  blurHeight?: number;
   /** Scroll-driven 0–1. Omit for a curtain that is simply always drawn. */
   opacity?: Animated.AnimatedInterpolation<number> | number;
   /**
@@ -76,7 +91,13 @@ type Props = {
  * Shared by Home and the search screens — the effect is the same one, and two
  * curtains with different falloffs over the same app would read as a mistake.
  */
-export function ScrollCurtain({ color, height, opacity = 1, blurred = false }: Props) {
+export function ScrollCurtain({
+  color,
+  height,
+  blurHeight,
+  opacity = 1,
+  blurred = false,
+}: Props) {
   const colors = useMemo(
     () =>
       STOPS.map((alpha) => rgba(color, alpha)) as unknown as readonly [
@@ -107,15 +128,15 @@ export function ScrollCurtain({ color, height, opacity = 1, blurred = false }: P
           {Array.from({ length: BLUR_LAYERS }, (_, i) => (
             <BlurView
               key={i}
-              intensity={BLUR_LAYER_INTENSITY}
+              intensity={BLUR_BASE_INTENSITY + i * BLUR_INTENSITY_STEP}
               tint="light"
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 right: 0,
-                // Full height for the first, then progressively shorter.
-                height: height * (1 - i / BLUR_LAYERS),
+                // Full reach for the first, then progressively shorter.
+                height: (blurHeight ?? height) * (1 - i / BLUR_LAYERS),
               }}
             />
           ))}

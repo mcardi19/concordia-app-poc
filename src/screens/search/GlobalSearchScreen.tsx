@@ -19,6 +19,7 @@ import { GlassView } from 'expo-glass-effect';
 import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
+  CURTAIN_BLUR_DEPTH,
   CURTAIN_FADE_DEPTH,
   CURTAIN_FADE_IN,
   ScrollCurtain,
@@ -326,6 +327,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
       <ScrollCurtain
         color={searchTheme.pageBackground}
         height={fieldRowHeight + CURTAIN_FADE_DEPTH}
+        blurHeight={fieldRowHeight + CURTAIN_BLUR_DEPTH}
         blurred
         opacity={curtainOpacity}
       />
