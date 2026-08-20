@@ -6,6 +6,7 @@ import {
   DAY_HOUR_END,
   DAY_HOUR_HEIGHT,
   DAY_HOUR_START,
+  GRID_INSET,
   RAIL_WIDTH,
   scheduleTheme,
 } from './scheduleTheme';
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
   },
   grid: {
     position: 'relative',
-    marginLeft: 8,
+    marginLeft: GRID_INSET,
   },
   block: {
     position: 'absolute',

@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
-import { RAIL_WIDTH, scheduleTheme } from './scheduleTheme';
+import { GRID_INSET, RAIL_WIDTH, scheduleTheme } from './scheduleTheme';
 import type { ScheduleAllDayItem } from './scheduleTypes';
 
 type Props = {
@@ -130,7 +130,9 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
     borderCurve: 'continuous',
-    paddingHorizontal: 14,
+    // Same insets as a timeline block, so both texts start on one line.
+    paddingLeft: 16,
+    paddingRight: 12,
     paddingVertical: 11,
   },
   cardText: {
@@ -161,5 +163,6 @@ const styles = StyleSheet.create({
   gutterBody: {
     flex: 1,
     minWidth: 0,
+    marginLeft: GRID_INSET,
   },
 });

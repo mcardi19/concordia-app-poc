@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     lineHeight: 13,
     fontWeight: '700',
-    letterSpacing: -0.2,
+    letterSpacing: -0.5,
     textAlign: 'center',
     includeFontPadding: false,
     // Lining figures, so the capsule does not twitch as the minute ticks.

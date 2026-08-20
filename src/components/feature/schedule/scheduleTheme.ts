@@ -59,3 +59,9 @@ export const DAY_HOUR_HEIGHT = 44;
 export const PLANNER_HOUR_HEIGHT = 36;
 /** Width of the left-hand hour label gutter. */
 export const RAIL_WIDTH = 46;
+/**
+ * Gap between the hour gutter and the blocks, so a block never crowds the
+ * time labels. Shared with the all-day card, which sits on the same axis and
+ * has to start on the same edge as the blocks below it.
+ */
+export const GRID_INSET = 8;
