@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/design-system';
 import { useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -14,6 +15,7 @@ import {
   ScheduleThreeDayView,
   ScheduleWeekStrip,
   dayTimelineTopFor,
+  formatClock,
   scheduleTheme,
   type PlannerDay,
   type ScheduleViewMode,
@@ -25,6 +27,7 @@ import {
 import {
   DAY_HOUR_HEIGHT,
   PLANNER_HOUR_HEIGHT,
+  RAIL_WIDTH,
 } from '@/components/feature/schedule/scheduleTheme';
 import {
   getDayKey,
@@ -53,6 +56,10 @@ const PLANNER_SPAN = 3;
 const FOCUS_HOUR = 8;
 /** Matches `ScheduleDayTimeline` padding above the hour grid. */
 const DAY_GRID_TOP = 18;
+/** Height of the "now" clock pill, so it can be centred on the rule. */
+const NOW_CLOCK_HEIGHT = 20;
+/** Thickness of the now rule — the pill centres on its middle, not its top. */
+const NOW_RULE_HEIGHT = 1.5;
 
 function plannerDaysFrom(start: Date, today: Date): PlannerDay[] {
   return Array.from({ length: PLANNER_SPAN }, (_, offset) => {
@@ -305,21 +312,58 @@ export function ScheduleScreen() {
             {/*
               The now rule lives here, not in the timeline, because the grid
               sits inside the horizontal pager and the pager clips to a page.
-              Drawn against the row it clears the hour rail on the left and
-              the screen inset on the right, which is what "now" should do —
-              it is a line across the whole day, not across one column.
+              Drawn against the row it reaches across the hour rail and every
+              column — it is a line across the whole day, not one column —
+              but stops at the screen margins like the rest of the tab.
             */}
             {showsNowRule ? (
-              <View
-                pointerEvents="none"
-                style={[
-                  styles.nowRule,
-                  {
-                    top: railTop + dayTimelineTopFor(nowMinutes),
-                    backgroundColor: theme.color.primary,
-                  },
-                ]}
-              />
+              <>
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.nowRule,
+                    {
+                      top: railTop + dayTimelineTopFor(nowMinutes),
+                      backgroundColor: theme.color.primary,
+                    },
+                  ]}
+                />
+                {/*
+                  The clock reads in the gutter, on the hour label it replaces:
+                  same column, same right edge, so "now" simply takes over that
+                  slot instead of covering an event.
+                */}
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.nowClock,
+                    {
+                      top:
+                        railTop +
+                        dayTimelineTopFor(nowMinutes) +
+                        NOW_RULE_HEIGHT / 2 -
+                        NOW_CLOCK_HEIGHT / 2,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.nowClockPill,
+                      {
+                        backgroundColor: theme.color.primary,
+                        shadowColor: theme.color.primary,
+                      },
+                    ]}
+                  >
+                    <Text
+                      variant="caption"
+                      style={[styles.nowClockText, { color: theme.color.text.inverse }]}
+                    >
+                      {formatClock(nowMinutes)}
+                    </Text>
+                  </View>
+                </View>
+              </>
             ) : null}
             <View>
               <View style={{ height: railTop }} />
@@ -387,13 +431,56 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  /** Negative insets cancel `timelineRow`'s padding, so it reaches both edges. */
+  /*
+    Absolute children sit against the row's border box, not its content box,
+    so the screen inset is spelled out here — the rule stops on the app's
+    margins instead of bleeding to the display edges.
+  */
+  /*
+    Starts where the gutter ends, which is where the clock pill ends: the two
+    read as one continuous marker. Running it to the screen margin instead
+    would leave a stub of rule showing beside the pill.
+  */
   nowRule: {
     position: 'absolute',
-    left: -semanticSpacing.screenHorizontal,
-    right: -semanticSpacing.screenHorizontal,
-    height: 1.5,
+    left: semanticSpacing.screenHorizontal + RAIL_WIDTH,
+    right: semanticSpacing.screenHorizontal,
+    height: NOW_RULE_HEIGHT,
     zIndex: 3,
+  },
+  /** Fills the hour rail's column, so no rule can show to either side of it. */
+  nowClock: {
+    position: 'absolute',
+    left: semanticSpacing.screenHorizontal,
+    width: RAIL_WIDTH,
+    height: NOW_CLOCK_HEIGHT,
+    justifyContent: 'center',
+    zIndex: 4,
+  },
+  /*
+    Sized and centred rather than padded: padding leaves the digits sitting
+    low in the pill, because a text box reserves room for descenders the
+    time never uses.
+  */
+  nowClockPill: {
+    alignSelf: 'stretch',
+    height: NOW_CLOCK_HEIGHT,
+    justifyContent: 'center',
+    borderRadius: 999,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.33,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  nowClockText: {
+    fontSize: 11.5,
+    lineHeight: 13,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    textAlign: 'center',
+    includeFontPadding: false,
+    // Lining figures, so the capsule does not twitch as the minute ticks.
+    fontVariant: ['tabular-nums'],
   },
   allDayWrap: {
     paddingHorizontal: semanticSpacing.screenHorizontal,

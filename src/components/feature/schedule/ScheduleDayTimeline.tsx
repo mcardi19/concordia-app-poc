@@ -201,60 +201,54 @@ export function ScheduleDayTimeline({
             );
           })}
 
-          {nowTop != null ? (
+          {/*
+            Standalone only. In pager mode the screen draws the rule and the
+            clock instead: this grid lives inside the horizontal pager, which
+            clips to the page, so nothing here can reach the hour rail or the
+            screen margin no matter how far it is offset.
+          */}
+          {nowTop != null && !hideRail ? (
             <>
-              {/*
-                Standalone only. In pager mode the screen draws the rule
-                instead: this grid lives inside the horizontal pager, which
-                clips to the page, so nothing here can reach the hour rail or
-                the screen edge no matter how far it is offset.
-              */}
-              {hideRail ? null : (
-                <View
-                  pointerEvents="none"
-                  style={[
-                    styles.nowRule,
-                    {
-                      top: nowTop,
-                      left: -NOW_RULE_BLEED_LEFT,
-                      right: -NOW_RULE_BLEED_RIGHT,
-                      backgroundColor: theme.color.primary,
-                    },
-                  ]}
-                />
-              )}
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.nowRule,
+                  {
+                    top: nowTop,
+                    left: -NOW_RULE_BLEED_LEFT,
+                    right: -NOW_RULE_BLEED_RIGHT,
+                    backgroundColor: theme.color.primary,
+                  },
+                ]}
+              />
               {/*
                 Markers keep the grid's own box, so the dot still lands on the
                 content edge and the pill still sits in the gutter beside it.
               */}
               <View pointerEvents="none" style={[styles.nowMarkers, { top: nowTop }]}>
-              <View
-                style={[
-                  styles.nowDot,
-                  hideRail ? styles.nowDotInPager : null,
-                  { backgroundColor: theme.color.primary },
-                ]}
-              />
-              <View
-                style={[
-                  hideRail ? styles.nowPillInPager : styles.nowPill,
-                  {
-                    backgroundColor: theme.color.primary,
-                    shadowColor: theme.color.primary,
-                  },
-                ]}
-              >
-                <Text
-                  variant="caption"
-                  style={{
-                    fontSize: 10,
-                    fontWeight: '700',
-                    color: theme.color.text.inverse,
-                  }}
+                <View
+                  style={[styles.nowDot, { backgroundColor: theme.color.primary }]}
+                />
+                <View
+                  style={[
+                    styles.nowPill,
+                    {
+                      backgroundColor: theme.color.primary,
+                      shadowColor: theme.color.primary,
+                    },
+                  ]}
                 >
-                  {formatClock(nowMinutes ?? 0)}
-                </Text>
-              </View>
+                  <Text
+                    variant="caption"
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      color: theme.color.text.inverse,
+                    }}
+                  >
+                    {formatClock(nowMinutes ?? 0)}
+                  </Text>
+                </View>
               </View>
             </>
           ) : null}
@@ -361,26 +355,11 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
-  nowDotInPager: {
-    left: 0,
-  },
   nowPill: {
     position: 'absolute',
     right: '100%',
     top: -9,
     marginRight: 12,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.33,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  nowPillInPager: {
-    position: 'absolute',
-    left: 12,
-    top: -9,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 10,
