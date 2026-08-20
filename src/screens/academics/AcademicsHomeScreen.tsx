@@ -39,12 +39,18 @@ import { academicsTheme } from './academicsTheme';
 type Props = AcademicsStackScreenProps<'AcademicsHome'>;
 
 /*
-  Sized so the third card peeks: at a 402pt screen with a 16pt inset and a
-  10pt gap, card three starts at 16 + 2×178 = 372, leaving ~30pt visible —
-  enough to read as "there is more" without a second card's worth of dead
-  space. Widening from 138 is what buys the larger type room to breathe.
+  Sized against the truncation, not the card count. Registrar titles are long
+  — "Last day to apply for DEF or MED notation" — and at 168 the second line
+  clipped on most of them. 210 gives the text 174pt across instead of 132, a
+  third more, which is the difference between two readable lines and an
+  ellipsis.
+
+  That trades the old three-card peek for a two-card one: on a 402pt screen
+  with a 16pt inset, card two now runs 236–446 and shows about 166 of its
+  210. Still unmistakably "there is more", and a partial card the size of a
+  card reads as more deliberate than a 30pt sliver.
 */
-const DATE_CARD_WIDTH = 168;
+const DATE_CARD_WIDTH = 210;
 const CAROUSEL_GAP = 10;
 const DATE_TITLE_LINE_HEIGHT = 21;
 
