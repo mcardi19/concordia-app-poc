@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
@@ -310,27 +310,43 @@ export function AcademicsHomeScreen({ navigation }: Props) {
                 </>
               );
 
+              const open = () => navigation.navigate('AcademicDate', { id: date.id });
+
               return soon ? (
-                <LinearGradient
-                  key={date.title}
-                  colors={[theme.color.primary, academicsTheme.heroGradientEnd]}
-                  style={[
-                    styles.dateCard,
-                    styles.dateCardContent,
-                    styles.dateCardSoon,
-                    { shadowColor: theme.color.primary },
-                  ]}
+                <Pressable
+                  key={date.id}
+                  onPress={open}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${meta.label}: ${date.title}`}
+                  style={({ pressed }) => (pressed ? styles.cardPressed : undefined)}
                 >
-                  {body}
-                </LinearGradient>
+                  <LinearGradient
+                    colors={[theme.color.primary, academicsTheme.heroGradientEnd]}
+                    style={[
+                      styles.dateCard,
+                      styles.dateCardContent,
+                      styles.dateCardSoon,
+                      { shadowColor: theme.color.primary },
+                    ]}
+                  >
+                    {body}
+                  </LinearGradient>
+                </Pressable>
               ) : (
-                <MeGlassCard
-                  key={date.title}
-                  style={styles.dateCard}
-                  contentStyle={[styles.dateCardSurface, styles.dateCardContent]}
+                <Pressable
+                  key={date.id}
+                  onPress={open}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${meta.label}: ${date.title}`}
+                  style={({ pressed }) => (pressed ? styles.cardPressed : undefined)}
                 >
-                  {body}
-                </MeGlassCard>
+                  <MeGlassCard
+                    style={styles.dateCard}
+                    contentStyle={[styles.dateCardSurface, styles.dateCardContent]}
+                  >
+                    {body}
+                  </MeGlassCard>
+                </Pressable>
               );
             })}
           </ScrollView>
@@ -394,6 +410,10 @@ export function AcademicsHomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  /** Press feedback for cards that draw their own surface. */
+  cardPressed: {
+    opacity: 0.72,
+  },
   root: {
     flex: 1,
     backgroundColor: academicsTheme.pageBackground,

@@ -21,6 +21,17 @@ export type SearchRoutes = {
   SearchCategory: { categoryKey: string };
 };
 
+/**
+ * Academic-date detail. Reached from the Schedule's all-day stack, the
+ * Academics carousel and the academic calendar — three tabs, one screen — so
+ * like `SearchRoutes` it is declared once and registered into whichever stack
+ * pushed it, rather than owned by one of them.
+ */
+export type AcademicDateRoutes = {
+  /** One academic date, by its `AcademicDateEntry` id. */
+  AcademicDate: { id: string };
+};
+
 /** The Me tab's own screens, kept separate so `MeStackParamList` reads as a sum. */
 export type MeRoutes = {
   MeHome: undefined;
@@ -36,10 +47,8 @@ export type TodayStackParamList = SearchRoutes & {
   Emergency: undefined;
 };
 
-export type ScheduleStackParamList = {
+export type ScheduleStackParamList = AcademicDateRoutes & {
   Schedule: undefined;
-  /** One academic date, by its `AcademicDateEntry` id. */
-  AcademicDate: { id: string };
 };
 
 export type CampusStackParamList = {
@@ -65,7 +74,7 @@ export type CampusStackParamList = {
   ServicesSearch: undefined;
 };
 
-export type AcademicsStackParamList = SearchRoutes & {
+export type AcademicsStackParamList = SearchRoutes & AcademicDateRoutes & {
   AcademicsHome: undefined;
   AcademicCalendar: undefined;
   Grades: undefined;

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import { Text } from '@/components/design-system';
 import { scheduleTheme } from '@/components/feature/schedule';
 import { MaterialSymbol, msChevronRight } from '@/components/icons';
@@ -7,7 +8,7 @@ import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { useNow } from '@/hooks';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
-import type { ScheduleStackScreenProps } from '@/navigation/types';
+import type { AcademicDateRoutes } from '@/navigation/types';
 import {
   ACADEMIC_CATEGORY_LABEL,
   academicDateById,
@@ -89,7 +90,13 @@ const TERM_LABEL: Record<AcademicDateEntry['term'], string> = {
  * and the Victoria Day frame are the same component with different data —
  * which is what makes it work for the other ninety-two dates too.
  */
-export function AcademicDateScreen({ route }: ScheduleStackScreenProps<'AcademicDate'>) {
+export function AcademicDateScreen() {
+  /*
+    The route rather than screen props: this screen is registered into three
+    different stacks, and typing it against any one of them would make it
+    unusable from the other two.
+  */
+  const route = useRoute<RouteProp<AcademicDateRoutes, 'AcademicDate'>>();
   const theme = useTheme();
   const now = useNow();
   const tabBarPadding = useTabBarContentPadding();

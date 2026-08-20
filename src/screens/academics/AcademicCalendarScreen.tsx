@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +32,7 @@ import {
 import { academicsTheme } from './academicsTheme';
 import { useNow } from '@/hooks';
 import { academicDayKey, academicTermStatus } from '@/services/academic';
+import type { AcademicsStackScreenProps } from '@/navigation/types';
 
 /** "Aug 19 – Aug 22", for entries that occupy more than a day. */
 function rangeLabel(event: AcademicEvent): string {
@@ -64,7 +65,9 @@ const KIND_ICON: Record<AcademicKind, Parameters<typeof MaterialSymbol>[0]['icon
  * Past entries within the current month are hidden behind a toggle rather
  * than dropped — the design keeps them reachable but out of the way.
  */
-export function AcademicCalendarScreen() {
+export function AcademicCalendarScreen({
+  navigation,
+}: AcademicsStackScreenProps<'AcademicCalendar'>) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarPadding = useTabBarContentPadding();
@@ -78,6 +81,11 @@ export function AcademicCalendarScreen() {
   const filterKinds = CALENDAR_FILTERS.find((f) => f.id === activeFilter)?.kinds ?? null;
   const thisMonthKey = academicDayKey(now).slice(0, 7);
   const termStatus = useMemo(() => academicTermStatus(now), [now]);
+
+  const open = useCallback(
+    (event: AcademicEvent) => navigation.navigate('AcademicDate', { id: event.id }),
+    [navigation],
+  );
 
   const months = useMemo(
     () =>
@@ -223,8 +231,14 @@ export function AcademicCalendarScreen() {
                     : event.detail;
 
                   return (
-                    <LinearGradient
+                    <Pressable
                       key={event.id}
+                      onPress={() => open(event)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Today, ${meta.label}: ${event.title}`}
+                      style={({ pressed }) => (pressed ? { opacity: 0.85 } : undefined)}
+                    >
+                    <LinearGradient
                       colors={[theme.color.primary, academicsTheme.heroGradientEnd]}
                       style={[styles.todayCard, { shadowColor: theme.color.primary }]}
                     >
@@ -295,15 +309,19 @@ export function AcademicCalendarScreen() {
                         </Text>
                       </View>
                     </LinearGradient>
+                    </Pressable>
                   );
                 }
 
                 return (
-                  <MeGlassCard
+                  <Pressable
                     key={event.id}
-                    style={past ? { opacity: 0.5 } : undefined}
-                    contentStyle={styles.eventRow}
+                    onPress={() => open(event)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${meta.label}: ${event.title}`}
+                    style={({ pressed }) => ({ opacity: past ? 0.5 : pressed ? 0.72 : 1 })}
                   >
+                  <MeGlassCard contentStyle={styles.eventRow}>
                     <View style={styles.eventDate}>
                       <Text
                         variant="bodySmall"
@@ -358,6 +376,7 @@ export function AcademicCalendarScreen() {
                       </Text>
                     </View>
                   </MeGlassCard>
+                  </Pressable>
                 );
               })}
             </View>
