@@ -479,13 +479,20 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     textAlign: 'center',
     includeFontPadding: false,
+    /*
+      Digits carry no descender, so the text box centres its own line box
+      while the ink lands high. Half a point puts the numerals, rather than
+      the box around them, on the capsule's centre line.
+    */
+    transform: [{ translateY: 0.5 }],
     // Lining figures, so the capsule does not twitch as the minute ticks.
     fontVariant: ['tabular-nums'],
   },
   allDayWrap: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 10,
-    paddingBottom: 10,
+    // The banner's gutter row carries the matching space below the card.
+    paddingBottom: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: scheduleTheme.mastheadBorder,
   },

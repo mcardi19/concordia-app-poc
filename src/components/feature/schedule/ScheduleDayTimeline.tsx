@@ -149,10 +149,16 @@ export function ScheduleDayTimeline({
                     style={{
                       fontSize: 10,
                       fontWeight: '600',
-                      letterSpacing: 0.2,
+                      letterSpacing: 0.3,
                       color: theme.color.primary,
                       opacity: isNow ? 1 : 0.85,
                       flex: 1,
+                      /*
+                        Course codes arrive uppercase, but the non-course
+                        entries ("Office hrs", "Club") do not — without this
+                        they read as titles rather than overlines.
+                      */
+                      textTransform: 'uppercase',
                     }}
                   >
                     {isNow ? 'NOW · ' : ''}
