@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, msEvent } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
-import { scheduleTheme } from './scheduleTheme';
+import { RAIL_WIDTH, scheduleTheme } from './scheduleTheme';
 import type { ScheduleAllDayItem } from './scheduleTypes';
 
 type Props = {
@@ -95,15 +95,12 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onPress }: Props)
   return (
     <View style={styles.gutterRow}>
       <View style={styles.gutter}>
-        <Text
-          variant="bodySmall"
-          style={{
-            fontSize: 13.5,
-            fontWeight: '500',
-            letterSpacing: -0.2,
-            color: theme.color.primary,
-          }}
-        >
+        {/*
+          Sits in the hour rail's column, styled as one of its labels — the
+          all-day row is the top of the same time axis, so its label belongs
+          in the same gutter rather than inside the card.
+        */}
+        <Text variant="caption" numberOfLines={1} style={styles.gutterLabel}>
           All day
         </Text>
       </View>
@@ -150,13 +147,19 @@ const styles = StyleSheet.create({
   },
   gutterRow: {
     flexDirection: 'row',
-    gap: 14,
-    paddingHorizontal: 4,
     paddingBottom: 10,
   },
+  /** Matches `ScheduleHourRail` so the label lines up with the hour labels. */
   gutter: {
-    width: 62,
-    paddingTop: 3,
+    width: RAIL_WIDTH,
+    paddingTop: 12,
+    paddingRight: 4,
+  },
+  gutterLabel: {
+    fontSize: 11.5,
+    textAlign: 'right',
+    letterSpacing: 0.2,
+    color: scheduleTheme.railLabel,
   },
   gutterBody: {
     flex: 1,

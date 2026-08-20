@@ -2,7 +2,7 @@ export { ScheduleHeader } from './ScheduleHeader';
 export { ScheduleWeekStrip } from './ScheduleWeekStrip';
 export { ScheduleAllDayBanner } from './ScheduleAllDayBanner';
 export { ScheduleAgendaView } from './ScheduleAgendaView';
-export { ScheduleDayTimeline } from './ScheduleDayTimeline';
+export { ScheduleDayTimeline, dayTimelineTopFor } from './ScheduleDayTimeline';
 export { ScheduleHourRail } from './ScheduleHourRail';
 export {
   ScheduleThreeDayView,

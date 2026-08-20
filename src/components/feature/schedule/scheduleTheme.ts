@@ -11,7 +11,7 @@ export const scheduleTheme = {
   cardBackground: '#FFFFFF',
   cardBorder: 'rgba(0, 0, 0, 0.06)',
   /** Rule under the week strip and all-day banner. */
-  mastheadBorder: 'rgba(0, 0, 0, 0.16)',
+  mastheadBorder: 'rgba(0, 0, 0, 0.24)',
 
   /** Hour labels and hairlines on the time rail. */
   railLabel: '#A8A8AA',
@@ -33,6 +33,13 @@ export const scheduleTheme = {
   /** All-day banner: front card, stacked card behind it. */
   allDayFill: '#F6EEF0',
   allDayStackFill: '#FBF4F6',
+
+  /**
+   * Course blocks on the timeline — an 18% wash of `#912338` on white, about
+   * twice the strength of the all-day fill. A block is the densest thing on
+   * the grid, so it carries more of the brand than the banner above it.
+   */
+  eventFill: '#EBD7DB',
 
   /** Floating add button. */
   fabFill: '#F4E7EA',

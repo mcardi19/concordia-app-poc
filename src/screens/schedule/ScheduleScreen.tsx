@@ -13,6 +13,7 @@ import {
   SchedulePager,
   ScheduleThreeDayView,
   ScheduleWeekStrip,
+  dayTimelineTopFor,
   scheduleTheme,
   type PlannerDay,
   type ScheduleViewMode,
@@ -31,6 +32,7 @@ import {
   isSameDay,
 } from '@/components/feature/schedule/scheduleUtils';
 import { useNow } from '@/hooks';
+import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
 import { HEADER_CHROME_TOP_GAP } from '@/navigation/HeaderIconButton';
@@ -165,6 +167,7 @@ function SchedulePage({
 }
 
 export function ScheduleScreen() {
+  const theme = useTheme();
   const tabBarPadding = useTabBarContentPadding();
   const onTabBarMinimize = useTabBarMinimizeScrollHandler();
   const insets = useSafeAreaInsets();
@@ -196,6 +199,8 @@ export function ScheduleScreen() {
   const hourHeight = viewMode === 'day' ? DAY_HOUR_HEIGHT : PLANNER_HOUR_HEIGHT;
   const railTop =
     viewMode === 'week' ? PLANNER_GRID_TOP + PLANNER_HEAD_HEIGHT : DAY_GRID_TOP;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const showsNowRule = viewMode === 'day' && isViewingToday;
 
   const onTimelineScroll = onTabBarMinimize;
 
@@ -251,7 +256,6 @@ export function ScheduleScreen() {
         />
         <ScheduleWeekStrip
           selectedDate={selectedDate}
-          events={MOCK_WEEK_EVENTS}
           onSelectDate={goToDate}
           stepDays={stepDays}
           scrollProgress={pagerProgress}
@@ -280,7 +284,7 @@ export function ScheduleScreen() {
             importantForAccessibility={showsAllDayBanner ? 'yes' : 'no-hide-descendants'}
           >
             <View style={showsAllDayBanner ? null : styles.allDayHidden}>
-              <ScheduleAllDayBanner items={MOCK_ALL_DAY_ITEMS} />
+              <ScheduleAllDayBanner items={MOCK_ALL_DAY_ITEMS} showGutterLabel />
             </View>
           </View>
         ) : null}
@@ -298,6 +302,25 @@ export function ScheduleScreen() {
           directionalLockEnabled
         >
           <View style={styles.timelineRow}>
+            {/*
+              The now rule lives here, not in the timeline, because the grid
+              sits inside the horizontal pager and the pager clips to a page.
+              Drawn against the row it clears the hour rail on the left and
+              the screen inset on the right, which is what "now" should do —
+              it is a line across the whole day, not across one column.
+            */}
+            {showsNowRule ? (
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.nowRule,
+                  {
+                    top: railTop + dayTimelineTopFor(nowMinutes),
+                    backgroundColor: theme.color.primary,
+                  },
+                ]}
+              />
+            ) : null}
             <View>
               <View style={{ height: railTop }} />
               <ScheduleHourRail
@@ -363,6 +386,14 @@ const styles = StyleSheet.create({
   timelinePager: {
     flex: 1,
     minWidth: 0,
+  },
+  /** Negative insets cancel `timelineRow`'s padding, so it reaches both edges. */
+  nowRule: {
+    position: 'absolute',
+    left: -semanticSpacing.screenHorizontal,
+    right: -semanticSpacing.screenHorizontal,
+    height: 1.5,
+    zIndex: 3,
   },
   allDayWrap: {
     paddingHorizontal: semanticSpacing.screenHorizontal,

@@ -26,11 +26,9 @@ import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { scheduleTheme } from './scheduleTheme';
 import { getDayLetter, isSameDay } from './scheduleUtils';
-import type { ScheduleEvent } from './scheduleTypes';
 
 type Props = {
   selectedDate: Date;
-  events: ScheduleEvent[];
   onSelectDate: (date: Date) => void;
   /**
    * Fires when paging settles on a different week, passing that week's Sunday.
@@ -45,8 +43,6 @@ type Props = {
 };
 
 const CIRCLE = 40;
-/** A day at or above this many events gets the solid density dot. */
-const BUSY_THRESHOLD = 3;
 
 /**
  * Weeks either side of the anchor that can be paged to. A year in each
@@ -76,11 +72,6 @@ function addDays(date: Date, days: number): Date {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
   return d;
-}
-
-/** Lowercase three-letter key matching ScheduleEvent.dayKey. */
-function dayKeyOf(date: Date): string {
-  return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
 }
 
 function playNumberPulse(scale: SharedValue<number>) {
@@ -129,7 +120,6 @@ function pagerNumberScale(progress: number, dayOffset: number, stepDays: number)
 function DayCell({
   date,
   selected,
-  count,
   pulseId,
   stepDays,
   scrollProgress,
@@ -138,7 +128,6 @@ function DayCell({
 }: {
   date: Date;
   selected: boolean;
-  count: number;
   /** Bumps when the selected day changes, including from the timetable pager. */
   pulseId: number;
   stepDays: number;
@@ -148,7 +137,6 @@ function DayCell({
 }) {
   const theme = useTheme();
   const primary = theme.color.primary;
-  const busy = count >= BUSY_THRESHOLD;
   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
   const pressScale = useSharedValue(1);
   const pressedRef = useRef(false);
@@ -225,19 +213,6 @@ function DayCell({
         </Animated.Text>
       </Animated.View>
 
-      <View
-        style={[
-          styles.dot,
-          {
-            backgroundColor:
-              count === 0
-                ? 'transparent'
-                : busy
-                  ? theme.color.primary
-                  : `${theme.color.primary}55`,
-          },
-        ]}
-      />
     </Pressable>
   );
 }
@@ -255,7 +230,6 @@ function DayCell({
  */
 export function ScheduleWeekStrip({
   selectedDate,
-  events,
   onSelectDate,
   onVisibleWeekChange,
   stepDays = 1,
@@ -279,14 +253,6 @@ export function ScheduleWeekStrip({
     () => Array.from({ length: PAGE_COUNT }, (_, i) => addDays(anchor, (i - WEEK_RADIUS) * 7)),
     [anchor],
   );
-
-  const countsByDayKey = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const event of events) {
-      counts[event.dayKey] = (counts[event.dayKey] ?? 0) + 1;
-    }
-    return counts;
-  }, [events]);
 
   /*
     Follow the selection when it moves from outside — the header's "today"
@@ -336,7 +302,6 @@ export function ScheduleWeekStrip({
               key={date.toISOString()}
               date={date}
               selected={isSameDay(date, selectedDate)}
-              count={countsByDayKey[dayKeyOf(date)] ?? 0}
               pulseId={pulseId}
               stepDays={stepDays}
               scrollProgress={scrollProgress}
@@ -347,7 +312,7 @@ export function ScheduleWeekStrip({
         })}
       </View>
     ),
-    [width, selectedDate, countsByDayKey, onSelectDate, pulseId, stepDays, scrollProgress, selectedStampSv],
+    [width, selectedDate, onSelectDate, pulseId, stepDays, scrollProgress, selectedStampSv],
   );
 
   const onMomentumScrollEnd = useCallback(
@@ -443,12 +408,6 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 6,
-  },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
     marginTop: 6,
   },
 });

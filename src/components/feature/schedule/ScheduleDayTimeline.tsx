@@ -31,8 +31,14 @@ const HOURS = Array.from(
   (_, i) => i + DAY_HOUR_START,
 );
 
-const topFor = (minutes: number) =>
+/**
+ * Offset of a minute-of-day from the top of the grid. Exported so the screen
+ * can place the full-width now rule on the same geometry as the blocks.
+ */
+export const dayTimelineTopFor = (minutes: number) =>
   (minutes / 60 - DAY_HOUR_START) * DAY_HOUR_HEIGHT;
+
+const topFor = dayTimelineTopFor;
 
 function hourLabel(hour: number): string {
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
@@ -196,10 +202,32 @@ export function ScheduleDayTimeline({
           })}
 
           {nowTop != null ? (
-            <View
-              pointerEvents="none"
-              style={[styles.nowRule, { top: nowTop, backgroundColor: theme.color.primary }]}
-            >
+            <>
+              {/*
+                Standalone only. In pager mode the screen draws the rule
+                instead: this grid lives inside the horizontal pager, which
+                clips to the page, so nothing here can reach the hour rail or
+                the screen edge no matter how far it is offset.
+              */}
+              {hideRail ? null : (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.nowRule,
+                    {
+                      top: nowTop,
+                      left: -NOW_RULE_BLEED_LEFT,
+                      right: -NOW_RULE_BLEED_RIGHT,
+                      backgroundColor: theme.color.primary,
+                    },
+                  ]}
+                />
+              )}
+              {/*
+                Markers keep the grid's own box, so the dot still lands on the
+                content edge and the pill still sits in the gutter beside it.
+              */}
+              <View pointerEvents="none" style={[styles.nowMarkers, { top: nowTop }]}>
               <View
                 style={[
                   styles.nowDot,
@@ -227,13 +255,21 @@ export function ScheduleDayTimeline({
                   {formatClock(nowMinutes ?? 0)}
                 </Text>
               </View>
-            </View>
+              </View>
+            </>
           ) : null}
         </View>
       </View>
     </View>
   );
 }
+
+/**
+ * How far the now rule reaches past the grid on each side, so it spans the
+ * screen: the row's own inset, plus the hour rail on the left.
+ */
+const NOW_RULE_BLEED_LEFT = semanticSpacing.screenHorizontal + RAIL_WIDTH;
+const NOW_RULE_BLEED_RIGHT = semanticSpacing.screenHorizontal;
 
 const styles = StyleSheet.create({
   root: {
@@ -306,10 +342,16 @@ const styles = StyleSheet.create({
   },
   nowRule: {
     position: 'absolute',
-    left: 0,
-    right: 0,
     height: 1.5,
     zIndex: 3,
+  },
+  /** Zero-height anchor matching the grid, for the dot and the time pill. */
+  nowMarkers: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 0,
+    zIndex: 4,
   },
   nowDot: {
     position: 'absolute',

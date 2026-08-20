@@ -31,7 +31,7 @@ export function ScheduleSurfaceFill({ radius = 8 }: Props) {
         style={[
           StyleSheet.absoluteFillObject,
           {
-            backgroundColor: scheduleTheme.allDayFill,
+            backgroundColor: scheduleTheme.eventFill,
             borderRadius: radius,
             borderCurve: 'continuous',
           },
@@ -56,7 +56,7 @@ export function ScheduleSurfaceFill({ radius = 8 }: Props) {
 }
 
 /**
- * The flat fill is opaque `#F6EEF0`; at partial alpha the same hue reads as a
+ * The flat fill is opaque `#EBD7DB`; at partial alpha the same hue reads as a
  * course block while still letting the glass refract what is behind it.
  */
-const SCHEDULE_GLASS_TINT = 'rgba(246, 238, 240, 0.55)';
+const SCHEDULE_GLASS_TINT = 'rgba(235, 215, 219, 0.72)';
