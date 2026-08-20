@@ -46,11 +46,18 @@ type Props = AcademicsStackScreenProps<'AcademicsHome'>;
   ellipsis.
 
   That trades the old three-card peek for a two-card one: on a 402pt screen
-  with a 16pt inset, card two now runs 236–446 and shows about 166 of its
-  210. Still unmistakably "there is more", and a partial card the size of a
-  card reads as more deliberate than a 30pt sliver.
+  with a 16pt inset, card two runs 256–486 and shows about 146 of its 230.
+  Still unmistakably "there is more", and a partial card the size of a card
+  reads as more deliberate than a 30pt sliver.
 */
-const DATE_CARD_WIDTH = 210;
+const DATE_CARD_WIDTH = 230;
+/*
+  Lighter than the Me tab's 60% wash on purpose. These cards sit against the
+  brand-filled "soonest" card, and liquid glass refracts colour in from its
+  edges — thinning the wash is what lets that red bleed across the seam
+  instead of being covered by white.
+*/
+const DATE_CARD_GLASS_TINT = 'rgba(255, 255, 255, 0.3)';
 const CAROUSEL_GAP = 10;
 const DATE_TITLE_LINE_HEIGHT = 21;
 
@@ -279,10 +286,10 @@ export function AcademicsHomeScreen({ navigation }: Props) {
                   <Text
                     variant="heading2"
                     style={{
-                      fontSize: 32,
-                      lineHeight: 35,
+                      fontSize: 40,
+                      lineHeight: 43,
                       fontWeight: '600',
-                      letterSpacing: -1,
+                      letterSpacing: -1.4,
                       marginTop: 4,
                       color: soon ? '#FFFFFF' : academicsTheme.headingText,
                     }}
@@ -349,6 +356,7 @@ export function AcademicsHomeScreen({ navigation }: Props) {
                   <MeGlassCard
                     style={styles.dateCard}
                     contentStyle={[styles.dateCardSurface, styles.dateCardContent]}
+                    glassTint={DATE_CARD_GLASS_TINT}
                   >
                     {body}
                   </MeGlassCard>

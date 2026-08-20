@@ -20,6 +20,12 @@ type Props = {
   /** Padding and inner layout for the surface itself. */
   contentStyle?: StyleProp<ViewStyle>;
   radius?: number;
+  /**
+   * Overrides the tab's default wash. Lower the alpha to let more of what
+   * surrounds the card refract through it — liquid glass bends colour in from
+   * its edges, so a card beside something saturated picks that colour up.
+   */
+  glassTint?: string;
 };
 
 /**
@@ -38,6 +44,7 @@ export function MeGlassCard({
   style,
   contentStyle,
   radius = 8,
+  glassTint = meTheme.cardGlassTint,
 }: Props) {
   const glass = useMemo(() => canUseLiquidGlass(), []);
   const interactive = onPress != null;
@@ -47,7 +54,7 @@ export function MeGlassCard({
       isInteractive={interactive}
       glassEffectStyle="regular"
       colorScheme="light"
-      tintColor={meTheme.cardGlassTint}
+      tintColor={glassTint}
       style={[styles.surface, { borderRadius: radius }, contentStyle]}
     >
       {children}
