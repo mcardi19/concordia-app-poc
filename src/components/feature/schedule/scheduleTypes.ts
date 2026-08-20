@@ -33,7 +33,11 @@ export type ScheduleEvent = {
  */
 export type ScheduleAllDayItem = {
   id: string;
-  /** "University", "Deadline", "Holiday" — rendered as the eyebrow. */
+  /** "Closure", "Deadline", "Examinations" — rendered as the eyebrow. */
   kind: string;
   title: string;
+  /** The registrar's qualification, shown once the stack is expanded. */
+  detail?: string;
+  /** Higher leads the stack. See `ACADEMIC_CATEGORY_PRIORITY`. */
+  priority?: number;
 };

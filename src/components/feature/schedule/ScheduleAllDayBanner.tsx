@@ -1,87 +1,124 @@
-import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { LayoutAnimation, Platform, Pressable, StyleSheet, UIManager, View } from 'react-native';
 import { Text } from '@/components/design-system';
+import { MaterialSymbol, msChevronRight, msExpandMore } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { GRID_INSET, RAIL_WIDTH, scheduleTheme } from './scheduleTheme';
 import type { ScheduleAllDayItem } from './scheduleTypes';
 
 type Props = {
   items: ScheduleAllDayItem[];
-  /** Renders the compact "All day" gutter label used by the agenda view. */
+  /** Renders the compact "All day" gutter label used by the timeline views. */
   showGutterLabel?: boolean;
-  onPress?: () => void;
+  /** Opens one entry's detail. */
+  onSelect?: (item: ScheduleAllDayItem) => void;
 };
 
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 /**
- * Institutional all-day entries. Only the first is shown; the rest are implied
- * by a card peeking out behind it plus a "+N more" pill, so a busy exam week
- * never pushes the timetable off screen.
+ * Institutional all-day entries — the day's academic dates.
+ *
+ * Collapsed, only the highest-priority entry is drawn, with a card peeking out
+ * behind it to show there are more. That is the honest default: on March 1st
+ * six things are true at once, and six stacked cards would push the timetable
+ * off screen for a day whose events have no times at all.
+ *
+ * Tapping the stack expands it in place rather than pushing a list screen,
+ * because the question "what else is today" is answered by three more lines,
+ * not by a navigation. Once expanded, each row is its own target into detail.
  */
-export function ScheduleAllDayBanner({ items, showGutterLabel, onPress }: Props) {
+export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props) {
   const theme = useTheme();
+  const [expanded, setExpanded] = useState(false);
+
+  const toggle = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((open) => !open);
+  }, []);
+
   if (items.length === 0) {
     return null;
   }
 
   const [first] = items;
   const more = items.length - 1;
+  const shown = expanded ? items : [first];
+
+  const card = (item: ScheduleAllDayItem, index: number) => (
+    <Pressable
+      key={item.id}
+      onPress={() => onSelect?.(item)}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.kind}: ${item.title}`}
+      style={({ pressed }) => [
+        styles.card,
+        { borderColor: `${theme.color.primary}26`, opacity: pressed ? 0.72 : 1 },
+        index > 0 ? styles.cardStacked : null,
+      ]}
+    >
+      <View style={styles.cardText}>
+        <Text
+          variant="caption"
+          style={[styles.kind, { color: theme.color.primary }]}
+        >
+          {item.kind}
+        </Text>
+        <Text variant="bodySmall" numberOfLines={expanded ? 2 : 1} style={styles.title}>
+          {item.title}
+        </Text>
+        {expanded && item.detail ? (
+          <Text variant="caption" numberOfLines={2} style={styles.detail}>
+            {item.detail}
+          </Text>
+        ) : null}
+      </View>
+
+      <MaterialSymbol
+        icon={msChevronRight}
+        size={16}
+        color={scheduleTheme.metaText}
+      />
+    </Pressable>
+  );
 
   const banner = (
-    <View style={styles.stackWrap}>
-      {more > 0 ? (
-        <View
-          style={[
-            styles.stackedCard,
-            { borderColor: `${theme.color.primary}1A` },
-          ]}
-        />
-      ) : null}
-
-      <Pressable
-        onPress={more > 0 ? onPress : undefined}
-        disabled={more === 0}
-        accessibilityRole={more > 0 ? 'button' : undefined}
-        accessibilityLabel={`All day: ${first.title}${more > 0 ? `, and ${more} more` : ''}`}
-        style={[styles.card, { borderColor: `${theme.color.primary}26` }]}
-      >
-        <View style={styles.cardText}>
-          <Text
-            variant="caption"
-            style={{
-              fontSize: 10,
-              fontWeight: '700',
-              letterSpacing: 0.3,
-              color: theme.color.primary,
-              textTransform: 'uppercase',
-            }}
-          >
-            {showGutterLabel ? first.kind : `All day · ${first.kind}`}
-          </Text>
-          <Text
-            variant="bodySmall"
-            numberOfLines={1}
-            style={{
-              fontSize: 14.5,
-              fontWeight: '600',
-              color: scheduleTheme.headingText,
-              marginTop: 2,
-            }}
-          >
-            {first.title}
-          </Text>
-        </View>
-
-        {more > 0 ? (
-          <View style={[styles.morePill, { backgroundColor: `${theme.color.primary}14` }]}>
-            <Text
-              variant="caption"
-              style={{ fontSize: 11, fontWeight: '700', color: theme.color.primary }}
-            >
-              +{more} more
-            </Text>
-          </View>
+    <View>
+      <View style={styles.stackWrap}>
+        {/*
+          The peeking card is the whole affordance for a collapsed stack — it
+          says "there is another one underneath" in the shape of the thing
+          underneath. It goes away once they are all drawn.
+        */}
+        {more > 0 && !expanded ? (
+          <View style={[styles.stackedCard, { borderColor: `${theme.color.primary}1A` }]} />
         ) : null}
-      </Pressable>
+
+        {shown.map(card)}
+      </View>
+
+      {more > 0 ? (
+        <Pressable
+          onPress={toggle}
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          accessibilityLabel={expanded ? 'Show fewer academic dates' : `Show ${more} more academic dates`}
+          hitSlop={6}
+          style={({ pressed }) => [styles.moreRow, { opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text variant="caption" style={[styles.moreLabel, { color: theme.color.primary }]}>
+            {expanded ? 'Show less' : `+${more} more`}
+          </Text>
+          <View style={expanded ? styles.chevronUp : undefined}>
+            <MaterialSymbol icon={msExpandMore} size={15} color={theme.color.primary} />
+          </View>
+        </Pressable>
+      ) : null}
     </View>
   );
 
@@ -135,14 +172,46 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     paddingVertical: 11,
   },
+  cardStacked: {
+    marginTop: 6,
+  },
   cardText: {
     flex: 1,
     minWidth: 0,
   },
-  morePill: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 999,
+  kind: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  title: {
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: scheduleTheme.headingText,
+    marginTop: 2,
+  },
+  detail: {
+    fontSize: 11.5,
+    lineHeight: 15,
+    color: scheduleTheme.metaText,
+    marginTop: 3,
+  },
+  moreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 2,
+    // Clears the peeking card's 6pt of overhang.
+    marginTop: 10,
+    paddingVertical: 2,
+  },
+  moreLabel: {
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  chevronUp: {
+    transform: [{ rotate: '180deg' }],
   },
   gutterRow: {
     flexDirection: 'row',

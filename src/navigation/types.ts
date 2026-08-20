@@ -38,6 +38,8 @@ export type TodayStackParamList = SearchRoutes & {
 
 export type ScheduleStackParamList = {
   Schedule: undefined;
+  /** One academic date, by its `AcademicDateEntry` id. */
+  AcademicDate: { id: string };
 };
 
 export type CampusStackParamList = {

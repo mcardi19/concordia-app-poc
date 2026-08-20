@@ -20,10 +20,7 @@ import {
   type PlannerDay,
   type ScheduleViewMode,
 } from '@/components/feature/schedule';
-import {
-  MOCK_ALL_DAY_ITEMS,
-  MOCK_WEEK_EVENTS,
-} from '@/components/feature/schedule/scheduleMockData';
+import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import {
   DAY_HOUR_HEIGHT,
   PLANNER_HOUR_HEIGHT,
@@ -35,11 +32,13 @@ import {
   isSameDay,
 } from '@/components/feature/schedule/scheduleUtils';
 import { useNow } from '@/hooks';
+import { PLACEHOLDER_ALL_DAY, allDayItemsFor } from './academicAllDay';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
 import { HEADER_CHROME_TOP_GAP } from '@/navigation/HeaderIconButton';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
+import type { ScheduleStackScreenProps } from '@/navigation/types';
 import { formatWeekMonday } from '@/api/schedule';
 
 /** Wednesday — decides which month a week spanning a boundary is titled by. */
@@ -129,7 +128,7 @@ function SchedulePage({
         <ScheduleAgendaView
           date={date}
           events={dayEvents}
-          allDayItems={isViewingToday ? MOCK_ALL_DAY_ITEMS : []}
+          allDayItems={allDayItemsFor(date)}
           todayKey={getDayKey(now)}
         />
       ) : null}
@@ -173,7 +172,7 @@ function SchedulePage({
   );
 }
 
-export function ScheduleScreen() {
+export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedule'>) {
   const theme = useTheme();
   const tabBarPadding = useTabBarContentPadding();
   const onTabBarMinimize = useTabBarMinimizeScrollHandler();
@@ -200,7 +199,12 @@ export function ScheduleScreen() {
 
   const todayIndex = weekDates.findIndex((d) => isSameDay(d, now));
   const isViewingToday = isSameDay(selectedDate, now);
-  const showsAllDayBanner = viewMode === 'day' && isViewingToday;
+  /*
+    Academic dates are a property of the day, not of today — paging to a
+    Thanksgiving three weeks out should show the closure sitting on it.
+  */
+  const allDayItems = useMemo(() => allDayItemsFor(selectedDate), [selectedDate]);
+  const showsAllDayBanner = viewMode === 'day' && allDayItems.length > 0;
   const isTimeline = viewMode === 'day' || viewMode === 'week';
   const stepDays = viewMode === 'week' ? PLANNER_SPAN : 1;
   const hourHeight = viewMode === 'day' ? DAY_HOUR_HEIGHT : PLANNER_HOUR_HEIGHT;
@@ -291,7 +295,11 @@ export function ScheduleScreen() {
             importantForAccessibility={showsAllDayBanner ? 'yes' : 'no-hide-descendants'}
           >
             <View style={showsAllDayBanner ? null : styles.allDayHidden}>
-              <ScheduleAllDayBanner items={MOCK_ALL_DAY_ITEMS} showGutterLabel />
+              <ScheduleAllDayBanner
+                items={allDayItems.length > 0 ? allDayItems : PLACEHOLDER_ALL_DAY}
+                showGutterLabel
+                onSelect={(item) => navigation.navigate('AcademicDate', { id: item.id })}
+              />
             </View>
           </View>
         ) : null}

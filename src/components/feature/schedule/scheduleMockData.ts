@@ -1,4 +1,4 @@
-import type { ScheduleAllDayItem, ScheduleEvent } from './scheduleTypes';
+import type { ScheduleEvent } from './scheduleTypes';
 import { scheduleTheme } from './scheduleTheme';
 
 const BRAND = '#912338';
@@ -44,10 +44,6 @@ export const MOCK_WEEK_EVENTS: ScheduleEvent[] = [
 ];
 
 /** Institutional entries pinned above the hour rail. */
-export const MOCK_ALL_DAY_ITEMS: ScheduleAllDayItem[] = [
-  { id: 'exams-end', kind: 'University', title: 'Examinations end' },
-];
-
 /** "Now" marker position in the design — Friday 2:42 PM. */
 export const MOCK_NOW_MINUTES = hm(14, 42);
 
