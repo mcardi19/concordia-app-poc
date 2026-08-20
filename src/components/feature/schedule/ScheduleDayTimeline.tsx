@@ -12,7 +12,7 @@ import {
 } from './scheduleTheme';
 import { ScheduleSurfaceFill } from './ScheduleSurface';
 import type { ScheduleEvent } from './scheduleTypes';
-import { formatClock } from './scheduleUtils';
+import { eventStatus, formatClock } from './scheduleUtils';
 import { semanticSpacing } from '@/design-system/tokens';
 
 type Props = {
@@ -102,10 +102,9 @@ export function ScheduleDayTimeline({
           {events.map((event) => {
             const top = topFor(event.startMinutes);
             const height = topFor(event.endMinutes) - top;
-            const isNow =
-              nowMinutes != null &&
-              nowMinutes >= event.startMinutes &&
-              nowMinutes < event.endMinutes;
+            const status = eventStatus(event, nowMinutes);
+            const isNow = status === 'active';
+            const isPast = status === 'past';
             return (
               <Pressable
                 key={event.id}
@@ -117,7 +116,7 @@ export function ScheduleDayTimeline({
                   {
                     top,
                     height,
-                    opacity: event.done ? 0.55 : 1,
+                    opacity: isPast ? 0.55 : 1,
                     borderColor: `${theme.color.primary}26`,
                     justifyContent: height > 60 ? 'flex-start' : 'center',
                     zIndex: isNow ? 2 : 1,
@@ -163,7 +162,7 @@ export function ScheduleDayTimeline({
                   >
                     {isNow ? 'NOW · ' : ''}
                     {event.courseCode}
-                    {event.done ? ' · done' : ''}
+                    {isPast ? ' · done' : ''}
                   </Text>
                   <Text
                     variant="caption"

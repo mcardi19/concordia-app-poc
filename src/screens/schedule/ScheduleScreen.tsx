@@ -130,6 +130,7 @@ function SchedulePage({
           events={dayEvents}
           allDayItems={allDayItemsFor(date)}
           todayKey={getDayKey(now)}
+          nowMinutes={nowMinutes}
         />
       ) : null}
 

@@ -235,3 +235,20 @@ export function groupEventsByDay(
     };
   }).filter((group) => group.events.length > 0);
 }
+
+/**
+ * Where an event sits relative to the clock.
+ *
+ * `nowMinutes` is only supplied for the day being lived through, so every
+ * event on any other day reads as `future` — a Friday class is not "done"
+ * when you are looking at next Friday.
+ */
+export function eventStatus(
+  event: { startMinutes: number; endMinutes: number },
+  nowMinutes?: number,
+): ScheduleEventStatus {
+  if (nowMinutes == null) return 'future';
+  if (nowMinutes >= event.endMinutes) return 'past';
+  if (nowMinutes >= event.startMinutes) return 'active';
+  return 'future';
+}

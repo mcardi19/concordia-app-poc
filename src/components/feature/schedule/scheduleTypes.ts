@@ -19,12 +19,15 @@ export type ScheduleEvent = {
   room?: string;
   professor?: string;
   mode?: ScheduleDeliveryMode;
-  /** Accent rail colour. Falls back to brand for classes, grey for study. */
+  /**
+   * Accent rail colour. Falls back to brand for classes, grey for study.
+   *
+   * Note there is no `done` or `now` here. Both used to be stored, frozen to
+   * the design canvas's Friday 2:42 PM, which meant a Friday morning class
+   * read as finished at 9am and a lecture read as live on the wrong day.
+   * `eventStatus` derives both from the clock instead.
+   */
   tint?: string;
-  /** Already finished — rendered dimmed. */
-  done?: boolean;
-  /** In session right now — rendered as the emphasised card. */
-  now?: boolean;
 };
 
 /**

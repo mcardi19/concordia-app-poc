@@ -7,7 +7,7 @@ import { ScheduleAllDayBanner } from './ScheduleAllDayBanner';
 import { ScheduleSurfaceFill } from './ScheduleSurface';
 import { scheduleTheme } from './scheduleTheme';
 import type { ScheduleAllDayItem, ScheduleEvent } from './scheduleTypes';
-import { formatClock, getDayKey, groupEventsByDay } from './scheduleUtils';
+import { eventStatus, formatClock, getDayKey, groupEventsByDay } from './scheduleUtils';
 
 type Props = {
   events: ScheduleEvent[];
@@ -21,6 +21,8 @@ type Props = {
   allDayItems: ScheduleAllDayItem[];
   /** Day key that should read as "Today". */
   todayKey: string;
+  /** Minutes from midnight, only for today — drives past/live styling. */
+  nowMinutes?: number;
   onSelectEvent?: (event: ScheduleEvent) => void;
 };
 
@@ -138,9 +140,11 @@ function NowRow({
 
 function AgendaRow({
   event,
+  past,
   onPress,
 }: {
   event: ScheduleEvent;
+  past?: boolean;
   onPress?: () => void;
 }) {
   const theme = useTheme();
@@ -150,7 +154,7 @@ function AgendaRow({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${event.courseCode}, ${event.title}`}
-      style={[styles.row, styles.plainRow, { opacity: event.done ? 0.5 : 1 }]}
+      style={[styles.row, styles.plainRow, { opacity: past ? 0.5 : 1 }]}
     >
       <TimeColumn event={event} />
       <View style={styles.plainBody}>
@@ -204,6 +208,7 @@ export function ScheduleAgendaView({
   date,
   allDayItems,
   todayKey,
+  nowMinutes,
   onSelectEvent,
 }: Props) {
   const theme = useTheme();
@@ -269,8 +274,10 @@ export function ScheduleAgendaView({
                 Nothing scheduled
               </Text>
             ) : (
-              group.events.map((event) =>
-                event.now ? (
+              group.events.map((event) => {
+                // Only the day being lived through has a clock to compare to.
+                const status = eventStatus(event, isToday ? nowMinutes : undefined);
+                return status === 'active' ? (
                   <NowRow
                     key={event.id}
                     event={event}
@@ -280,9 +287,11 @@ export function ScheduleAgendaView({
                   <AgendaRow
                     key={event.id}
                     event={event}
+                    past={status === 'past'}
                     onPress={() => onSelectEvent?.(event)}
                   />
-                ),
+                );
+              },
               )
             )}
           </View>

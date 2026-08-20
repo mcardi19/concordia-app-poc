@@ -48,7 +48,14 @@ describe('deriveTodaySession', () => {
   it('rolls to the next teaching day once the day is over', () => {
     const session = deriveTodaySession(monday(21));
     expect(session.state).toBe('tomorrow');
-    expect(session.statusLabel).toBe('Done for today · next Tuesday');
+    // Tuesday is tomorrow, and "next Tuesday" would read as the week after.
+    expect(session.statusLabel).toBe('Done for today · tomorrow');
+  });
+
+  it('names the weekday once the next class is further out than tomorrow', () => {
+    // Saturday's only entry is a study block, so the next class is Monday.
+    const session = deriveTodaySession(saturday(11));
+    expect(session.statusLabel).toBe('No classes today · next Monday');
   });
 
   it('says so when the day has no classes at all', () => {

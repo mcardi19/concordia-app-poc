@@ -54,16 +54,29 @@ export function classesOn(dayKey: string): ScheduleEvent[] {
   ).sort((a, b) => a.startMinutes - b.startMinutes);
 }
 
-function nextTeachingDay(fromDayKey: string): { dayKey: string; event: ScheduleEvent } | null {
+function nextTeachingDay(
+  fromDayKey: string,
+): { dayKey: string; event: ScheduleEvent; daysAhead: number } | null {
   const start = (WEEK_ORDER_KEYS as readonly string[]).indexOf(fromDayKey);
   if (start < 0) return null;
   // A week at most — a timetable with nothing in it should end, not loop.
   for (let step = 1; step <= WEEK_ORDER_KEYS.length; step += 1) {
     const dayKey = WEEK_ORDER_KEYS[(start + step) % WEEK_ORDER_KEYS.length];
     const [event] = classesOn(dayKey);
-    if (event) return { dayKey, event };
+    if (event) return { dayKey, event, daysAhead: step };
   }
   return null;
+}
+
+/**
+ * Names the day the next class is on.
+ *
+ * "next" and "tomorrow" do not go together — nobody says "next tomorrow" —
+ * so the whole tail changes rather than just the day word: tomorrow gets the
+ * relative form, anything further out gets "next" and a weekday.
+ */
+function nextDayPhrase(dayKey: string, daysAhead: number): string {
+  return daysAhead === 1 ? 'tomorrow' : `next ${DAY_NAME[dayKey] ?? ''}`.trim();
 }
 
 const DAY_NAME: Record<string, string> = {
@@ -136,13 +149,9 @@ export function deriveTodaySession(now: Date): TodaySession {
   */
   const upcoming = nextTeachingDay(dayKey);
   if (upcoming) {
-    const label = today.length > 0 ? 'Done for today · next' : 'No classes today · next';
-    return fromEvent(
-      upcoming.event,
-      'tomorrow',
-      `${label} ${DAY_NAME[upcoming.dayKey] ?? ''}`.trim(),
-      TONE.rest,
-    );
+    const label = today.length > 0 ? 'Done for today' : 'No classes today';
+    const when = nextDayPhrase(upcoming.dayKey, upcoming.daysAhead);
+    return fromEvent(upcoming.event, 'tomorrow', `${label} · ${when}`, TONE.rest);
   }
 
   return {
