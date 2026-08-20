@@ -1,7 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
-import { MaterialSymbol, msEvent } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { RAIL_WIDTH, scheduleTheme } from './scheduleTheme';
 import type { ScheduleAllDayItem } from './scheduleTypes';
@@ -45,8 +44,6 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onPress }: Props)
         accessibilityLabel={`All day: ${first.title}${more > 0 ? `, and ${more} more` : ''}`}
         style={[styles.card, { borderColor: `${theme.color.primary}26` }]}
       >
-        <MaterialSymbol icon={msEvent} size={18} color={theme.color.primary} />
-
         <View style={styles.cardText}>
           <Text
             variant="caption"
