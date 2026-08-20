@@ -2,7 +2,9 @@ import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { Text } from '@/components/design-system';
-import { scheduleTheme } from '@/components/feature/schedule';
+import { CardGlass } from '@/components/design-system/GlassSurface';
+import { SECTION_HEADING_TEXT } from '@/components/feature/today/TodaySectionHeader';
+import { academicsTheme } from '@/screens/academics/academicsTheme';
 import { MaterialSymbol, msChevronRight } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -148,7 +150,13 @@ export function AcademicDateScreen() {
     >
       {/* Hero — the date, and how long you have. */}
       <View style={styles.block}>
-        <View style={[styles.hero, { shadowColor: theme.color.primary }]}>
+        {/*
+          Shadow outside, clip inside: a view that clips its bounds clips its
+          own shadow too, so the lift and the glass cannot live on one box.
+        */}
+        <View style={[styles.heroShadow, { shadowColor: theme.color.primary }]}>
+        <View style={styles.hero}>
+          <CardGlass radius={PANEL_RADIUS} />
           <View style={styles.heroDate}>
             <Text variant="caption" style={[styles.dow, { color: theme.color.primary }]}>
               {day.toLocaleDateString('en-CA', { weekday: 'short' }).toUpperCase()}
@@ -183,6 +191,7 @@ export function AcademicDateScreen() {
               </Text>
             ) : null}
           </View>
+        </View>
         </View>
       </View>
 
@@ -226,7 +235,8 @@ export function AcademicDateScreen() {
         <Text variant="heading3" style={styles.sectionHeading}>
           Details
         </Text>
-        <View style={[styles.panel, { borderColor: scheduleTheme.cardBorder }]}>
+        <View style={[styles.panel, { borderColor: academicsTheme.cardBorder }]}>
+          <CardGlass radius={PANEL_RADIUS} />
           {details.map((row, index) => (
             <View
               key={row.key}
@@ -252,7 +262,8 @@ export function AcademicDateScreen() {
           <Text variant="heading3" style={styles.sectionHeading}>
             Related dates
           </Text>
-          <View style={[styles.panel, { borderColor: scheduleTheme.cardBorder }]}>
+          <View style={[styles.panel, { borderColor: academicsTheme.cardBorder }]}>
+            <CardGlass radius={PANEL_RADIUS} />
             {related.map((other, index) => {
               const otherDay = parseDay(other.date);
               return (
@@ -287,7 +298,7 @@ export function AcademicDateScreen() {
                   <MaterialSymbol
                     icon={msChevronRight}
                     size={16}
-                    color={scheduleTheme.metaText}
+                    color={academicsTheme.metaText}
                   />
                 </Pressable>
               );
@@ -298,7 +309,8 @@ export function AcademicDateScreen() {
 
       {/* Source. */}
       <View style={styles.block}>
-        <View style={[styles.panel, styles.source, { borderColor: scheduleTheme.cardBorder }]}>
+        <View style={[styles.panel, styles.source, { borderColor: academicsTheme.cardBorder }]}>
+          <CardGlass radius={PANEL_RADIUS} />
           <Text variant="caption" style={styles.detailKey}>
             SOURCE
           </Text>
@@ -311,10 +323,25 @@ export function AcademicDateScreen() {
   );
 }
 
+/**
+ * The app's overline, as used by the schedule blocks, the all-day card and
+ * the campus cards. This screen had four near-misses of it — 11pt here, 0.2
+ * tracking there, one that never uppercased.
+ */
+/** One radius for every panel on the page, glass and border alike. */
+const PANEL_RADIUS = 12;
+
+const OVERLINE = {
+  fontSize: 10,
+  fontWeight: '700',
+  letterSpacing: 0.3,
+  textTransform: 'uppercase',
+} as const;
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: scheduleTheme.pageBackground,
+    backgroundColor: academicsTheme.pageBackground,
   },
   missing: {
     flex: 1,
@@ -326,41 +353,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: semanticSpacing.screenHorizontal + 6,
     paddingTop: 20,
   },
-  hero: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
-    backgroundColor: scheduleTheme.cardBackground,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: scheduleTheme.cardBorder,
-    borderRadius: 8,
+  heroShadow: {
+    borderRadius: PANEL_RADIUS,
     borderCurve: 'continuous',
-    paddingVertical: 20,
-    paddingHorizontal: 22,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
     shadowRadius: 24,
     elevation: 2,
   },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: academicsTheme.cardBorder,
+    borderRadius: PANEL_RADIUS,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    paddingVertical: 20,
+    paddingHorizontal: 22,
+  },
   heroDate: {
     alignItems: 'center',
   },
   dow: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.2,
+    ...OVERLINE,
   },
   dayNumber: {
     fontSize: 56,
     lineHeight: 56,
     fontWeight: '600',
     letterSpacing: -2,
-    color: scheduleTheme.headingText,
+    color: academicsTheme.headingText,
     marginTop: 4,
   },
   month: {
-    fontSize: 11,
-    color: scheduleTheme.metaText,
+    fontSize: 12,
+    color: academicsTheme.metaText,
     marginTop: 4,
   },
   heroRule: {
@@ -372,11 +401,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   heroLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-    color: scheduleTheme.metaText,
-    textTransform: 'uppercase',
+    ...OVERLINE,
+    color: academicsTheme.metaText,
   },
   countRow: {
     flexDirection: 'row',
@@ -392,22 +418,19 @@ const styles = StyleSheet.create({
   },
   countUnit: {
     fontSize: 14,
-    color: scheduleTheme.metaText,
+    color: academicsTheme.metaText,
   },
   heroSub: {
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 16,
-    color: scheduleTheme.metaText,
+    color: academicsTheme.metaText,
     marginTop: 6,
   },
   eyebrow: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
+    ...OVERLINE,
   },
   title: {
-    color: scheduleTheme.headingText,
+    color: academicsTheme.headingText,
     marginTop: 6,
   },
   lede: {
@@ -421,27 +444,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   affectsLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.2,
+    ...OVERLINE,
     color: '#FFFFFF',
     opacity: 0.75,
-    textTransform: 'uppercase',
   },
   affectsBody: {
-    fontSize: 14.5,
+    fontSize: 14,
     lineHeight: 20,
     color: '#FFFFFF',
     marginTop: 6,
   },
   sectionHeading: {
-    color: scheduleTheme.headingText,
+    ...SECTION_HEADING_TEXT,
+    color: academicsTheme.headingText,
     marginBottom: 10,
   },
   panel: {
-    backgroundColor: scheduleTheme.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
+    borderRadius: PANEL_RADIUS,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -454,18 +474,19 @@ const styles = StyleSheet.create({
   },
   detailRowDivided: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: scheduleTheme.cardBorder,
+    borderBottomColor: academicsTheme.cardBorder,
   },
   detailKey: {
     width: 84,
     fontSize: 12,
-    color: scheduleTheme.metaText,
+    lineHeight: 20,
+    color: academicsTheme.metaText,
   },
   detailValue: {
     flex: 1,
-    fontSize: 12.5,
-    lineHeight: 18,
-    color: scheduleTheme.headingText,
+    fontSize: 14,
+    lineHeight: 20,
+    color: academicsTheme.headingText,
   },
   relatedRowPressed: {
     opacity: 0.55,
@@ -486,11 +507,11 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontWeight: '600',
     letterSpacing: -0.8,
-    color: scheduleTheme.headingText,
+    color: academicsTheme.headingText,
   },
   relatedMonth: {
-    fontSize: 10,
-    color: scheduleTheme.metaText,
+    fontSize: 12,
+    color: academicsTheme.metaText,
     marginTop: 2,
   },
   relatedText: {
@@ -498,16 +519,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   relatedKind: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-    color: scheduleTheme.metaText,
-    textTransform: 'uppercase',
+    ...OVERLINE,
+    color: academicsTheme.metaText,
   },
   relatedTitle: {
-    fontSize: 13,
-    lineHeight: 17,
-    color: scheduleTheme.headingText,
+    fontSize: 14,
+    lineHeight: 19,
+    color: academicsTheme.headingText,
     marginTop: 3,
   },
   source: {
@@ -515,8 +533,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   sourceValue: {
-    fontSize: 13,
-    color: scheduleTheme.headingText,
+    fontSize: 14,
+    color: academicsTheme.headingText,
     marginTop: 3,
   },
 });

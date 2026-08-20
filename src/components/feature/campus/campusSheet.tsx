@@ -1,8 +1,13 @@
 import React, { useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { GlassView } from 'expo-glass-effect';
 import type { MsIconDefinition } from 'material-symbols-react-native';
+import {
+  CARD_GLASS_TINT,
+  CardGlass,
+  SHEET_GLASS_TINT,
+  SheetGlass,
+} from '@/components/design-system/GlassSurface';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import { MaterialSymbol } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
@@ -21,17 +26,13 @@ export const SHEET_DISMISS_DISTANCE = 120;
 export const SHEET_SPRING = { damping: 22, stiffness: 220, mass: 0.9 };
 export const SHEET_PEEK_HEIGHT_RATIO = 0.38;
 export const SHEET_EXPANDED_HEIGHT_RATIO = 0.78;
-export const SHEET_GLASS_TINT = 'rgba(255,255,255,0.55)';
-/**
- * Cards are tinted heavier than sheets. A sheet is large enough that whatever
- * shows through it reads as texture, but the quick card is a small panel of
- * fine print over a busy map — at the sheet's tint, street names and building
- * footprints run straight through the pill labels.
- */
-export const CARD_GLASS_TINT = 'rgba(255,255,255,0.82)';
+/*
+  The glass itself lives in the design system: the academic date screen wants
+  the same card material, and a second definition would drift from this one.
+  Re-exported so the drawers here keep importing their chrome from one place.
+*/
+export { CARD_GLASS_TINT, CardGlass, SHEET_GLASS_TINT, SheetGlass };
 
-const SHEET_BLUR_INTENSITY = 72;
-const CARD_BLUR_INTENSITY = 96;
 /** Larger than `theme.radius.xl` (12) so the sheet reads as a rounded iOS panel. */
 export const SHEET_CORNER_RADIUS = 32;
 
@@ -45,84 +46,6 @@ export const sheetShadow = Platform.select({
   },
   android: { elevation: 12 },
 });
-
-/**
- * Absolute-fill glass, with the three-tier fallback every surface on this map
- * needs: liquid glass on iOS 26, a chrome blur on older iOS, a near-opaque
- * white anywhere else. Layout stays on the sibling content — this only paints.
- */
-function GlassLayer({
-  corner,
-  tint,
-  intensity,
-  fallback,
-}: {
-  corner: ViewStyle;
-  tint: string;
-  intensity: number;
-  fallback: string;
-}) {
-  const useGlass = useMemo(() => canUseLiquidGlass(), []);
-
-  if (useGlass) {
-    return (
-      <GlassView
-        pointerEvents="none"
-        isInteractive={false}
-        glassEffectStyle="regular"
-        colorScheme="light"
-        tintColor={tint}
-        style={[StyleSheet.absoluteFillObject, corner]}
-      />
-    );
-  }
-
-  if (Platform.OS === 'ios') {
-    return (
-      <BlurView
-        pointerEvents="none"
-        intensity={intensity}
-        tint="systemChromeMaterialLight"
-        style={[StyleSheet.absoluteFillObject, corner]}
-      />
-    );
-  }
-
-  return (
-    <View
-      pointerEvents="none"
-      style={[StyleSheet.absoluteFillObject, { backgroundColor: fallback }, corner]}
-    />
-  );
-}
-
-/** For sheets rising off the bottom edge — only the top corners are visible. */
-export function SheetGlass({ radius }: { radius: number }) {
-  return (
-    <GlassLayer
-      corner={{
-        borderTopLeftRadius: radius,
-        borderTopRightRadius: radius,
-        borderCurve: 'continuous',
-      }}
-      tint={SHEET_GLASS_TINT}
-      intensity={SHEET_BLUR_INTENSITY}
-      fallback="rgba(255,255,255,0.94)"
-    />
-  );
-}
-
-/** For cards floating clear of every edge, so all four corners are rounded. */
-export function CardGlass({ radius }: { radius: number }) {
-  return (
-    <GlassLayer
-      corner={{ borderRadius: radius, borderCurve: 'continuous' }}
-      tint={CARD_GLASS_TINT}
-      intensity={CARD_BLUR_INTENSITY}
-      fallback="rgba(255,255,255,0.97)"
-    />
-  );
-}
 
 export function GlassIconButton({
   icon,
