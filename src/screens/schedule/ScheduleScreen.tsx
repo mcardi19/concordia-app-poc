@@ -440,20 +440,28 @@ const styles = StyleSheet.create({
     Starts where the gutter ends, which is where the clock pill ends: the two
     read as one continuous marker. Running it to the screen margin instead
     would leave a stub of rule showing beside the pill.
+
+    It does run out to the screen edge on the right, though — unlike a block,
+    "now" is not bounded by the day's column. It is the one thing on this
+    grid that keeps going.
   */
   nowRule: {
     position: 'absolute',
     left: semanticSpacing.screenHorizontal + RAIL_WIDTH,
-    right: semanticSpacing.screenHorizontal,
+    right: 0,
     height: NOW_RULE_HEIGHT,
     zIndex: 3,
   },
-  /** Fills the hour rail's column, so no rule can show to either side of it. */
+  /*
+    The hour rail's column. The pill hangs off its right edge, where the rule
+    begins, so the two meet with no rule showing to the pill's left.
+  */
   nowClock: {
     position: 'absolute',
     left: semanticSpacing.screenHorizontal,
     width: RAIL_WIDTH,
     height: NOW_CLOCK_HEIGHT,
+    alignItems: 'flex-end',
     justifyContent: 'center',
     zIndex: 4,
   },
@@ -463,7 +471,7 @@ const styles = StyleSheet.create({
     time never uses.
   */
   nowClockPill: {
-    alignSelf: 'stretch',
+    paddingHorizontal: 6,
     height: NOW_CLOCK_HEIGHT,
     justifyContent: 'center',
     borderRadius: 999,
