@@ -33,7 +33,7 @@ const TERM_WINDOWS: { term: AcademicTerm; from: string; to: string }[] = [
   { term: 'summer-2027', from: '2027-05-01', to: '2027-08-31' },
 ];
 
-function termFor(date: string): AcademicTerm {
+export function academicTermFor(date: string): AcademicTerm {
   const window = TERM_WINDOWS.find((w) => date >= w.from && date <= w.to);
   // Only the Dec 24 closure runs past its window's end, and it starts in fall.
   return window?.term ?? 'fall-2026';
@@ -70,7 +70,7 @@ function build(raw: RawAcademicDate[]): AcademicDateEntry[] {
         detail: row.detail,
         priority: row.priority ?? ACADEMIC_CATEGORY_PRIORITY[row.category],
         actionable: row.actionable ?? false,
-        term: termFor(row.date),
+        term: academicTermFor(row.date),
       };
     })
     .sort((a, b) => (a.date === b.date ? b.priority - a.priority : a.date < b.date ? -1 : 1));
@@ -128,3 +128,75 @@ export function relatedAcademicDates(entry: AcademicDateEntry, limit = 3): Acade
     .map((row) => row.other);
 }
 
+
+/** Display name per term. */
+export const ACADEMIC_TERM_LABEL: Record<AcademicTerm, string> = {
+  'summer-2026': 'Summer 2026',
+  'fall-2026': 'Fall 2026',
+  'winter-2027': 'Winter 2027',
+  'summer-2027': 'Summer 2027',
+};
+
+export type AcademicTermStatus = {
+  term: AcademicTerm;
+  /** "Fall 2026". */
+  label: string;
+  /** Null outside the teaching weeks — reading break included, breaks count. */
+  week: { current: number; total: number } | null;
+  /** "Classes in session", "Reading week", "Labour Day". */
+  phase: string;
+};
+
+const MS_PER_WEEK = 604_800_000;
+
+function covers(entry: AcademicDateEntry, dayKey: string): boolean {
+  return coversDay(entry, dayKey);
+}
+
+/**
+ * Where the student is in the term right now — the calendar masthead.
+ *
+ * Every part is read off the dataset rather than written down, because a
+ * hand-written "Week 11 of 13" is wrong the week after it is typed. The week
+ * count spans the term's own "Classes begin" and "Last day of classes", so a
+ * term with two sessions is measured end to end.
+ */
+export function academicTermStatus(now: Date): AcademicTermStatus {
+  const dayKey = academicDayKey(now);
+  const term = academicTermFor(dayKey);
+  const inTerm = ACADEMIC_DATES.filter((entry) => entry.term === term);
+
+  const begins = inTerm.find((e) => e.category === 'term' && e.title === 'Classes begin');
+  const ends = [...inTerm].reverse().find(
+    (e) => e.category === 'term' && e.title === 'Last day of classes',
+  );
+
+  let week: AcademicTermStatus['week'] = null;
+  if (begins && ends && dayKey >= begins.date && dayKey <= ends.date) {
+    const from = Date.parse(begins.date);
+    const elapsed = Date.parse(dayKey) - from;
+    const span = Date.parse(ends.date) - from;
+    week = {
+      current: Math.floor(elapsed / MS_PER_WEEK) + 1,
+      total: Math.ceil(span / MS_PER_WEEK) + 1,
+    };
+  }
+
+  /*
+    Phase reads from most specific to least: a closure inside reading week is
+    still the closure, and that is the thing worth naming.
+  */
+  const today = ACADEMIC_DATES.filter((entry) => covers(entry, dayKey));
+  const closure = today.find((e) => e.category === 'closure');
+  const reading = today.find((e) => e.category === 'term' && e.title === 'Reading week');
+  const exams = today.find((e) => e.category === 'exam' && e.endDate);
+
+  let phase = 'Between terms';
+  if (closure) phase = closure.title;
+  else if (reading) phase = 'Reading week';
+  else if (exams) phase = 'Examination period';
+  else if (week) phase = 'Classes in session';
+  else if (begins && dayKey < begins.date) phase = 'Before classes begin';
+
+  return { term, label: ACADEMIC_TERM_LABEL[term], week, phase };
+}

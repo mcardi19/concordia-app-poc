@@ -1,5 +1,6 @@
 import {
   ACADEMIC_DATES,
+  academicTermStatus,
   academicDatesOn,
   academicDayKey,
   relatedAcademicDates,
@@ -110,5 +111,29 @@ describe('helpers', () => {
     const related = relatedAcademicDates(entry, 3);
     expect(related).toHaveLength(3);
     expect(related.map((e) => e.id)).not.toContain(entry.id);
+  });
+});
+
+describe('academicTermStatus', () => {
+  it('names the term and counts the week from the data', () => {
+    const status = academicTermStatus(day('2026-09-22'));
+    expect(status.label).toBe('Fall 2026');
+    // Classes begin Sep 8; Sep 22 is the third week.
+    expect(status.week).toEqual({ current: 3, total: expect.any(Number) });
+    expect(status.phase).toBe('Classes in session');
+  });
+
+  it('names a closure over the reading week it sits inside', () => {
+    expect(academicTermStatus(day('2026-10-12')).phase).toBe('Thanksgiving Day');
+    expect(academicTermStatus(day('2026-10-14')).phase).toBe('Reading week');
+  });
+
+  it('reports the examination period', () => {
+    expect(academicTermStatus(day('2026-12-15')).phase).toBe('Examination period');
+  });
+
+  it('drops the week count outside the teaching weeks', () => {
+    expect(academicTermStatus(day('2026-09-02')).week).toBeNull();
+    expect(academicTermStatus(day('2026-09-02')).phase).toBe('Before classes begin');
   });
 });

@@ -19,26 +19,41 @@ import {
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import {
-  ACADEMIC_MONTHS,
-  ACADEMIC_TODAY,
   CALENDAR_FILTERS,
   KIND_META,
+  ACADEMIC_EVENTS,
+  academicMonths,
+  isEventToday,
   isPastEvent,
-  isToday,
   nextEvent,
   type AcademicEvent,
   type AcademicKind,
 } from './academicsData';
 import { academicsTheme } from './academicsTheme';
+import { useNow } from '@/hooks';
+import { academicDayKey, academicTermStatus } from '@/services/academic';
+
+/** "Aug 19 – Aug 22", for entries that occupy more than a day. */
+function rangeLabel(event: AcademicEvent): string {
+  if (!event.endDate) return '';
+  const fmt = (iso: string) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-CA', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+  return `${fmt(event.date)} – ${fmt(event.endDate)}`;
+}
 
 const KIND_ICON: Record<AcademicKind, Parameters<typeof MaterialSymbol>[0]['icon']> = {
   registration: msHowToReg,
-  classes: msSchool,
+  term: msSchool,
   exam: msAssignment,
   deadline: msScheduleClock,
-  holiday: msWbSunny,
-  fees: msPayments,
-  convocation: msWorkspacePremium,
+  closure: msWbSunny,
+  financial: msPayments,
+  graduation: msWorkspacePremium,
 };
 
 /**
@@ -57,38 +72,46 @@ export function AcademicCalendarScreen() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [showPast, setShowPast] = useState(false);
 
-  const next = useMemo(() => nextEvent(), []);
+  const now = useNow();
+  const next = useMemo(() => nextEvent(now), [now]);
+  const allMonths = useMemo(() => academicMonths(), []);
   const filterKinds = CALENDAR_FILTERS.find((f) => f.id === activeFilter)?.kinds ?? null;
+  const thisMonthKey = academicDayKey(now).slice(0, 7);
+  const termStatus = useMemo(() => academicTermStatus(now), [now]);
 
   const months = useMemo(
     () =>
-      ACADEMIC_MONTHS.map((month) => {
-        const visible = month.events.filter((event) => {
-          if (filterKinds && !filterKinds.includes(event.kind)) return false;
-          if (!showPast && isPastEvent(month.month, event)) return false;
-          return true;
-        });
+      allMonths
+        .map((month) => {
+          const visible = month.events.filter((event) => {
+            if (filterKinds && !filterKinds.includes(event.kind)) return false;
+            if (!showPast && isPastEvent(event, now)) return false;
+            return true;
+          });
 
-        // Today first, then next up, then the rest chronologically.
-        const rank = (event: AcademicEvent) => {
-          if (isToday(month.month, event)) return 0;
-          if (next && month.month === next.month && event.day === next.event.day) return 1;
-          return isPastEvent(month.month, event) ? 3 : 2;
-        };
+          // Today first, then next up, then the rest chronologically.
+          const rank = (event: AcademicEvent) => {
+            if (isEventToday(event, now)) return 0;
+            if (next && event.id === next.id) return 1;
+            return isPastEvent(event, now) ? 3 : 2;
+          };
 
-        const ordered =
-          month.month === ACADEMIC_TODAY.month
-            ? [...visible].sort((a, b) => rank(a) - rank(b) || Number(a.day) - Number(b.day))
-            : visible;
+          const ordered =
+            month.key === thisMonthKey
+              ? [...visible].sort(
+                  (a, b) => rank(a) - rank(b) || Number(a.day) - Number(b.day),
+                )
+              : visible;
 
-        return { month: month.month, events: ordered };
-      }).filter((m) => m.events.length > 0),
-    [filterKinds, showPast, next],
+          return { ...month, events: ordered };
+        })
+        .filter((m) => m.events.length > 0),
+    [allMonths, filterKinds, showPast, next, now, thisMonthKey],
   );
 
-  const hiddenPastCount = ACADEMIC_MONTHS.reduce(
-    (sum, m) => sum + m.events.filter((e) => isPastEvent(m.month, e)).length,
-    0,
+  const hiddenPastCount = useMemo(
+    () => ACADEMIC_EVENTS.filter((event) => isPastEvent(event, now)).length,
+    [now],
   );
 
   return (
@@ -107,19 +130,21 @@ export function AcademicCalendarScreen() {
             variant="heading2"
             style={{ fontSize: 27, lineHeight: 30, color: '#FFFFFF' }}
           >
-            Spring 2026
+            {termStatus.label}
           </Text>
           <View style={styles.heroMetaRow}>
-            <View style={styles.heroPill}>
-              <Text variant="caption" style={{ fontSize: 10.5, fontWeight: '700', color: '#FFFFFF' }}>
-                Week 11 of 13
-              </Text>
-            </View>
+            {termStatus.week ? (
+              <View style={styles.heroPill}>
+                <Text variant="caption" style={{ fontSize: 10.5, fontWeight: '700', color: '#FFFFFF' }}>
+                  Week {termStatus.week.current} of {termStatus.week.total}
+                </Text>
+              </View>
+            ) : null}
             <Text
               variant="caption"
               style={{ fontSize: 12.5, fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}
             >
-              Midterm period
+              {termStatus.phase}
             </Text>
           </View>
         </LinearGradient>
@@ -179,13 +204,27 @@ export function AcademicCalendarScreen() {
             <View style={styles.eventList}>
               {month.events.map((event) => {
                 const meta = KIND_META[event.kind];
-                const today = isToday(month.month, event);
-                const past = isPastEvent(month.month, event);
+                const today = isEventToday(event, now);
+                const past = isPastEvent(event, now);
 
                 if (today) {
+                  /*
+                    A span in force shows *today's* date, not the day it began
+                    — a card labelled "Today" beside the 19th when it is the
+                    20th is simply wrong. The range moves into the detail line.
+                  */
+                  const spanning = Boolean(event.endDate) && event.date !== academicDayKey(now);
+                  const heroDay = spanning ? String(now.getDate()) : event.day;
+                  const heroDow = spanning
+                    ? now.toLocaleDateString('en-CA', { weekday: 'short' })
+                    : event.dow;
+                  const heroDetail = event.endDate
+                    ? [rangeLabel(event), event.detail].filter(Boolean).join(' · ')
+                    : event.detail;
+
                   return (
                     <LinearGradient
-                      key={`${month.month}-${event.day}`}
+                      key={event.id}
                       colors={[theme.color.primary, academicsTheme.heroGradientEnd]}
                       style={[styles.todayCard, { shadowColor: theme.color.primary }]}
                     >
@@ -194,7 +233,7 @@ export function AcademicCalendarScreen() {
                           variant="heading2"
                           style={{ fontSize: 28, lineHeight: 30, fontWeight: '600', letterSpacing: -1, color: '#FFFFFF' }}
                         >
-                          {event.day}
+                          {heroDay}
                         </Text>
                         <Text
                           variant="caption"
@@ -206,7 +245,7 @@ export function AcademicCalendarScreen() {
                             marginTop: 4,
                           }}
                         >
-                          {event.dow.toUpperCase()}
+                          {heroDow.toUpperCase()}
                         </Text>
                       </View>
 
@@ -252,7 +291,7 @@ export function AcademicCalendarScreen() {
                           variant="caption"
                           style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.82)', marginTop: 3 }}
                         >
-                          {event.detail}
+                          {heroDetail}
                         </Text>
                       </View>
                     </LinearGradient>
@@ -261,7 +300,7 @@ export function AcademicCalendarScreen() {
 
                 return (
                   <MeGlassCard
-                    key={`${month.month}-${event.day}`}
+                    key={event.id}
                     style={past ? { opacity: 0.5 } : undefined}
                     contentStyle={styles.eventRow}
                   >

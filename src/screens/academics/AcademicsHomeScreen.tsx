@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
+import { useNow } from '@/hooks';
+import { academicTermStatus } from '@/services/academic';
 import { MeGlassCard, MeSectionLabel } from '@/components/feature/me';
 import { horizontalCarouselProps } from '@/components/feature/today';
 import {
@@ -28,7 +30,7 @@ import {
   COURSES,
   KIND_META,
   TERM_STATS,
-  UPCOMING_DATES,
+  upcomingDates,
   type AcademicResource,
   type Course,
 } from './academicsData';
@@ -88,6 +90,10 @@ function GradeChip({ course }: { course: Course }) {
  */
 export function AcademicsHomeScreen({ navigation }: Props) {
   const theme = useTheme();
+  const now = useNow();
+  /* The carousel is "what's next from here", so it has to move with the day. */
+  const upcoming = useMemo(() => upcomingDates(now, 4), [now]);
+  const termStatus = useMemo(() => academicTermStatus(now), [now]);
   const insets = useSafeAreaInsets();
   const tabBarPadding = useTabBarContentPadding();
   const onScroll = useTabBarMinimizeScrollHandler();
@@ -122,10 +128,12 @@ export function AcademicsHomeScreen({ navigation }: Props) {
             variant="bodySmall"
             style={{ fontSize: 14, fontWeight: '500', color: academicsTheme.heroSubtitle, marginTop: 7 }}
           >
-            {ACADEMIC_TERM.term}
+            {termStatus.label}
           </Text>
           <Text variant="caption" style={{ fontSize: 12, color: academicsTheme.heroMeta, marginTop: 9 }}>
-            {ACADEMIC_TERM.week}
+            {termStatus.week
+              ? `Week ${termStatus.week.current} of ${termStatus.week.total} · ${termStatus.phase}`
+              : termStatus.phase}
           </Text>
 
           <View style={styles.statsRow}>
@@ -227,9 +235,9 @@ export function AcademicsHomeScreen({ navigation }: Props) {
             snapToInterval={DATE_CARD_WIDTH + CAROUSEL_GAP}
             contentContainerStyle={styles.carousel}
           >
-            {UPCOMING_DATES.map((date) => {
+            {upcoming.map((date) => {
               const meta = KIND_META[date.kind];
-              const soon = date.soon === true;
+              const soon = date.soon;
 
               const body = (
                 <>
