@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useRoute, type RouteProp } from '@react-navigation/native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { Text } from '@/components/design-system';
 import { scheduleTheme } from '@/components/feature/schedule';
 import { MaterialSymbol, msChevronRight } from '@/components/icons';
@@ -97,6 +97,15 @@ export function AcademicDateScreen() {
     unusable from the other two.
   */
   const route = useRoute<RouteProp<AcademicDateRoutes, 'AcademicDate'>>();
+  /*
+    `push`, not `navigate`. This screen is the focused route, and a stack's
+    `navigate` reuses the focused route rather than stacking a second copy —
+    following a related date would swap the content out from under you with
+    no way back to the date you came from.
+  */
+  const navigation = useNavigation<{
+    push: (screen: 'AcademicDate', params: { id: string }) => void;
+  }>();
   const theme = useTheme();
   const now = useNow();
   const tabBarPadding = useTabBarContentPadding();
@@ -247,11 +256,15 @@ export function AcademicDateScreen() {
             {related.map((other, index) => {
               const otherDay = parseDay(other.date);
               return (
-                <View
+                <Pressable
                   key={other.id}
-                  style={[
+                  onPress={() => navigation.push('AcademicDate', { id: other.id })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${other.title}, ${ACADEMIC_CATEGORY_LABEL[other.category]}`}
+                  style={({ pressed }) => [
                     styles.relatedRow,
                     index < related.length - 1 ? styles.detailRowDivided : null,
+                    pressed ? styles.relatedRowPressed : null,
                   ]}
                 >
                   <View style={styles.relatedDate}>
@@ -276,7 +289,7 @@ export function AcademicDateScreen() {
                     size={16}
                     color={scheduleTheme.metaText}
                   />
-                </View>
+                </Pressable>
               );
             })}
           </View>
@@ -453,6 +466,9 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     lineHeight: 18,
     color: scheduleTheme.headingText,
+  },
+  relatedRowPressed: {
+    opacity: 0.55,
   },
   relatedRow: {
     flexDirection: 'row',
