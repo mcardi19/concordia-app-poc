@@ -83,3 +83,10 @@ export const HOUR_LABEL_LINE_HEIGHT = 12 * 1.4;
  * without the other, which would read as a mistake in a single column.
  */
 export const RAIL_LABEL_WEIGHT = '600' as const;
+/**
+ * Where an hour's hairline sits relative to the top of its row: the middle of
+ * the label's line box, so the rule reads as belonging to the time beside it.
+ * Labels are positioned from their box top, which is why this is a half
+ * line-height rather than zero.
+ */
+export const HOUR_LINE_OFFSET = HOUR_LABEL_LINE_HEIGHT / 2;

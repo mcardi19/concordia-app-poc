@@ -7,7 +7,7 @@ import {
   DAY_HOUR_HEIGHT,
   DAY_HOUR_START,
   GRID_INSET,
-  HOUR_LABEL_LINE_HEIGHT,
+  HOUR_LINE_OFFSET,
   RAIL_LABEL_WEIGHT,
   RAIL_WIDTH,
   scheduleTheme,
@@ -42,14 +42,6 @@ export const dayTimelineTopFor = (minutes: number) =>
   (minutes / 60 - DAY_HOUR_START) * DAY_HOUR_HEIGHT;
 
 const topFor = dayTimelineTopFor;
-
-/**
- * Where an hour's hairline sits relative to the top of its row: the middle of
- * the label's line box, so the rule reads as belonging to the time beside it
- * rather than floating above it. The labels are positioned from their box
- * top, which is why this is a half line-height and not zero.
- */
-const HOUR_LINE_OFFSET = HOUR_LABEL_LINE_HEIGHT / 2;
 
 /**
  * 02 · Day — the live single-day timeline. Blocks are absolutely positioned
@@ -91,23 +83,26 @@ export function ScheduleDayTimeline({
               </Text>
             ))}
 
-        {HOURS.map((hour, index) => (
-          <View
-            key={`line-${hour}`}
-            style={[
-              styles.hourLine,
-              {
-                top: index * DAY_HOUR_HEIGHT + HOUR_LINE_OFFSET,
-                /*
-                  Starts where a block starts, not where the column does —
-                  the grid is inset from the gutter, and a rule running past
-                  that inset stuck out to the left of every card on it.
-                */
-                left: (hideRail ? 0 : RAIL_WIDTH) + GRID_INSET,
-              },
-            ]}
-          />
-        ))}
+        {/*
+          Standalone only, same reason as the now rule: in pager mode the
+          screen draws these, because a rule inside the pager cannot reach
+          the screen edge — the pager clips to its page.
+        */}
+        {hideRail
+          ? null
+          : HOURS.map((hour, index) => (
+              <View
+                key={`line-${hour}`}
+                style={[
+                  styles.hourLine,
+                  {
+                    top: index * DAY_HOUR_HEIGHT + HOUR_LINE_OFFSET,
+                    // Starts where a block starts, not where the column does.
+                    left: RAIL_WIDTH + GRID_INSET,
+                  },
+                ]}
+              />
+            ))}
 
         <View style={[styles.grid, { height: gridHeight }]}>
           {events.map((event) => {

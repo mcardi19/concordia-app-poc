@@ -23,6 +23,8 @@ import {
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import {
   DAY_HOUR_HEIGHT,
+  GRID_INSET,
+  HOUR_LINE_OFFSET,
   PLANNER_HOUR_HEIGHT,
   RAIL_WIDTH,
 } from '@/components/feature/schedule/scheduleTheme';
@@ -55,6 +57,8 @@ const PLANNER_SPAN = 3;
 const FOCUS_HOUR = 8;
 /** Matches `ScheduleDayTimeline` padding above the hour grid. */
 const DAY_GRID_TOP = 18;
+/** One rule per hour of the day, drawn by the row rather than by a page. */
+const HOUR_INDEXES = Array.from({ length: 24 }, (_, i) => i);
 
 /**
  * "Friday August 21, 2026" — assembled rather than taken from a locale
@@ -222,6 +226,13 @@ export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedul
   const railTop =
     viewMode === 'week' ? PLANNER_GRID_TOP + PLANNER_HEAD_HEIGHT : DAY_GRID_TOP;
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  /*
+    Hour rules belong to the row, not to a page: like the now rule, one drawn
+    inside the pager stops at the page edge instead of the screen edge. The
+    3-day view keeps its own — its rules divide columns rather than crossing
+    the whole width.
+  */
+  const showsHourRules = viewMode === 'day';
   const showsNowRule = viewMode === 'day' && isViewingToday;
 
   const onTimelineScroll = onTabBarMinimize;
@@ -353,6 +364,18 @@ export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedul
               column — it is a line across the whole day, not one column —
               but stops at the screen margins like the rest of the tab.
             */}
+            {showsHourRules
+              ? HOUR_INDEXES.map((index) => (
+                  <View
+                    key={`hour-${index}`}
+                    pointerEvents="none"
+                    style={[
+                      styles.hourRule,
+                      { top: railTop + index * DAY_HOUR_HEIGHT + HOUR_LINE_OFFSET },
+                    ]}
+                  />
+                ))
+              : null}
             {showsNowRule ? (
               <>
                 <View
@@ -473,6 +496,17 @@ const styles = StyleSheet.create({
     so the screen inset is spelled out here — the rule stops on the app's
     margins instead of bleeding to the display edges.
   */
+  /*
+    Left edge lines up with a block's, right edge runs off the screen: the
+    grid is bounded by the screen inset but the hour it marks is not.
+  */
+  hourRule: {
+    position: 'absolute',
+    left: semanticSpacing.screenHorizontal + RAIL_WIDTH + GRID_INSET,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: scheduleTheme.railLine,
+  },
   /*
     Starts where the gutter ends, which is where the clock pill ends: the two
     read as one continuous marker. Running it to the screen margin instead
