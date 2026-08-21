@@ -47,11 +47,11 @@ export const SHEET_CORNER_RADIUS = 32;
 export const glassButtonShadow = Platform.select({
   ios: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.24,
-    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
-  android: { elevation: 6 },
+  android: { elevation: 4 },
 });
 
 /** Drop shadow lifting the sheet off the map. */
