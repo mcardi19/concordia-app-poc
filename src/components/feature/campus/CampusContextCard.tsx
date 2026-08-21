@@ -11,7 +11,7 @@ import {
 } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import type { CampusContextCard as CardModel } from '@/services/campus/campusContext';
-import { CardGlass } from './campusSheet';
+import { CardGlass, GlassIconButton } from './campusSheet';
 
 const CARD_RADIUS = 24;
 
@@ -65,18 +65,7 @@ export function CampusContextCard({ card, onPrimaryPress, onDismiss }: Props) {
             ) : null}
           </View>
 
-          <Pressable
-            onPress={onDismiss}
-            accessibilityRole="button"
-            accessibilityLabel="Dismiss"
-            hitSlop={8}
-            style={({ pressed }) => [
-              styles.dismiss,
-              { backgroundColor: theme.color.backgroundSubtle, opacity: pressed ? 0.6 : 1 },
-            ]}
-          >
-            <MaterialSymbol icon={msClose} size={15} color={theme.color.text.secondary} />
-          </Pressable>
+          <GlassIconButton icon={msClose} label="Dismiss" onPress={onDismiss} />
         </View>
 
         <View style={[styles.metaRow, { backgroundColor: `${accent}0F` }]}>
@@ -144,8 +133,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   eyebrow: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: '700',
   },
   title: {
@@ -155,13 +144,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     marginTop: 2,
     marginBottom: 2,
-  },
-  dismiss: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   metaRow: {
     flexDirection: 'row',
@@ -179,11 +161,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginVertical: 2,
   },
+  /*
+    Each half is `flex: 1`, so the two are the same width by construction and
+    the divider lands dead centre. Centring the label makes that visible —
+    left-aligned, a short room code against a longer walk time read as two
+    unequal segments even though the boxes match.
+  */
   metaText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
   action: {
     flexDirection: 'row',
