@@ -21,6 +21,13 @@ type Props = {
 /** How far the card behind shows below the front one. */
 const PEEK_OVERHANG = 6;
 
+/**
+ * Every item in this banner comes from the same feed, so the overline says
+ * so before it says what kind of date this one is — "ACADEMIC CALENDAR ·
+ * FEES" rather than just "FEES" floating with no source.
+ */
+const SOURCE_LABEL = 'Academic Calendar';
+
 /** "+1 more academic date", "+2 more academic dates". */
 function moreLabel(count: number): string {
   return `+${count} more academic date${count === 1 ? '' : 's'}`;
@@ -79,8 +86,8 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props
       accessibilityState={opensStack ? { expanded: false } : undefined}
       accessibilityLabel={
         opensStack
-          ? `${item.kind}: ${item.title}, and ${moreLabel(more)}`
-          : `${item.kind}: ${item.title}`
+          ? `${SOURCE_LABEL}, ${item.kind}: ${item.title}, and ${moreLabel(more)}`
+          : `${SOURCE_LABEL}, ${item.kind}: ${item.title}`
       }
       style={({ pressed }) => [
         styles.card,
@@ -91,9 +98,10 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props
       <View style={styles.cardText}>
         <Text
           variant="caption"
+          numberOfLines={1}
           style={[styles.kind, { color: theme.color.primary }]}
         >
-          {item.kind}
+          {SOURCE_LABEL} · {item.kind}
         </Text>
         <Text variant="bodySmall" numberOfLines={expanded ? 2 : 1} style={styles.title}>
           {item.title}
