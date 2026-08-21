@@ -55,6 +55,16 @@ const PLANNER_SPAN = 3;
 const FOCUS_HOUR = 8;
 /** Matches `ScheduleDayTimeline` padding above the hour grid. */
 const DAY_GRID_TOP = 18;
+
+/**
+ * "Friday August 21, 2026" — assembled rather than taken from a locale
+ * pattern, which puts a comma after the weekday.
+ */
+function formatFullDate(date: Date): string {
+  const weekday = date.toLocaleDateString('en-CA', { weekday: 'long' });
+  const month = date.toLocaleDateString('en-CA', { month: 'long' });
+  return `${weekday} ${month} ${date.getDate()}, ${date.getFullYear()}`;
+}
 /** Height of the "now" clock pill, so it can be centred on the rule. */
 const NOW_CLOCK_HEIGHT = 20;
 /** Thickness of the now rule — the pill centres on its middle, not its top. */
@@ -289,13 +299,23 @@ export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedul
           The card itself is painted only when that day has entries.
         */}
         {viewMode === 'day' ? (
-          <View
-            style={styles.allDayWrap}
-            pointerEvents={showsAllDayBanner ? 'auto' : 'none'}
-            accessibilityElementsHidden={!showsAllDayBanner}
-            importantForAccessibility={showsAllDayBanner ? 'yes' : 'no-hide-descendants'}
-          >
-            <View style={showsAllDayBanner ? null : styles.allDayHidden}>
+          <View style={styles.allDayWrap}>
+            {/*
+              The full date, spelled out. The masthead above gives the month
+              and the strip circles the number, but neither says which day of
+              the week you are looking at once you have paged away from today.
+              It is not part of the all-day card, so it stays legible on a day
+              that has no academic dates at all.
+            */}
+            <Text variant="body" style={styles.allDayDate}>
+              {formatFullDate(selectedDate)}
+            </Text>
+            <View
+              style={showsAllDayBanner ? null : styles.allDayHidden}
+              pointerEvents={showsAllDayBanner ? 'auto' : 'none'}
+              accessibilityElementsHidden={!showsAllDayBanner}
+              importantForAccessibility={showsAllDayBanner ? 'yes' : 'no-hide-descendants'}
+            >
               <ScheduleAllDayBanner
                 items={allDayItems.length > 0 ? allDayItems : PLACEHOLDER_ALL_DAY}
                 showGutterLabel
@@ -504,6 +524,14 @@ const styles = StyleSheet.create({
     transform: [{ translateY: 0.5 }],
     // Lining figures, so the capsule does not twitch as the minute ticks.
     fontVariant: ['tabular-nums'],
+  },
+  allDayDate: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+    color: scheduleTheme.headingText,
+    marginBottom: 10,
   },
   allDayWrap: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
