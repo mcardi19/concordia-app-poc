@@ -101,7 +101,12 @@ export function ScheduleDayTimeline({
               styles.hourLine,
               {
                 top: index * DAY_HOUR_HEIGHT + HOUR_LINE_OFFSET,
-                left: hideRail ? 0 : RAIL_WIDTH,
+                /*
+                  Starts where a block starts, not where the column does —
+                  the grid is inset from the gutter, and a rule running past
+                  that inset stuck out to the left of every card on it.
+                */
+                left: (hideRail ? 0 : RAIL_WIDTH) + GRID_INSET,
               },
             ]}
           />

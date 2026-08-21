@@ -15,7 +15,7 @@ export const scheduleTheme = {
 
   /** Hour labels and hairlines on the time rail. */
   railLabel: '#A8A8AA',
-  railLine: 'rgba(0, 0, 0, 0.05)',
+  railLine: 'rgba(0, 0, 0, 0.09)',
 
   headingText: '#0F0F10',
   bodyText: '#1A1216',
