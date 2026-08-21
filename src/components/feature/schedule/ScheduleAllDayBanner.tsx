@@ -59,12 +59,25 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props
   const more = items.length - 1;
   const shown = expanded ? items : [first];
 
-  const card = (item: ScheduleAllDayItem, index: number) => (
+  /*
+    Collapsed, the whole first card opens the stack — the hidden dates are
+    what it is standing in for, so the card is the affordance and the label
+    below only says how many. Once open it goes back to being one date among
+    the others, and "Show less" takes over the collapsing.
+  */
+  const card = (item: ScheduleAllDayItem, index: number) => {
+    const opensStack = index === 0 && more > 0 && !expanded;
+    return (
     <Pressable
       key={item.id}
-      onPress={() => onSelect?.(item)}
+      onPress={() => (opensStack ? toggle() : onSelect?.(item))}
       accessibilityRole="button"
-      accessibilityLabel={`${item.kind}: ${item.title}`}
+      accessibilityState={opensStack ? { expanded: false } : undefined}
+      accessibilityLabel={
+        opensStack
+          ? `${item.kind}: ${item.title}, and ${moreLabel(more)}`
+          : `${item.kind}: ${item.title}`
+      }
       style={({ pressed }) => [
         styles.card,
         { borderColor: `${theme.color.primary}26`, opacity: pressed ? 0.72 : 1 },
@@ -88,30 +101,37 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props
         ) : null}
 
         {/*
-          The toggle lives in the first card rather than under the stack: it
-          describes that card's hidden siblings, so it belongs to it. Nested
-          inside the card's own Pressable, which is fine — the inner one takes
-          the touch, so tapping the label expands instead of opening the date.
+          Collapsed this is a caption, not a target — the card around it is
+          already the target. Expanded it becomes one, because by then the
+          card itself belongs to its own date again.
         */}
         {index === 0 && more > 0 ? (
-          <Pressable
-            onPress={toggle}
-            accessibilityRole="button"
-            accessibilityState={{ expanded }}
-            accessibilityLabel={
-              expanded ? 'Show fewer academic dates' : moreLabel(more)
-            }
-            hitSlop={8}
-            style={({ pressed }) => [styles.moreRow, { opacity: pressed ? 0.6 : 1 }]}
-          >
-            <Text variant="caption" style={[styles.moreLabel, { color: theme.color.primary }]}>
-              {expanded ? 'Show less' : moreLabel(more)}
+          expanded ? (
+            <Pressable
+              onPress={toggle}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: true }}
+              accessibilityLabel="Show fewer academic dates"
+              hitSlop={8}
+              style={({ pressed }) => [styles.moreRow, { opacity: pressed ? 0.6 : 1 }]}
+            >
+              <Text variant="caption" style={[styles.moreLabel, { color: theme.color.primary }]}>
+                Show less
+              </Text>
+            </Pressable>
+          ) : (
+            <Text
+              variant="caption"
+              style={[styles.moreLabel, styles.moreRow, { color: theme.color.primary }]}
+            >
+              {moreLabel(more)}
             </Text>
-          </Pressable>
+          )
         ) : null}
       </View>
     </Pressable>
-  );
+    );
+  };
 
   const banner = (
     <View>
