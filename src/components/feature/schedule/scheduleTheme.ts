@@ -65,3 +65,9 @@ export const RAIL_WIDTH = 46;
  * has to start on the same edge as the blocks below it.
  */
 export const GRID_INSET = 8;
+/**
+ * Line box of an hour label — `caption` is 12pt on a 1.4 ratio, and the rail
+ * overrides the size but not the ratio. Exported so the hour hairlines can
+ * centre on the label rather than guessing an offset from its top.
+ */
+export const HOUR_LABEL_LINE_HEIGHT = 12 * 1.4;

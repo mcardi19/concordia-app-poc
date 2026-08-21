@@ -32,7 +32,7 @@ import {
   isSameDay,
 } from '@/components/feature/schedule/scheduleUtils';
 import { useNow } from '@/hooks';
-import { PLACEHOLDER_ALL_DAY, allDayItemsFor } from './academicAllDay';
+import { allDayItemsFor } from './academicAllDay';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
@@ -294,12 +294,19 @@ export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedul
           }}
         />
         {/*
-          Day view always keeps this slot, even with no all-day card, so the
-          hour rail does not jump when paging onto or off a day that has one.
-          The card itself is painted only when that day has entries.
+          The strip sizes to what the day actually has: the date alone on a
+          day with no academic entries, date plus card on a day with them. It
+          used to hold a card's worth of height either way so the grid below
+          would not shift when paging between the two, but reserving space for
+          something absent is a worse trade than the shift.
         */}
         {viewMode === 'day' ? (
-          <View style={styles.allDayWrap}>
+          <View
+            style={[
+              styles.allDayWrap,
+              showsAllDayBanner ? null : styles.allDayWrapEmpty,
+            ]}
+          >
             {/*
               The full date, spelled out. The masthead above gives the month
               and the strip circles the number, but neither says which day of
@@ -307,21 +314,22 @@ export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedul
               It is not part of the all-day card, so it stays legible on a day
               that has no academic dates at all.
             */}
-            <Text variant="body" style={styles.allDayDate}>
+            <Text
+              variant="body"
+              style={[
+                styles.allDayDate,
+                showsAllDayBanner ? styles.allDayDateSpaced : null,
+              ]}
+            >
               {formatFullDate(selectedDate)}
             </Text>
-            <View
-              style={showsAllDayBanner ? null : styles.allDayHidden}
-              pointerEvents={showsAllDayBanner ? 'auto' : 'none'}
-              accessibilityElementsHidden={!showsAllDayBanner}
-              importantForAccessibility={showsAllDayBanner ? 'yes' : 'no-hide-descendants'}
-            >
+            {showsAllDayBanner ? (
               <ScheduleAllDayBanner
-                items={allDayItems.length > 0 ? allDayItems : PLACEHOLDER_ALL_DAY}
+                items={allDayItems}
                 showGutterLabel
                 onSelect={(item) => navigation.navigate('AcademicDate', { id: item.id })}
               />
-            </View>
+            ) : null}
           </View>
         ) : null}
       </View>
@@ -531,17 +539,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: -0.3,
     color: scheduleTheme.headingText,
+  },
+  /** Only when a card follows — otherwise the wrap's own padding closes it. */
+  allDayDateSpaced: {
     marginBottom: 10,
   },
   allDayWrap: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 10,
-    // The banner's gutter row carries the matching space below the card.
+    // With a card, its gutter row carries the space below; without one,
+    // `allDayWrapEmpty` does, so the date is not left against the rule.
     paddingBottom: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: scheduleTheme.mastheadBorder,
   },
-  allDayHidden: {
-    opacity: 0,
+  allDayWrapEmpty: {
+    paddingBottom: 10,
   },
 });

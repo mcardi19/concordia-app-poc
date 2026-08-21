@@ -7,6 +7,7 @@ import {
   DAY_HOUR_HEIGHT,
   DAY_HOUR_START,
   GRID_INSET,
+  HOUR_LABEL_LINE_HEIGHT,
   RAIL_WIDTH,
   scheduleTheme,
 } from './scheduleTheme';
@@ -40,6 +41,14 @@ export const dayTimelineTopFor = (minutes: number) =>
   (minutes / 60 - DAY_HOUR_START) * DAY_HOUR_HEIGHT;
 
 const topFor = dayTimelineTopFor;
+
+/**
+ * Where an hour's hairline sits relative to the top of its row: the middle of
+ * the label's line box, so the rule reads as belonging to the time beside it
+ * rather than floating above it. The labels are positioned from their box
+ * top, which is why this is a half line-height and not zero.
+ */
+const HOUR_LINE_OFFSET = HOUR_LABEL_LINE_HEIGHT / 2;
 
 function hourLabel(hour: number): string {
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
@@ -91,7 +100,7 @@ export function ScheduleDayTimeline({
             style={[
               styles.hourLine,
               {
-                top: index * DAY_HOUR_HEIGHT + 4,
+                top: index * DAY_HOUR_HEIGHT + HOUR_LINE_OFFSET,
                 left: hideRail ? 0 : RAIL_WIDTH,
               },
             ]}
