@@ -18,6 +18,9 @@ type Props = {
   onSelect?: (item: ScheduleAllDayItem) => void;
 };
 
+/** How far the card behind shows below the front one. */
+const PEEK_OVERHANG = 6;
+
 /** "+1 more academic date", "+2 more academic dates". */
 function moreLabel(count: number): string {
   return `+${count} more academic date${count === 1 ? '' : 's'}`;
@@ -58,6 +61,7 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props
   const [first] = items;
   const more = items.length - 1;
   const shown = expanded ? items : [first];
+  const peeking = more > 0 && !expanded;
 
   /*
     Collapsed, the whole first card opens the stack — the hidden dates are
@@ -141,12 +145,21 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props
           says "there is another one underneath" in the shape of the thing
           underneath. It goes away once they are all drawn.
         */}
-        {more > 0 && !expanded ? (
+        {peeking ? (
           <View style={[styles.stackedCard, { borderColor: `${theme.color.primary}1A` }]} />
         ) : null}
 
         {shown.map(card)}
       </View>
+      {/*
+        The peeking card is absolutely positioned, so it hangs below the
+        stack without adding to its height — which left the gap under a
+        collapsed stack short by exactly its overhang. The spacer gives that
+        height back, and sits outside `stackWrap` rather than in it: growing
+        the wrap would take the peek card down with it, since the card is
+        positioned against the wrap's own bottom edge.
+      */}
+      {peeking ? <View style={styles.peekSpacer} /> : null}
     </View>
   );
 
@@ -181,7 +194,7 @@ const styles = StyleSheet.create({
     left: 11,
     right: 11,
     top: 8,
-    bottom: -6,
+    bottom: -PEEK_OVERHANG,
     backgroundColor: scheduleTheme.allDayStackFill,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
@@ -232,6 +245,9 @@ const styles = StyleSheet.create({
   moreLabel: {
     fontSize: 11.5,
     fontWeight: '700',
+  },
+  peekSpacer: {
+    height: PEEK_OVERHANG,
   },
   gutterRow: {
     flexDirection: 'row',
