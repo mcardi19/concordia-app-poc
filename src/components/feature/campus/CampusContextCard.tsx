@@ -92,7 +92,9 @@ export function CampusContextCard({ card, onPrimaryPress, onDismiss }: Props) {
           accessibilityLabel={card.primaryAction}
           style={({ pressed }) => [
             styles.action,
-            { backgroundColor: accent, opacity: pressed ? 0.85 : 1 },
+            // Tinted by the card's own accent, so an amber card does not
+            // throw a burgundy shadow.
+            { backgroundColor: accent, shadowColor: accent, opacity: pressed ? 0.85 : 1 },
           ]}
         >
           <MaterialSymbol icon={msDirections} size={18} color={theme.color.text.inverse} />
@@ -185,6 +187,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderCurve: 'continuous',
+    // The card's one call to action, and it sat flat on the glass.
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.32,
+    shadowRadius: 14,
+    elevation: 8,
   },
   actionLabel: {
     fontSize: 14,

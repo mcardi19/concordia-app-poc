@@ -830,17 +830,23 @@ const styles = StyleSheet.create({
     borderRadius: ACTION_TILE_RADIUS,
     borderCurve: 'continuous',
   },
+  /*
+    Deeper than a card's shadow would need to be, because these sit on the
+    drawer's glass rather than on a flat page — a 10% shadow against a
+    translucent surface reads as a smudge, and the tiles looked printed on
+    rather than pressable.
+  */
   actionTileShadow: {
-    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0px 6px 14px rgba(0, 0, 0, 0.18)',
     ...Platform.select({
-      android: { elevation: 3 },
+      android: { elevation: 6 },
       default: {},
     }),
   },
   actionTileShadowBrand: {
-    boxShadow: '0px 4px 10px rgba(145, 35, 56, 0.2)',
+    boxShadow: '0px 6px 14px rgba(145, 35, 56, 0.34)',
     ...Platform.select({
-      android: { elevation: 4 },
+      android: { elevation: 8 },
       default: {},
     }),
   },
