@@ -36,6 +36,24 @@ export { CARD_GLASS_TINT, CardGlass, SHEET_GLASS_TINT, SheetGlass };
 /** Larger than `theme.radius.xl` (12) so the sheet reads as a rounded iOS panel. */
 export const SHEET_CORNER_RADIUS = 32;
 
+/**
+ * Lift under the round glass controls — close, bookmark, recenter.
+ *
+ * They are the one thing on this screen with no fill of their own: clear
+ * glass over a map or over a sheet's glass, which left them reading as
+ * etched into the surface rather than sitting on it. The shadow is what
+ * separates them from whatever is behind.
+ */
+export const glassButtonShadow = Platform.select({
+  ios: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.24,
+    shadowRadius: 9,
+  },
+  android: { elevation: 6 },
+});
+
 /** Drop shadow lifting the sheet off the map. */
 export const sheetShadow = Platform.select({
   ios: {
@@ -128,6 +146,7 @@ const styles = StyleSheet.create({
     width: HEADER_BAR_BUTTON_SIZE,
     height: HEADER_BAR_BUTTON_SIZE,
     borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
+    ...glassButtonShadow,
   },
   iconButtonSurface: {
     width: HEADER_BAR_BUTTON_SIZE,

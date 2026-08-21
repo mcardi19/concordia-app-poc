@@ -16,7 +16,10 @@ import { CampusQuickCard } from '@/components/feature/campus/CampusQuickCard';
 import { CampusContextCard } from '@/components/feature/campus/CampusContextCard';
 import { CampusShuttleDrawer } from '@/components/feature/campus/CampusShuttleDrawer';
 import { CampusResultsDrawer } from '@/components/feature/campus/CampusResultsDrawer';
-import { SHEET_PEEK_HEIGHT_RATIO } from '@/components/feature/campus/campusSheet';
+import {
+  SHEET_PEEK_HEIGHT_RATIO,
+  glassButtonShadow,
+} from '@/components/feature/campus/campusSheet';
 import {
   CAMPUS_SEARCH_FIELD_HEIGHT,
   CampusSearchBar,
@@ -792,6 +795,7 @@ const styles = StyleSheet.create({
   locateButton: {
     width: HEADER_BAR_BUTTON_SIZE,
     height: HEADER_BAR_BUTTON_SIZE,
+    ...glassButtonShadow,
   },
   statusChip: {
     overflow: 'hidden',
