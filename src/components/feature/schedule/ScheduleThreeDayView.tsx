@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
+import { splitHourLabel } from './scheduleUtils';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import {
@@ -9,6 +10,7 @@ import {
   PLANNER_HOUR_HEIGHT,
   RAIL_WIDTH,
   scheduleTheme,
+  RAIL_LABEL_WEIGHT,
 } from './scheduleTheme';
 import type { ScheduleEvent } from './scheduleTypes';
 
@@ -43,11 +45,6 @@ const HOURS = Array.from(
 
 const topFor = (minutes: number) =>
   (minutes / 60 - DAY_HOUR_START) * PLANNER_HOUR_HEIGHT;
-
-function hourLabel(hour: number): string {
-  const h12 = hour % 12 === 0 ? 12 : hour % 12;
-  return `${h12} ${hour >= 12 ? 'PM' : 'AM'}`;
-}
 
 /**
  * 02b · 3-Day — the planning view. Deliberately has no "now" rule: this is for
@@ -123,7 +120,8 @@ export function ScheduleThreeDayView({
                     { top: index * PLANNER_HOUR_HEIGHT - 5, color: scheduleTheme.railLabel },
                   ]}
                 >
-                  {hourLabel(hour)}
+                  {splitHourLabel(hour).value}
+                  <Text style={styles.meridiem}> {splitHourLabel(hour).meridiem}</Text>
                 </Text>
               ))}
             </View>
@@ -284,6 +282,11 @@ const styles = StyleSheet.create({
     width: 42,
     textAlign: 'right',
     fontSize: 11,
+    fontWeight: RAIL_LABEL_WEIGHT,
+  },
+  meridiem: {
+    fontWeight: '400',
+    color: scheduleTheme.railMeridiem,
   },
   columns: {
     flex: 1,

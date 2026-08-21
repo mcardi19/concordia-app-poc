@@ -3,7 +3,12 @@ import { LayoutAnimation, Platform, Pressable, StyleSheet, UIManager, View } fro
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, msExpandMore } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
-import { GRID_INSET, RAIL_WIDTH, scheduleTheme } from './scheduleTheme';
+import {
+  GRID_INSET,
+  RAIL_LABEL_WEIGHT,
+  RAIL_WIDTH,
+  scheduleTheme,
+} from './scheduleTheme';
 import type { ScheduleAllDayItem } from './scheduleTypes';
 
 type Props = {
@@ -221,6 +226,7 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     textAlign: 'right',
     letterSpacing: 0.2,
+    fontWeight: RAIL_LABEL_WEIGHT,
     color: scheduleTheme.railLabel,
   },
   gutterBody: {

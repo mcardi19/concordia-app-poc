@@ -252,3 +252,13 @@ export function eventStatus(
   if (nowMinutes >= event.startMinutes) return 'active';
   return 'future';
 }
+
+/**
+ * An hour label in two parts, so the meridiem can be set back from the
+ * number it follows. Shared by all three rails — a 10 AM that looked one way
+ * in the day view and another in the planner would read as two components.
+ */
+export function splitHourLabel(hour: number): { value: string; meridiem: string } {
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return { value: String(h12), meridiem: hour >= 12 ? 'PM' : 'AM' };
+}

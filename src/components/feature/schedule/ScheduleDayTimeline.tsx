@@ -8,12 +8,13 @@ import {
   DAY_HOUR_START,
   GRID_INSET,
   HOUR_LABEL_LINE_HEIGHT,
+  RAIL_LABEL_WEIGHT,
   RAIL_WIDTH,
   scheduleTheme,
 } from './scheduleTheme';
 import { ScheduleSurfaceFill } from './ScheduleSurface';
 import type { ScheduleEvent } from './scheduleTypes';
-import { eventStatus, formatClock } from './scheduleUtils';
+import { eventStatus, formatClock, splitHourLabel } from './scheduleUtils';
 import { semanticSpacing } from '@/design-system/tokens';
 
 type Props = {
@@ -50,11 +51,6 @@ const topFor = dayTimelineTopFor;
  */
 const HOUR_LINE_OFFSET = HOUR_LABEL_LINE_HEIGHT / 2;
 
-function hourLabel(hour: number): string {
-  const h12 = hour % 12 === 0 ? 12 : hour % 12;
-  return `${h12} ${hour >= 12 ? 'PM' : 'AM'}`;
-}
-
 /**
  * 02 · Day — the live single-day timeline. Blocks are absolutely positioned
  * against a fixed hour grid, so an event's height encodes its real duration
@@ -90,7 +86,8 @@ export function ScheduleDayTimeline({
                   { top: index * DAY_HOUR_HEIGHT, color: scheduleTheme.railLabel },
                 ]}
               >
-                {hourLabel(hour)}
+                {splitHourLabel(hour).value}
+                <Text style={styles.meridiem}> {splitHourLabel(hour).meridiem}</Text>
               </Text>
             ))}
 
@@ -309,6 +306,11 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontSize: 12,
     letterSpacing: 0.2,
+    fontWeight: RAIL_LABEL_WEIGHT,
+  },
+  meridiem: {
+    fontWeight: '400',
+    color: scheduleTheme.railMeridiem,
   },
   hourLine: {
     position: 'absolute',

@@ -14,7 +14,13 @@ export const scheduleTheme = {
   mastheadBorder: 'rgba(0, 0, 0, 0.24)',
 
   /** Hour labels and hairlines on the time rail. */
-  railLabel: '#A8A8AA',
+  railLabel: '#75757A',
+  /**
+   * The AM/PM beside an hour. Recessive on purpose: the number is what you
+   * scan for, and the half of the day you are looking at is already obvious
+   * from everything around it.
+   */
+  railMeridiem: '#AEAEB2',
   railLine: 'rgba(0, 0, 0, 0.09)',
 
   headingText: '#0F0F10',
@@ -71,3 +77,9 @@ export const GRID_INSET = 8;
  * centre on the label rather than guessing an offset from its top.
  */
 export const HOUR_LABEL_LINE_HEIGHT = 12 * 1.4;
+/**
+ * Weight for every label in the gutter — the hour times and the "All day"
+ * row that shares their column. Kept together so one cannot be restyled
+ * without the other, which would read as a mistake in a single column.
+ */
+export const RAIL_LABEL_WEIGHT = '600' as const;
