@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { LayoutAnimation, Platform, Pressable, StyleSheet, UIManager, View } from 'react-native';
 import { Text } from '@/components/design-system';
-import { MaterialSymbol, msExpandMore } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import {
   GRID_INSET,
@@ -18,6 +17,11 @@ type Props = {
   /** Opens one entry's detail. */
   onSelect?: (item: ScheduleAllDayItem) => void;
 };
+
+/** "+1 more academic date", "+2 more academic dates". */
+function moreLabel(count: number): string {
+  return `+${count} more academic date${count === 1 ? '' : 's'}`;
+}
 
 if (
   Platform.OS === 'android' &&
@@ -82,6 +86,29 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props
             {item.detail}
           </Text>
         ) : null}
+
+        {/*
+          The toggle lives in the first card rather than under the stack: it
+          describes that card's hidden siblings, so it belongs to it. Nested
+          inside the card's own Pressable, which is fine — the inner one takes
+          the touch, so tapping the label expands instead of opening the date.
+        */}
+        {index === 0 && more > 0 ? (
+          <Pressable
+            onPress={toggle}
+            accessibilityRole="button"
+            accessibilityState={{ expanded }}
+            accessibilityLabel={
+              expanded ? 'Show fewer academic dates' : moreLabel(more)
+            }
+            hitSlop={8}
+            style={({ pressed }) => [styles.moreRow, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Text variant="caption" style={[styles.moreLabel, { color: theme.color.primary }]}>
+              {expanded ? 'Show less' : moreLabel(more)}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -100,24 +127,6 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props
 
         {shown.map(card)}
       </View>
-
-      {more > 0 ? (
-        <Pressable
-          onPress={toggle}
-          accessibilityRole="button"
-          accessibilityState={{ expanded }}
-          accessibilityLabel={expanded ? 'Show fewer academic dates' : `Show ${more} more academic dates`}
-          hitSlop={6}
-          style={({ pressed }) => [styles.moreRow, { opacity: pressed ? 0.6 : 1 }]}
-        >
-          <Text variant="caption" style={[styles.moreLabel, { color: theme.color.primary }]}>
-            {expanded ? 'Show less' : `+${more} more`}
-          </Text>
-          <View style={expanded ? styles.chevronUp : undefined}>
-            <MaterialSymbol icon={msExpandMore} size={15} color={theme.color.primary} />
-          </View>
-        </Pressable>
-      ) : null}
     </View>
   );
 
@@ -197,20 +206,12 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   moreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: 2,
-    // Clears the peeking card's 6pt of overhang.
-    marginTop: 10,
-    paddingVertical: 2,
+    marginTop: 5,
   },
   moreLabel: {
     fontSize: 11.5,
     fontWeight: '700',
-  },
-  chevronUp: {
-    transform: [{ rotate: '180deg' }],
   },
   gutterRow: {
     flexDirection: 'row',
