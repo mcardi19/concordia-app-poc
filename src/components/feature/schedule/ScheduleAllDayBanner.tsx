@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { LayoutAnimation, Platform, Pressable, StyleSheet, UIManager, View } from 'react-native';
 import { Text } from '@/components/design-system';
-import { MaterialSymbol, msChevronRight, msExpandMore } from '@/components/icons';
+import { MaterialSymbol, msExpandMore } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { GRID_INSET, RAIL_WIDTH, scheduleTheme } from './scheduleTheme';
 import type { ScheduleAllDayItem } from './scheduleTypes';
@@ -78,12 +78,6 @@ export function ScheduleAllDayBanner({ items, showGutterLabel, onSelect }: Props
           </Text>
         ) : null}
       </View>
-
-      <MaterialSymbol
-        icon={msChevronRight}
-        size={16}
-        color={scheduleTheme.metaText}
-      />
     </Pressable>
   );
 
