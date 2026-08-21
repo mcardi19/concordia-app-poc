@@ -1,5 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  StyleSheet,
+  Text as RNText,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { Text } from '@/components/design-system';
 import { splitHourLabel } from './scheduleUtils';
 import {
@@ -51,7 +57,7 @@ export function ScheduleHourRail({
           ]}
         >
           {splitHourLabel(hour).value}
-          <Text style={styles.meridiem}> {splitHourLabel(hour).meridiem}</Text>
+          <RNText style={styles.meridiem}> {splitHourLabel(hour).meridiem}</RNText>
         </Text>
       ))}
     </View>

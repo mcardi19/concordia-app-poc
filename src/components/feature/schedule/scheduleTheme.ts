@@ -21,7 +21,7 @@ export const scheduleTheme = {
    * from everything around it.
    */
   railMeridiem: '#AEAEB2',
-  railLine: 'rgba(0, 0, 0, 0.09)',
+  railLine: 'rgba(0, 0, 0, 0.13)',
 
   headingText: '#0F0F10',
   bodyText: '#1A1216',

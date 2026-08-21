@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
 import {
@@ -87,7 +87,7 @@ export function ScheduleDayTimeline({
                 ]}
               >
                 {splitHourLabel(hour).value}
-                <Text style={styles.meridiem}> {splitHourLabel(hour).meridiem}</Text>
+                <RNText style={styles.meridiem}> {splitHourLabel(hour).meridiem}</RNText>
               </Text>
             ))}
 
