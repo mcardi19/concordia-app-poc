@@ -84,9 +84,12 @@ export const HOUR_LABEL_LINE_HEIGHT = 12 * 1.4;
  */
 export const RAIL_LABEL_WEIGHT = '600' as const;
 /**
- * Where an hour's hairline sits relative to the top of its row: the middle of
- * the label's line box, so the rule reads as belonging to the time beside it.
- * Labels are positioned from their box top, which is why this is a half
- * line-height rather than zero.
+ * Lift applied to an hour label so its line box straddles the hour rather
+ * than hanging below it.
+ *
+ * The hour is the axis origin: a rule sits exactly on it and a block's `top`
+ * is measured from it, so neither can be nudged to meet the text. Only the
+ * text moves. Labels are positioned from their box top, hence half a line
+ * height, negative.
  */
-export const HOUR_LINE_OFFSET = HOUR_LABEL_LINE_HEIGHT / 2;
+export const HOUR_LABEL_CENTRE_OFFSET = -HOUR_LABEL_LINE_HEIGHT / 2;

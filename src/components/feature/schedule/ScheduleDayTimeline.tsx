@@ -7,7 +7,7 @@ import {
   DAY_HOUR_HEIGHT,
   DAY_HOUR_START,
   GRID_INSET,
-  HOUR_LINE_OFFSET,
+  HOUR_LABEL_CENTRE_OFFSET,
   RAIL_LABEL_WEIGHT,
   RAIL_WIDTH,
   scheduleTheme,
@@ -75,7 +75,10 @@ export function ScheduleDayTimeline({
                 variant="caption"
                 style={[
                   styles.hourLabel,
-                  { top: index * DAY_HOUR_HEIGHT, color: scheduleTheme.railLabel },
+                  {
+                    top: index * DAY_HOUR_HEIGHT + HOUR_LABEL_CENTRE_OFFSET,
+                    color: scheduleTheme.railLabel,
+                  },
                 ]}
               >
                 {splitHourLabel(hour).value}
@@ -96,7 +99,7 @@ export function ScheduleDayTimeline({
                 style={[
                   styles.hourLine,
                   {
-                    top: index * DAY_HOUR_HEIGHT + HOUR_LINE_OFFSET,
+                    top: index * DAY_HOUR_HEIGHT,
                     // Starts where a block starts, not where the column does.
                     left: RAIL_WIDTH + GRID_INSET,
                   },

@@ -24,7 +24,6 @@ import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData
 import {
   DAY_HOUR_HEIGHT,
   GRID_INSET,
-  HOUR_LINE_OFFSET,
   PLANNER_HOUR_HEIGHT,
   RAIL_WIDTH,
 } from '@/components/feature/schedule/scheduleTheme';
@@ -371,7 +370,7 @@ export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedul
                     pointerEvents="none"
                     style={[
                       styles.hourRule,
-                      { top: railTop + index * DAY_HOUR_HEIGHT + HOUR_LINE_OFFSET },
+                      { top: railTop + index * DAY_HOUR_HEIGHT },
                     ]}
                   />
                 ))
@@ -429,7 +428,8 @@ export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedul
               <View style={{ height: railTop }} />
               <ScheduleHourRail
                 hourHeight={hourHeight}
-                labelOffset={viewMode === 'week' ? -5 : 0}
+                // The rail centres its labels on the hour itself now.
+                labelOffset={0}
                 labelSize={viewMode === 'week' ? 11 : 12}
               />
             </View>

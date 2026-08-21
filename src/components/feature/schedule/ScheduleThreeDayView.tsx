@@ -11,6 +11,7 @@ import {
   RAIL_WIDTH,
   scheduleTheme,
   RAIL_LABEL_WEIGHT,
+  HOUR_LABEL_CENTRE_OFFSET,
 } from './scheduleTheme';
 import type { ScheduleEvent } from './scheduleTypes';
 
@@ -117,7 +118,10 @@ export function ScheduleThreeDayView({
                   variant="caption"
                   style={[
                     styles.hourLabel,
-                    { top: index * PLANNER_HOUR_HEIGHT - 5, color: scheduleTheme.railLabel },
+                    {
+                      top: index * PLANNER_HOUR_HEIGHT + HOUR_LABEL_CENTRE_OFFSET,
+                      color: scheduleTheme.railLabel,
+                    },
                   ]}
                 >
                   {splitHourLabel(hour).value}

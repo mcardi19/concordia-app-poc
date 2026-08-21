@@ -11,6 +11,7 @@ import { splitHourLabel } from './scheduleUtils';
 import {
   DAY_HOUR_END,
   DAY_HOUR_START,
+  HOUR_LABEL_CENTRE_OFFSET,
   RAIL_LABEL_WEIGHT,
   RAIL_WIDTH,
   scheduleTheme,
@@ -23,7 +24,7 @@ const HOURS = Array.from(
 
 type Props = {
   hourHeight: number;
-  /** Nudge labels to sit on the hour line (3-day uses a slight lift). */
+  /** Extra nudge on top of the centring the rail already does. */
   labelOffset?: number;
   labelSize?: number;
   style?: StyleProp<ViewStyle>;
@@ -50,7 +51,7 @@ export function ScheduleHourRail({
           style={[
             styles.label,
             {
-              top: index * hourHeight + labelOffset,
+              top: index * hourHeight + labelOffset + HOUR_LABEL_CENTRE_OFFSET,
               fontSize: labelSize,
               color: scheduleTheme.railLabel,
             },
