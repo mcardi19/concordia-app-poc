@@ -19,7 +19,7 @@ import {
   GlassPillSurface,
   glassPillStyles,
 } from '@/components/design-system/GlassPill';
-import { useTheme } from '@/design-system/theme';
+import { useAppearance, useTheme } from '@/design-system/theme';
 import type { PinnedChip } from './todayData';
 import { todayShadowSoft } from './todayShadows';
 
@@ -55,7 +55,18 @@ function PinnedChipItem({
   onChipDelete,
 }: ChipItemProps) {
   const theme = useTheme();
+  const { scheme } = useAppearance();
   const jiggle = useSharedValue(0);
+  /*
+    Light mode: a mid-gray circle needs a genuinely dark bar to read against
+    it. Dark mode: roles invert — a dark circle needs a near-white bar —
+    rather than shifting both in the same direction and flattening the
+    contrast that makes the glyph legible.
+  */
+  const removeBadgeColors =
+    scheme === 'dark'
+      ? { circle: '#3A3A3C', border: 'rgba(255, 255, 255, 0.14)', bar: '#EBEBED' }
+      : { circle: '#C7C7CC', border: 'rgba(0, 0, 0, 0.12)', bar: '#3A3A3C' };
 
   useEffect(() => {
     if (isEditing) {
@@ -142,9 +153,9 @@ function PinnedChipItem({
             width: REMOVE_BADGE_SIZE,
             height: REMOVE_BADGE_SIZE,
             borderRadius: REMOVE_BADGE_SIZE / 2,
-            backgroundColor: '#C7C7CC',
+            backgroundColor: removeBadgeColors.circle,
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: 'rgba(0, 0, 0, 0.12)',
+            borderColor: removeBadgeColors.border,
           }}
         >
           <View
@@ -152,7 +163,7 @@ function PinnedChipItem({
               width: 12,
               height: 3,
               borderRadius: 1.5,
-              backgroundColor: '#3A3A3C',
+              backgroundColor: removeBadgeColors.bar,
             }}
           />
         </Pressable>

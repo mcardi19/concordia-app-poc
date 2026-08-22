@@ -4,6 +4,7 @@
 
 import {
   semanticColors,
+  semanticColorsDark,
   semanticSpacing,
   semanticTypography,
   semanticRadius,
@@ -14,8 +15,12 @@ import {
 } from '@/design-system/tokens';
 import { primitiveFontFamily } from '@/design-system/tokens/primitive';
 
+/** Widens a `const`-literal token object's string leaves to `string`, so a
+ *  differently-valued sibling (e.g. `semanticColorsDark`) still satisfies it. */
+type Widen<T> = T extends string ? string : { [K in keyof T]: Widen<T[K]> };
+
 export type Theme = {
-  color: typeof semanticColors;
+  color: Widen<typeof semanticColors>;
   spacing: typeof semanticSpacing;
   typography: typeof semanticTypography;
   radius: typeof semanticRadius;
@@ -36,4 +41,10 @@ export const lightTheme: Theme = {
   motion: semanticMotion,
   fontFamily: primitiveFontFamily,
   touchTargetMinSize,
+};
+
+/** Everything but `color` is scheme-independent, so this only overrides that. */
+export const darkTheme: Theme = {
+  ...lightTheme,
+  color: semanticColorsDark,
 };

@@ -31,7 +31,7 @@ export type SettingsRow = {
   id: string;
   label: string;
   value?: string;
-  route?: 'Grades' | 'Balance' | 'Profile';
+  route?: 'Grades' | 'Balance' | 'Profile' | 'Appearance';
 };
 
 /** Where a Me-tab surface can send the user. Omit when nothing is built yet. */

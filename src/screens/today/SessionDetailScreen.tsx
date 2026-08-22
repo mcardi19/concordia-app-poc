@@ -49,7 +49,7 @@ import {
 } from '@/navigation/HeaderIconButton';
 import { useTabBarScrollInset } from '@/navigation/tabBarInset';
 import type { RootStackScreenProps } from '@/navigation/types';
-import { todayTheme } from './todayTheme';
+import { useTodayTheme } from './todayTheme';
 
 type Props = RootStackScreenProps<'SessionDetail'>;
 
@@ -117,6 +117,13 @@ const androidBlurMethod =
   Platform.OS === 'android' ? ('dimezisBlurView' as const) : undefined;
 
 /**
+ * Backdrop dim and close-button tint sit over a `tint="dark"` BlurView, not
+ * the app's own background — theme-independent, same in light and dark mode.
+ */
+const BACKDROP_DIM_COLOR = '#000000';
+const CLOSE_BUTTON_TINT = 'rgba(0,0,0,0.18)';
+
+/**
  * Never wrap BlurView in a view with animated opacity — that disables
  * UIVisualEffectView. Drive intensity + a separate dim instead.
  */
@@ -133,6 +140,7 @@ const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
  */
 export function SessionDetailScreen({ navigation }: Props) {
   const theme = useTheme();
+  const todayTheme = useTodayTheme();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarScrollInset();
   const horizontalInset = theme.spacing.screenHorizontal;
@@ -595,13 +603,13 @@ export function SessionDetailScreen({ navigation }: Props) {
           pointerEvents="none"
           style={[
             StyleSheet.absoluteFillObject,
-            { backgroundColor: '#000000' },
+            { backgroundColor: BACKDROP_DIM_COLOR },
             backdropDimStyle,
           ]}
         />
       </View>
 
-      <Animated.View style={[styles.sheet, sheetStyle]}>
+      <Animated.View style={[styles.sheet, { backgroundColor: todayTheme.pageBackground }, sheetStyle]}>
         {/*
           Fixed screen-sized scroller. Pinning width/height means the resizing
           window above never changes this subtree's constraints, so its content
@@ -682,7 +690,7 @@ export function SessionDetailScreen({ navigation }: Props) {
               pointerEvents="none"
               style={[
                 StyleSheet.absoluteFill,
-                { backgroundColor: 'rgba(0,0,0,0.18)' },
+                { backgroundColor: CLOSE_BUTTON_TINT },
                 closeTintStyle,
               ]}
             />
@@ -706,7 +714,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderCurve: 'continuous',
     overflow: 'hidden',
-    backgroundColor: todayTheme.pageBackground,
   },
   // Screen-sized and screen-anchored so the clip window slides over it.
   scroller: {

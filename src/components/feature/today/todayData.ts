@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import type { MsIconDefinition } from 'material-symbols-react-native';
+import { useAppearance, useTheme } from '@/design-system/theme';
 import { msDirectionsBusFill } from '@material-symbols-react-native/rounded-400/msDirectionsBusFill';
 import { msHomeFill } from '@material-symbols-react-native/rounded-400/msHomeFill';
 import { msMeetingRoomFill } from '@material-symbols-react-native/rounded-400/msMeetingRoomFill';
@@ -68,29 +70,74 @@ export type CampusTodayItem = {
   image: ImageSourcePropType;
 };
 
-export const PINNED_CHIPS: PinnedChip[] = [
-  { id: 'moodle', label: 'Moodle', icon: msHomeFill, iconColor: '#7B2D8E' },
-  { id: 'library', label: 'Library', icon: msMenuBookFill, iconColor: '#912338', tab: 'Library' },
-  { id: 'grades', label: 'Grades', icon: msSchoolFill, iconColor: '#C9A859', tab: 'Me', meRoute: 'Grades' },
-  { id: 'room', label: 'Room booking', icon: msMeetingRoomFill, iconColor: '#057D78' },
+type PinnedChipBase = Omit<PinnedChip, 'iconColor'>;
+
+const PINNED_CHIPS_BASE: PinnedChipBase[] = [
+  { id: 'moodle', label: 'Moodle', icon: msHomeFill },
+  { id: 'library', label: 'Library', icon: msMenuBookFill, tab: 'Library' },
+  { id: 'grades', label: 'Grades', icon: msSchoolFill, tab: 'Me', meRoute: 'Grades' },
+  { id: 'room', label: 'Room booking', icon: msMeetingRoomFill },
   {
     id: 'shuttle',
     label: 'Shuttle',
     icon: msDirectionsBusFill,
-    iconColor: '#0072A8',
     tab: 'Campus',
     campusRoute: 'ShuttleSchedule',
   },
 ];
 
 /** Full set of pin-able shortcuts shown in the Add drawer. */
-export const PINNED_CHIP_CATALOG: PinnedChip[] = [
-  ...PINNED_CHIPS,
-  { id: 'schedule', label: 'Schedule', icon: msCalendarMonthFill, iconColor: '#DA3A16', tab: 'Schedule' },
-  { id: 'wallet', label: 'Wallet', icon: msAccountBalanceWalletFill, iconColor: '#573996', tab: 'Me' },
-  { id: 'events', label: 'Events', icon: msEventFill, iconColor: '#057D78', tab: 'Campus' },
-  { id: 'dining', label: 'Dining', icon: msRestaurantFill, iconColor: '#E5A712', tab: 'Campus' },
+const PINNED_CHIP_CATALOG_EXTRA_BASE: PinnedChipBase[] = [
+  { id: 'schedule', label: 'Schedule', icon: msCalendarMonthFill, tab: 'Schedule' },
+  { id: 'wallet', label: 'Wallet', icon: msAccountBalanceWalletFill, tab: 'Me' },
+  { id: 'events', label: 'Events', icon: msEventFill, tab: 'Campus' },
+  { id: 'dining', label: 'Dining', icon: msRestaurantFill, tab: 'Campus' },
 ];
+
+/**
+ * Per-shortcut icon tints. `library` isn't here — it's the app's own brand
+ * color, so the hook below points it at `theme.color.primary` instead of a
+ * fifth independent hardcode of Concordia burgundy.
+ */
+const ICON_COLOR_LIGHT: Record<string, string> = {
+  moodle: '#7B2D8E',
+  grades: '#C9A859',
+  room: '#057D78',
+  shuttle: '#0072A8',
+  schedule: '#DA3A16',
+  wallet: '#573996',
+  events: '#057D78',
+  dining: '#E5A712',
+};
+
+/** First-draft dark tints — flagged for visual QA. */
+const ICON_COLOR_DARK: Record<string, string> = {
+  moodle: '#A374B0',
+  grades: '#D9BE85',
+  room: '#3FA39E',
+  shuttle: '#4A9BC9',
+  schedule: '#E2694B',
+  wallet: '#8067AE',
+  events: '#3FA39E',
+  dining: '#EBC24A',
+};
+
+export function usePinnedChipCatalog(): { chips: PinnedChip[]; catalog: PinnedChip[] } {
+  const theme = useTheme();
+  const { scheme } = useAppearance();
+
+  return useMemo(() => {
+    const colors = scheme === 'dark' ? ICON_COLOR_DARK : ICON_COLOR_LIGHT;
+    const withColor = (base: PinnedChipBase): PinnedChip => ({
+      ...base,
+      iconColor: base.id === 'library' ? theme.color.primary : colors[base.id],
+    });
+    return {
+      chips: PINNED_CHIPS_BASE.map(withColor),
+      catalog: [...PINNED_CHIPS_BASE, ...PINNED_CHIP_CATALOG_EXTRA_BASE].map(withColor),
+    };
+  }, [scheme, theme.color.primary]);
+}
 
 export const ATTENTION_ITEMS: AttentionItem[] = [
   {

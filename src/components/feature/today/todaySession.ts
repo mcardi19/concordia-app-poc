@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNow } from '@/hooks';
+import { useAppearance } from '@/design-system/theme';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import { getDayKey, WEEK_ORDER_KEYS } from '@/components/feature/schedule/scheduleUtils';
 import type { ScheduleEvent } from '@/components/feature/schedule/scheduleTypes';
@@ -16,12 +17,29 @@ export type TodaySessionState = 'inSession' | 'imminent' | 'upcoming' | 'tomorro
 const IMMINENT_MINUTES = 15;
 
 /** Tones from the design's status pills. */
-const TONE = {
+const TONE_LIGHT = {
   live: '#2F8F5B',
   soon: '#C2683A',
   later: '#D1A020',
   rest: '#2F77C4',
 } as const;
+
+const TONE_DARK = {
+  live: '#3FAE72',
+  soon: '#D97A4F',
+  later: '#E0B23A',
+  rest: '#4A8FDB',
+} as const;
+
+function getTodayStatusTones(scheme: 'light' | 'dark') {
+  return scheme === 'dark' ? TONE_DARK : TONE_LIGHT;
+}
+
+/**
+ * Default status tone for badges rendered without an explicit one — shared
+ * so a stray badge doesn't invent its own, inconsistent "live" green.
+ */
+export const DEFAULT_STATUS_TONE = TONE_LIGHT.live;
 
 function toMinutes(date: Date): number {
   return date.getHours() * 60 + date.getMinutes();
@@ -120,7 +138,8 @@ function fromEvent(
  * Recomputed off `useNow`, which ticks once a minute — the same clock the
  * schedule's now-marker uses.
  */
-export function deriveTodaySession(now: Date): TodaySession {
+export function deriveTodaySession(now: Date, scheme: 'light' | 'dark' = 'light'): TodaySession {
+  const TONE = getTodayStatusTones(scheme);
   const dayKey = getDayKey(now);
   const minutes = toMinutes(now);
   const today = classesOn(dayKey);
@@ -170,5 +189,6 @@ export function deriveTodaySession(now: Date): TodaySession {
 
 export function useTodaySession(): TodaySession {
   const now = useNow();
-  return useMemo(() => deriveTodaySession(now), [now]);
+  const { scheme } = useAppearance();
+  return useMemo(() => deriveTodaySession(now, scheme), [now, scheme]);
 }

@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider, useTheme } from '@/design-system/theme';
+import { ThemeProvider, useTheme, useAppearance } from '@/design-system/theme';
 import { useConcordiaFonts } from '@/design-system/fonts';
 import { RootNavigator } from '@/navigation';
 import { createNavigationTheme } from '@/navigation/navigationTheme';
@@ -24,7 +24,8 @@ const queryClient = new QueryClient({
 
 function AppNavigation() {
   const theme = useTheme();
-  const navigationTheme = useMemo(() => createNavigationTheme(theme), [theme]);
+  const { scheme } = useAppearance();
+  const navigationTheme = useMemo(() => createNavigationTheme(theme, scheme), [theme, scheme]);
 
   return (
     <SafeAreaProvider>

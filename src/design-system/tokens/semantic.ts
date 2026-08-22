@@ -57,6 +57,64 @@ export const semanticColors = {
   tintMuted: primitiveColors.black10,
 } as const;
 
+/**
+ * UI-only dark-mode neutrals — not CDS colors, so they live here rather than
+ * in `primitive/colors.ts` (which mirrors the CDS LESS source exactly).
+ */
+const darkNeutral = {
+  bg0: '#121214',
+  bg1: '#1C1C1E',
+  bg2: '#242426',
+  border: 'rgba(255, 255, 255, 0.16)',
+  borderSubtle: 'rgba(255, 255, 255, 0.10)',
+  borderSubtler: 'rgba(255, 255, 255, 0.06)',
+} as const;
+
+/**
+ * First-draft dark palette — flagged for a real contrast check once the app
+ * is running in dark mode, not treated as final. See `burgundyDarkModeTint`.
+ */
+export const semanticColorsDark = {
+  primary: primitiveColors.burgundyDarkModeTint,
+  primaryHover: primitiveColors.burgundyDarkModeTintHover,
+  primaryActive: primitiveColors.burgundyDarkModeTintPressed,
+  primaryDark: primitiveColors.burgundyDark,
+
+  background: darkNeutral.bg0,
+  backgroundSubtle: darkNeutral.bg1,
+  backgroundMuted: darkNeutral.bg2,
+  backgroundBrand: primitiveColors.burgundy,
+  backgroundInverse: primitiveColors.white,
+
+  text: {
+    primary: '#F5F5F7',
+    secondary: 'rgba(255, 255, 255, 0.75)',
+    subtle: 'rgba(255, 255, 255, 0.6)',
+    subtler: 'rgba(255, 255, 255, 0.6)',
+    inverse: primitiveColors.black,
+    inverseSubtle: 'rgba(0, 0, 0, 0.7)',
+    brand: primitiveColors.burgundyDarkModeTint,
+    link: primitiveColors.cyan,
+    linkHover: primitiveColors.cyanHover,
+  },
+
+  border: darkNeutral.border,
+  borderSubtle: darkNeutral.borderSubtle,
+  borderSubtler: darkNeutral.borderSubtler,
+  borderBrand: primitiveColors.burgundyDarkModeTint,
+  borderFocus: primitiveColors.cyan,
+
+  success: primitiveColors.limeGreen,
+  warning: primitiveColors.yellow,
+  error: primitiveColors.magenta,
+  info: primitiveColors.cyan,
+
+  tintSuccess: 'rgba(140, 198, 62, 0.16)',
+  tintWarning: 'rgba(229, 167, 18, 0.16)',
+  tintInfo: 'rgba(0, 173, 239, 0.16)',
+  tintMuted: 'rgba(255, 255, 255, 0.08)',
+} as const;
+
 export const semanticSpacing = {
   xs: primitiveSpacing['04'],
   sm: primitiveSpacing['08'],

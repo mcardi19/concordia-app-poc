@@ -11,6 +11,14 @@ const CAMPUS_CARD_WIDTH = 228;
 const CAMPUS_IMAGE_HEIGHT = 106;
 const CAROUSEL_GAP = 14;
 
+/**
+ * The badge sits on a photo thumbnail, not the page — fixed regardless of
+ * app theme, same reasoning as `SessionHero`'s on-scrim colors.
+ */
+const ON_PHOTO_BADGE_BG = 'rgba(255,255,255,0.92)';
+const ON_PHOTO_BADGE_BORDER = 'rgba(0,0,0,0.08)';
+const ON_PHOTO_BADGE_TEXT = '#1A1A1A';
+
 /** Shared so other flows' carousels snap identically to Home's. */
 export const horizontalCarouselProps = {
   horizontal: true as const,
@@ -70,13 +78,13 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
             <View style={{ position: 'absolute', top: 10, left: 10 }}>
               <View
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.92)',
+                  backgroundColor: ON_PHOTO_BADGE_BG,
                   borderRadius: 7,
                   borderCurve: 'continuous',
                   paddingHorizontal: 9,
                   paddingVertical: 4,
                   borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: 'rgba(0,0,0,0.08)',
+                  borderColor: ON_PHOTO_BADGE_BORDER,
                 }}
               >
                 <Text
@@ -86,6 +94,7 @@ export function TodayUpdatesCarousel({ items, onPress }: UpdatesProps) {
                     fontSize: 11,
                     lineHeight: 11 * 1.2,
                     letterSpacing: 0.2,
+                    color: ON_PHOTO_BADGE_TEXT,
                   }}
                 >
                   {item.badge}

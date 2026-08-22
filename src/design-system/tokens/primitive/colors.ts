@@ -8,6 +8,14 @@ export const primitiveColors = {
   burgundyHover: '#7B1E30',
   burgundyPressed: '#651828',
   burgundyDark: '#541421',
+  /**
+   * Lightened for dark-mode use — not from the CDS source. Base burgundy's
+   * contrast against a near-black background falls short of AA, so dark
+   * mode needs a brighter tint rather than the light-mode brand color.
+   */
+  burgundyDarkModeTint: '#D9748C',
+  burgundyDarkModeTintHover: '#C65E76',
+  burgundyDarkModeTintPressed: '#B14E64',
 
   blue: '#0072A8',
   blueHover: '#00608E',

@@ -3,6 +3,7 @@ import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from '@/components/design-system';
 import { PulsingStatusDot } from '@/components/design-system/PulsingStatusDot';
 import { useTheme } from '@/design-system/theme';
+import { DEFAULT_STATUS_TONE } from './todaySession';
 
 type Props = {
   label: string;
@@ -11,8 +12,15 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
+/**
+ * Always sits on a photo/gradient surface, not the page — fixed regardless
+ * of app theme, same reasoning as `SessionHero`'s on-scrim colors.
+ */
+const ON_PHOTO_BADGE_BG = '#FFFFFF';
+const ON_PHOTO_BADGE_TEXT = '#1A1A1A';
+
 /** White pill badge for photo / gradient surfaces (homepage primary card). */
-export function SessionStatusBadge({ label, tone = '#00C853', style }: Props) {
+export function SessionStatusBadge({ label, tone = DEFAULT_STATUS_TONE, style }: Props) {
   return (
     <View
       style={[
@@ -25,7 +33,7 @@ export function SessionStatusBadge({ label, tone = '#00C853', style }: Props) {
           paddingHorizontal: 12,
           borderRadius: 999,
           borderCurve: 'continuous',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: ON_PHOTO_BADGE_BG,
         },
         style,
       ]}
@@ -35,7 +43,7 @@ export function SessionStatusBadge({ label, tone = '#00C853', style }: Props) {
         variant="body"
         style={{
           fontWeight: '500',
-          color: '#1A1A1A',
+          color: ON_PHOTO_BADGE_TEXT,
           fontSize: 15,
           lineHeight: 15 * 1.2,
         }}

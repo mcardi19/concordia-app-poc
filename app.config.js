@@ -10,7 +10,7 @@ export default {
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
-    userInterfaceStyle: 'light',
+    userInterfaceStyle: 'automatic',
     splash: {
       image: './assets/splash-icon.png',
       resizeMode: 'contain',
@@ -19,6 +19,16 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'ca.concordia.app',
+      /**
+       * Personal Apple developer team, used to sign local device builds.
+       * Set here so it survives `expo prebuild`, which regenerates the
+       * gitignored `ios/` directory and drops any signing set up by hand.
+       *
+       * Not the certificate id shown in Keychain's "Apple Development:
+       * … (XXXXXXXXXX)" name — that is a different value. This is the
+       * team id, the cert subject's OU field.
+       */
+      appleTeamId: 'WP674ZSSXH',
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
           'Concordia uses your location to show where you are on the campus map.',

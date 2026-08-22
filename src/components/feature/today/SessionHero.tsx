@@ -17,15 +17,25 @@ import {
   Text,
   type ProgressiveImageTreatmentProps,
 } from '@/components/design-system';
-import { useTheme } from '@/design-system/theme';
 import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
-import { todayTheme } from '@/screens/today/todayTheme';
+import { useTodayTheme } from '@/screens/today/todayTheme';
 import type { TodaySession } from './todayData';
 import { SessionStatusBadge } from './SessionStatusBadge';
 import {
   SESSION_CARD_SHARED_TAG,
   sessionCardSharedTransition,
 } from './sessionSharedTransition';
+
+/**
+ * The hero photo always needs a dark scrim and readable white text over it,
+ * regardless of app theme — these are fixed, not light/dark pairs.
+ */
+const SESSION_HERO_SCRIM_COLORS = [
+  'transparent',
+  'rgba(0, 0, 0, 0.58)',
+  'rgba(0, 0, 0, 0.94)',
+] as const;
+const ON_SCRIM_TEXT_COLOR = '#FFFFFF';
 
 export const SESSION_HERO_MIN_HEIGHT = 440;
 export const SESSION_HERO_CONTENT_PAD = 20;
@@ -128,7 +138,7 @@ export function SessionHero({
   fillContainer = false,
   treatment,
 }: Props) {
-  const theme = useTheme();
+  const todayTheme = useTodayTheme();
 
   const image = (
     <Animated.Image
@@ -161,7 +171,7 @@ export function SessionHero({
   const overlay = (
     <SessionHeroOverlay
       session={session}
-      theme={theme}
+      todayTheme={todayTheme}
       showStatusBadge={showStatusBadge}
       showActions={showActions}
       showProfessor={showProfessor}
@@ -213,7 +223,7 @@ export function SessionHero({
 
 type OverlayProps = {
   session: TodaySession;
-  theme: ReturnType<typeof useTheme>;
+  todayTheme: ReturnType<typeof useTodayTheme>;
   showStatusBadge: boolean;
   showActions: boolean;
   showProfessor: boolean;
@@ -233,7 +243,7 @@ type OverlayProps = {
 
 function SessionHeroOverlay({
   session,
-  theme,
+  todayTheme,
   showStatusBadge,
   showActions,
   showProfessor,
@@ -284,7 +294,7 @@ function SessionHeroOverlay({
     <View pointerEvents="box-none" style={[absoluteFill, contentStyle]}>
       <LinearGradient
         pointerEvents="none"
-        colors={['transparent', 'rgba(0, 0, 0, 0.58)', 'rgba(0, 0, 0, 0.94)']}
+        colors={SESSION_HERO_SCRIM_COLORS}
         locations={[0.36, 0.68, 1]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
@@ -317,7 +327,7 @@ function SessionHeroOverlay({
           <Text
             variant="heading2"
             style={{
-              color: theme.color.text.inverse,
+              color: ON_SCRIM_TEXT_COLOR,
               fontSize: 32,
               lineHeight: 32 * 1.15,
             }}
@@ -326,16 +336,16 @@ function SessionHeroOverlay({
           </Text>
         </View>
 
-        <View style={styles.meta}>
-          <MetaField label="Room" value={session.room} />
-          <MetaField label={session.timeLabel} value={session.timeValue} />
+        <View style={[styles.meta, { borderTopColor: todayTheme.sessionMetaRule }]}>
+          <MetaField label="Room" value={session.room} todayTheme={todayTheme} />
+          <MetaField label={session.timeLabel} value={session.timeValue} todayTheme={todayTheme} />
           <Animated.View style={[styles.rightCell, rightCellTransform]}>
             {showProfessor ? (
               <Animated.View
                 pointerEvents="none"
                 style={[{ position: 'absolute', right: 0, bottom: 0 }, profStyle]}
               >
-                <MetaField label="Prof" value={session.professor} />
+                <MetaField label="Prof" value={session.professor} todayTheme={todayTheme} />
               </Animated.View>
             ) : null}
             {showActions ? (
@@ -395,7 +405,6 @@ const styles = StyleSheet.create({
     padding: SESSION_HERO_CONTENT_PAD,
     backgroundColor: 'transparent',
     borderTopWidth: 1,
-    borderTopColor: todayTheme.sessionMetaRule,
   },
   rightCell: {
     flex: 1,
@@ -429,6 +438,7 @@ export function SessionHeroActions({
   /** @deprecated Location CTA removed from the homepage primary card. */
   onLocationPress?: () => void;
 }) {
+  const todayTheme = useTodayTheme();
   const label = (
     <Text
       variant="body"
@@ -474,7 +484,15 @@ export function SessionHeroActions({
   );
 }
 
-function MetaField({ label, value }: { label: string; value: string }) {
+function MetaField({
+  label,
+  value,
+  todayTheme,
+}: {
+  label: string;
+  value: string;
+  todayTheme: ReturnType<typeof useTodayTheme>;
+}) {
   return (
     <View style={{ minWidth: 64 }}>
       <Text
@@ -493,7 +511,7 @@ function MetaField({ label, value }: { label: string; value: string }) {
         variant="body"
         style={{
           fontWeight: '600',
-          color: '#FFFFFF',
+          color: ON_SCRIM_TEXT_COLOR,
           fontSize: 17,
           lineHeight: 17 * 1.2,
         }}

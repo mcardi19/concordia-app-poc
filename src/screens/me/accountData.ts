@@ -40,7 +40,7 @@ export const defaultBalanceSummary: AccountBalanceSummary = {
 
 export const accountSettingsRows: SettingsRow[] = [
   { id: 'notifications', label: 'Notifications', value: 'On' },
-  { id: 'appearance', label: 'Appearance', value: 'Auto' },
+  { id: 'appearance', label: 'Appearance', route: 'Appearance' },
   { id: 'accessibility', label: 'Accessibility' },
   { id: 'privacy', label: 'Privacy & data' },
 ];

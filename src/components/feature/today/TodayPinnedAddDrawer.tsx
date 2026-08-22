@@ -25,6 +25,8 @@ type Props = {
 const DISMISS_DISTANCE = 120;
 const OFFSCREEN = 520;
 const SPRING = { damping: 22, stiffness: 220, mass: 0.9 };
+/** A standard modal scrim — fixed regardless of app theme. */
+const MODAL_BACKDROP_COLOR = '#000';
 
 /**
  * Bottom drawer for choosing a shortcut to pin. Matches BuildingDrawer /
@@ -115,7 +117,7 @@ export function TodayPinnedAddDrawer({ visible, options, onSelect, onClose }: Pr
       <GestureHandlerRootView style={styles.modalRoot}>
         <Animated.View
           pointerEvents="auto"
-          style={[styles.backdrop, backdropStyle, { backgroundColor: '#000' }]}
+          style={[styles.backdrop, backdropStyle, { backgroundColor: MODAL_BACKDROP_COLOR }]}
         >
           <Pressable
             accessibilityRole="button"

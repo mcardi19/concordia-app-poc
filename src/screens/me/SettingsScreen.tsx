@@ -2,17 +2,23 @@ import React from 'react';
 import { View } from 'react-native';
 import { Screen, Text, Button } from '@/components/design-system';
 import { AccountSettingsList } from '@/components/feature/me';
-import { useTheme } from '@/design-system/theme';
+import { useAppearance, useTheme } from '@/design-system/theme';
 import { useAuth } from '@/hooks/useAuth';
 import { accountSettingsRows } from './accountData';
 import type { MeStackScreenProps } from '@/navigation/types';
 
 type Props = MeStackScreenProps<'Settings'>;
 
-export function SettingsScreen(_props: Props) { // navigation props unused on this screen
-  void _props;
+const PREFERENCE_LABEL = { system: 'System', light: 'Light', dark: 'Dark' } as const;
+
+export function SettingsScreen({ navigation }: Props) {
   const theme = useTheme();
   const { logout, isLoading } = useAuth();
+  const { preference } = useAppearance();
+
+  const rows = accountSettingsRows.map((row) =>
+    row.id === 'appearance' ? { ...row, value: PREFERENCE_LABEL[preference] } : row,
+  );
 
   return (
     <Screen>
@@ -23,7 +29,10 @@ export function SettingsScreen(_props: Props) { // navigation props unused on th
         App preferences and account actions.
       </Text>
 
-      <AccountSettingsList rows={accountSettingsRows} />
+      <AccountSettingsList
+        rows={rows}
+        onRowPress={(row) => row.route && navigation.navigate(row.route)}
+      />
 
       <View style={{ marginTop: theme.spacing.xl }}>
         <Button variant="secondary" onPress={() => logout()} disabled={isLoading}>

@@ -7,7 +7,7 @@ import { MaterialSymbol, msCall, msChevronRight, msNorthEast } from '@/component
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
-import { meTheme } from '@/screens/me/meTheme';
+import { useMeTheme } from '@/screens/me/meTheme';
 import {
   CONCORDIA_EMERGENCY_URL,
   CRISIS_HELPLINES,
@@ -34,6 +34,7 @@ const ER_MAP_URL = Platform.select({
  */
 export function EmergencyScreen() {
   const theme = useTheme();
+  const meTheme = useMeTheme();
   const bottomPadding = useTabBarContentPadding();
 
   const open = useCallback((url: string) => {
@@ -41,7 +42,7 @@ export function EmergencyScreen() {
   }, []);
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: meTheme.pageBackground }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottomPadding + 24 }}
@@ -79,10 +80,10 @@ export function EmergencyScreen() {
 
         <Section label="Hospital emergency rooms">
           <MeGlassCard style={styles.card} contentStyle={styles.erCard}>
-            <Text variant="bodySmall" style={styles.rowTitle}>
+            <Text variant="bodySmall" style={[styles.rowTitle, { color: meTheme.headingText }]}>
               Find ERs & wait times in Montreal
             </Text>
-            <Text variant="caption" style={styles.rowDetail}>
+            <Text variant="caption" style={[styles.rowDetail, { color: meTheme.metaText }]}>
               Including psychiatric emergency departments. Unsure if you need the ER? Call{' '}
               <Text variant="caption" color="brand" style={styles.inlineStrong}>
                 8-1-1
@@ -109,15 +110,17 @@ export function EmergencyScreen() {
                 accessibilityLabel={`${resource.label}. ${resource.detail}`}
                 style={({ pressed }) => [
                   styles.resourceRow,
-                  index < EMERGENCY_RESOURCES.length - 1 ? styles.divider : null,
+                  index < EMERGENCY_RESOURCES.length - 1
+                    ? [styles.divider, { borderBottomColor: theme.color.borderSubtle }]
+                    : null,
                   { opacity: pressed ? 0.6 : 1 },
                 ]}
               >
                 <View style={styles.rowText}>
-                  <Text variant="bodySmall" style={styles.rowTitle}>
+                  <Text variant="bodySmall" style={[styles.rowTitle, { color: meTheme.headingText }]}>
                     {resource.label}
                   </Text>
-                  <Text variant="caption" style={styles.rowDetail}>
+                  <Text variant="caption" style={[styles.rowDetail, { color: meTheme.metaText }]}>
                     {resource.detail}
                   </Text>
                 </View>
@@ -127,7 +130,7 @@ export function EmergencyScreen() {
           </MeGlassCard>
         </Section>
 
-        <Text variant="caption" style={styles.footer}>
+        <Text variant="caption" style={[styles.footer, { color: meTheme.metaText }]}>
           Concordia is located on the unceded Indigenous lands of the Kanien&rsquo;kehá:ka
           Nation. If you&rsquo;re in immediate danger, call 911 first.
         </Text>
@@ -139,6 +142,7 @@ export function EmergencyScreen() {
 /** One of the two numbers you dial without reading the rest of the page. */
 function CallAction({ call, onPress }: { call: EmergencyCall; onPress: () => void }) {
   const theme = useTheme();
+  const meTheme = useMeTheme();
   const primary = call.primary === true;
 
   return (
@@ -149,8 +153,14 @@ function CallAction({ call, onPress }: { call: EmergencyCall; onPress: () => voi
       style={({ pressed }) => [
         styles.call,
         primary
-          ? [styles.callPrimary, { backgroundColor: theme.color.primary }]
-          : [styles.callSecondary, { borderColor: `${theme.color.primary}30` }],
+          ? [
+              styles.callPrimary,
+              { backgroundColor: theme.color.primary, shadowColor: theme.color.primary },
+            ]
+          : [
+              styles.callSecondary,
+              { backgroundColor: meTheme.cardBackground, borderColor: `${theme.color.primary}30` },
+            ],
         { opacity: pressed ? 0.85 : 1 },
       ]}
     >
@@ -219,6 +229,7 @@ function HelplineRow({
   onPress: () => void;
 }) {
   const theme = useTheme();
+  const meTheme = useMeTheme();
 
   return (
     <Pressable
@@ -227,14 +238,14 @@ function HelplineRow({
       accessibilityLabel={`Call ${line.name}, ${line.phone}`}
       style={({ pressed }) => [
         styles.helpline,
-        !last ? styles.divider : null,
+        !last ? [styles.divider, { borderBottomColor: theme.color.borderSubtle }] : null,
         { opacity: pressed ? 0.6 : 1 },
       ]}
     >
-      <Text variant="bodySmall" style={styles.rowTitle}>
+      <Text variant="bodySmall" style={[styles.rowTitle, { color: meTheme.headingText }]}>
         {line.name}
       </Text>
-      <Text variant="caption" style={styles.rowDetail}>
+      <Text variant="caption" style={[styles.rowDetail, { color: meTheme.metaText }]}>
         {line.detail}
       </Text>
       <View style={styles.helplineMeta}>
@@ -245,7 +256,7 @@ function HelplineRow({
           </Text>
         </View>
         {line.alt ? (
-          <Text variant="caption" style={styles.altLabel}>
+          <Text variant="caption" style={[styles.altLabel, { color: meTheme.metaText }]}>
             {line.alt}
           </Text>
         ) : null}
@@ -255,14 +266,19 @@ function HelplineRow({
 }
 
 function LinkButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const meTheme = useMeTheme();
+
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="link"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.linkButton, { opacity: pressed ? 0.6 : 1 }]}
+      style={({ pressed }) => [
+        styles.linkButton,
+        { backgroundColor: meTheme.stackFill, opacity: pressed ? 0.6 : 1 },
+      ]}
     >
-      <Text variant="caption" style={styles.linkLabel}>
+      <Text variant="caption" style={[styles.linkLabel, { color: meTheme.headingText }]}>
         {label}
       </Text>
       <MaterialSymbol icon={msNorthEast} size={13} color={meTheme.headingText} />
@@ -271,9 +287,11 @@ function LinkButton({ label, onPress }: { label: string; onPress: () => void }) 
 }
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  const meTheme = useMeTheme();
+
   return (
     <View style={styles.section}>
-      <Text variant="heading3" style={styles.sectionLabel}>
+      <Text variant="heading3" style={[styles.sectionLabel, { color: meTheme.headingText }]}>
         {label}
       </Text>
       {children}
@@ -284,7 +302,6 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: meTheme.pageBackground,
   },
   masthead: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
@@ -319,7 +336,6 @@ const styles = StyleSheet.create({
   callPrimary: {
     ...Platform.select({
       ios: {
-        shadowColor: '#912238',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
         shadowRadius: 24,
@@ -328,7 +344,6 @@ const styles = StyleSheet.create({
     }),
   },
   callSecondary: {
-    backgroundColor: meTheme.cardBackground,
     borderWidth: 1,
   },
   callIcon: {
@@ -365,7 +380,6 @@ const styles = StyleSheet.create({
   sectionLabel: {
     ...SECTION_HEADING_TEXT,
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    color: meTheme.headingText,
     marginBottom: 12,
   },
   card: {
@@ -377,7 +391,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0, 0, 0, 0.08)',
   },
   helpline: {
     paddingHorizontal: 16,
@@ -407,7 +420,6 @@ const styles = StyleSheet.create({
   altLabel: {
     fontSize: 11,
     lineHeight: 14,
-    color: meTheme.metaText,
   },
   resourceRow: {
     flexDirection: 'row',
@@ -425,12 +437,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: '600',
     letterSpacing: -0.3,
-    color: meTheme.headingText,
   },
   rowDetail: {
     fontSize: 12,
     lineHeight: 17,
-    color: meTheme.metaText,
     marginTop: 3,
   },
   inlineStrong: {
@@ -453,20 +463,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 7,
     borderCurve: 'continuous',
-    backgroundColor: meTheme.stackFill,
   },
   linkLabel: {
     fontSize: 12,
     lineHeight: 15,
     fontWeight: '600',
-    color: meTheme.headingText,
   },
   footer: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 20,
     fontSize: 11,
     lineHeight: 16,
-    color: meTheme.metaText,
     textAlign: 'center',
   },
 });

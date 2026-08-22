@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GlassView } from 'expo-glass-effect';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
-import { todayHairlineCard } from './todaySurfaces';
+import { useTodaySurfaces } from './todaySurfaces';
 
 type Props = {
   /** Match the parent's corner radius so the fill does not square off. */
@@ -20,6 +20,7 @@ type Props = {
  */
 export function TodaySurfaceFill({ radius }: Props) {
   const glass = useMemo(() => canUseLiquidGlass(), []);
+  const { todayHairlineCard } = useTodaySurfaces();
 
   if (!glass) {
     return (

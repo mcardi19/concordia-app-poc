@@ -48,7 +48,7 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
                 height: ICON_TILE,
                 borderRadius: 10,
                 borderCurve: 'continuous',
-                backgroundColor: 'rgba(145,34,56,0.08)',
+                backgroundColor: `${theme.color.primary}14`,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -85,7 +85,7 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
               accessibilityRole="button"
               accessibilityLabel={item.actionLabel}
               style={{
-                backgroundColor: 'rgba(145,34,56,0.1)',
+                backgroundColor: `${theme.color.primary}1A`,
                 borderRadius: 8,
                 borderCurve: 'continuous',
                 paddingHorizontal: 14,
@@ -110,7 +110,7 @@ export function TodayAttentionList({ items, onActionPress }: Props) {
             <View
               style={{
                 height: StyleSheet.hairlineWidth,
-                backgroundColor: 'rgba(0,0,0,0.08)',
+                backgroundColor: theme.color.borderSubtle,
                 marginLeft: DIVIDER_INSET,
               }}
             />

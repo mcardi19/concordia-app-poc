@@ -24,8 +24,7 @@ export { TodayPinnedAddDrawer } from './TodayPinnedAddDrawer';
 export { TodayAttentionList } from './TodayAttentionList';
 export { TodayUpdatesCarousel, TodayCampusCarousel } from './TodayCarousels';
 export {
-  PINNED_CHIPS,
-  PINNED_CHIP_CATALOG,
+  usePinnedChipCatalog,
   ATTENTION_ITEMS,
   LATEST_UPDATES,
   CAMPUS_TODAY,

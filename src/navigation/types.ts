@@ -36,6 +36,7 @@ export type AcademicDateRoutes = {
 export type MeRoutes = {
   MeHome: undefined;
   Settings: undefined;
+  Appearance: undefined;
   Profile: undefined;
   Grades: undefined;
   Balance: undefined;

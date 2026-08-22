@@ -15,8 +15,7 @@ import {
   ATTENTION_ITEMS,
   CAMPUS_TODAY,
   LATEST_UPDATES,
-  PINNED_CHIP_CATALOG,
-  PINNED_CHIPS,
+  usePinnedChipCatalog,
   TodayAttentionList,
   TodayCampusCarousel,
   TodayPinnedAddDrawer,
@@ -37,17 +36,17 @@ import { HEADER_BAR_BUTTON_SIZE, HEADER_CHROME_TOP_GAP } from '@/navigation/Head
 import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
 import { useTabBarScrollInset } from '@/navigation/tabBarInset';
 import type { TodayStackScreenProps } from '@/navigation/types';
-import { todayTheme } from './todayTheme';
+import { useTodayTheme } from './todayTheme';
 
 type Props = TodayStackScreenProps<'Today'>;
 
 /** Masthead veil turns on with scroll and stays while scrolled. */
 const MASTHEAD_OVERLAP = 56;
 
-const PAGE_BG = todayTheme.pageBackground;
-
 export function TodayScreen({ navigation }: Props) {
   const theme = useTheme();
+  const todayTheme = useTodayTheme();
+  const PAGE_BG = todayTheme.pageBackground;
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarScrollInset();
   const inset = theme.spacing.screenHorizontal;
@@ -56,8 +55,21 @@ export function TodayScreen({ navigation }: Props) {
   const lastTabMinimizeYRef = useRef(0);
   const insetTopRef = useRef(0);
   const topBaselineRef = useRef<number | null>(null);
+  const { chips: defaultChips, catalog: pinnedChipCatalog } = usePinnedChipCatalog();
   const [isPinnedEditing, setIsPinnedEditing] = useState(false);
-  const [pinnedChips, setPinnedChips] = useState(PINNED_CHIPS);
+  /*
+    Only ids are kept in state — a chip's iconColor depends on the active
+    theme, so storing full chip objects would freeze whichever colors were
+    current when a chip was pinned instead of tracking theme changes.
+  */
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() => defaultChips.map((chip) => chip.id));
+  const pinnedChips = useMemo(
+    () =>
+      pinnedIds
+        .map((id) => pinnedChipCatalog.find((chip) => chip.id === id))
+        .filter((chip): chip is PinnedChip => Boolean(chip)),
+    [pinnedIds, pinnedChipCatalog],
+  );
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
 
   const gradientOpacity = useMemo(
@@ -169,7 +181,7 @@ export function TodayScreen({ navigation }: Props) {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            setPinnedChips((current) => current.filter((item) => item.id !== chip.id));
+            setPinnedIds((current) => current.filter((id) => id !== chip.id));
           },
         },
       ],
@@ -177,17 +189,12 @@ export function TodayScreen({ navigation }: Props) {
   }, []);
 
   const addableChips = useMemo(() => {
-    const pinnedIds = new Set(pinnedChips.map((chip) => chip.id));
-    return PINNED_CHIP_CATALOG.filter((chip) => !pinnedIds.has(chip.id));
-  }, [pinnedChips]);
+    const pinnedIdSet = new Set(pinnedIds);
+    return pinnedChipCatalog.filter((chip) => !pinnedIdSet.has(chip.id));
+  }, [pinnedIds, pinnedChipCatalog]);
 
   const handleAddChip = useCallback((chip: PinnedChip) => {
-    setPinnedChips((current) => {
-      if (current.some((item) => item.id === chip.id)) {
-        return current;
-      }
-      return [...current, chip];
-    });
+    setPinnedIds((current) => (current.includes(chip.id) ? current : [...current, chip.id]));
   }, []);
 
   return (
