@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackHeaderItem } from '@react-navigation/native-stack';
 import { TodayScreen } from '@/screens/today/TodayScreen';
+import { CampusTodayScreen } from '@/screens/campusToday/CampusTodayScreen';
 import { EmergencyScreen } from '@/screens/today/EmergencyScreen';
 import { useTheme } from '@/design-system/theme';
 import { searchScreens } from './searchRoutes';
@@ -87,6 +88,11 @@ export function TodayStack() {
         name="Emergency"
         component={EmergencyScreen}
         options={{ title: 'Emergency & crisis' }}
+      />
+      <Stack.Screen
+        name="CampusToday"
+        component={CampusTodayScreen}
+        options={{ title: 'Campus today' }}
       />
       {searchScreens(Stack)}
     </Stack.Navigator>

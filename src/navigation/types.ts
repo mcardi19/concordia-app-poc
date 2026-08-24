@@ -50,6 +50,8 @@ export type TodayStackParamList = SearchRoutes & {
   Today: undefined;
   /** Reached from the shield action in the Home header. */
   Emergency: undefined;
+  /** "Campus today" opened whole from the Home section header. */
+  CampusToday: undefined;
 };
 
 export type ScheduleStackParamList = AcademicDateRoutes & {

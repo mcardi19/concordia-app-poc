@@ -248,7 +248,11 @@ export function TodayScreen({ navigation }: Props) {
 
           <View>
             <View style={{ paddingHorizontal: inset }}>
-              <TodaySectionHeader title="Campus today" showChevron />
+              <TodaySectionHeader
+                title="Campus today"
+                showChevron
+                onPress={() => navigation.navigate('CampusToday')}
+              />
             </View>
             <TodayCampusCarousel items={CAMPUS_TODAY} />
           </View>
