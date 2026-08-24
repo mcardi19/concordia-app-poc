@@ -7,6 +7,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useTheme } from '@/design-system/theme';
+import type { RegisteredFontKey } from '@/design-system/fonts/fontMap';
 
 export type TextVariant = 'heading1' | 'heading2' | 'heading3' | 'body' | 'bodySmall' | 'caption';
 
@@ -14,6 +15,11 @@ export interface TextProps extends RNTextProps {
   variant?: TextVariant;
   color?: 'primary' | 'secondary' | 'subtle' | 'inverse' | 'brand' | 'link';
   allowFontScaling?: boolean;
+  /**
+   * Opt in to a registered brand face (Gill Sans Nova). When set it overrides
+   * the platform UI font. Only the session card uses this for now.
+   */
+  brandFace?: RegisteredFontKey;
 }
 
 /**
@@ -30,6 +36,7 @@ export function Text({
   variant = 'body',
   color = 'primary',
   allowFontScaling = true,
+  brandFace,
   style,
   ...rest
 }: TextProps) {
@@ -61,8 +68,15 @@ export function Text({
   }
 
   const flattened = StyleSheet.flatten([baseStyle, style]) as TextStyle;
-  // Callers may pass a fontFamily (brand tokens, Figma Inter leftovers) — discard it.
-  flattened.fontFamily = PLATFORM_UI_FONT;
+  if (brandFace) {
+    // Explicit brand opt-in wins. The weight is baked into the face, so drop any
+    // fontWeight to avoid faux-bold synthesis against a single-weight TTF.
+    flattened.fontFamily = brandFace;
+    delete flattened.fontWeight;
+  } else {
+    // Callers may pass a fontFamily (brand tokens, Figma Inter leftovers) — discard it.
+    flattened.fontFamily = PLATFORM_UI_FONT;
+  }
 
   return <RNText allowFontScaling={allowFontScaling} style={flattened} {...rest} />;
 }

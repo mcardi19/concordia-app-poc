@@ -17,6 +17,7 @@ import {
   Text,
   type ProgressiveImageTreatmentProps,
 } from '@/components/design-system';
+import { fonts } from '@/design-system/fonts';
 import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
 import { useTodayTheme } from '@/screens/today/todayTheme';
 import type { TodaySession } from './todayData';
@@ -36,6 +37,14 @@ const SESSION_HERO_SCRIM_COLORS = [
   'rgba(0, 0, 0, 0.94)',
 ] as const;
 const ON_SCRIM_TEXT_COLOR = '#FFFFFF';
+
+/**
+ * The session card is the only surface opted into Gill Sans Nova for now.
+ * Uses the condensed family (CDS `gill-sans-nova-condensed`) at Cn Heavy (800);
+ * the condensed romans available locally are Medium (500), Heavy (800) and
+ * ExtraBold (900).
+ */
+const SESSION_CARD_BRAND_FACE = fonts.brandCondensedHeavy;
 
 export const SESSION_HERO_MIN_HEIGHT = 440;
 export const SESSION_HERO_CONTENT_PAD = 20;
@@ -323,13 +332,20 @@ function SessionHeroOverlay({
             }}
           >
             {session.courseCode}
+            {/*
+              The code names the course; this names which of its components
+              you are actually walking to. Same line, because they are one
+              label — "ENGL 369" alone does not say lecture or seminar.
+            */}
+            {session.componentLabel ? ` · ${session.componentLabel}` : ''}
           </Text>
           <Text
             variant="heading2"
+            brandFace={SESSION_CARD_BRAND_FACE}
             style={{
               color: ON_SCRIM_TEXT_COLOR,
-              fontSize: 32,
-              lineHeight: 32 * 1.15,
+              fontSize: 40,
+              lineHeight: 40 * 1.15,
             }}
           >
             {session.title}
@@ -395,7 +411,7 @@ const styles = StyleSheet.create({
   },
   title: {
     gap: 8,
-    marginBottom: 24,
+    marginBottom: 12,
     paddingHorizontal: SESSION_HERO_CONTENT_PAD,
   },
   meta: {

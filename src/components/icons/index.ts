@@ -69,5 +69,12 @@ export {
   msPedalBikeFill,
   msSearchOff,
   msHistory,
+  msLanguage,
+  msHelp,
+  msInfo,
+  msLogout,
+  msMail,
+  msEdit,
+  msPhotoCamera,
 } from './symbols';
 export type { TabSymbolPair, FeatureSymbolKey } from './symbols';

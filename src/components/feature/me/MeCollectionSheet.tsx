@@ -1,19 +1,10 @@
-import React, { useCallback, useEffect } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { MaterialSymbol, msBookmark, msBookmarkFill } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
-import { semanticSpacing } from '@/design-system/tokens';
 import { meTheme } from '@/screens/me/meTheme';
+import { MeBottomSheet } from './MeBottomSheet';
 
 /** A row in the collection sheet. */
 export type MeCollectionRow = {
@@ -36,14 +27,10 @@ type Props = {
   onClose: () => void;
 };
 
-const DISMISS_DISTANCE = 120;
-const OFFSCREEN = 460;
-const SPRING = { damping: 22, stiffness: 220, mass: 0.9 };
-
 /**
- * Bottom sheet listing a full collection. Mirrors the interaction model of
- * BuildingDrawer (pan-to-dismiss, animated backdrop) so both sheets in the app
- * behave identically.
+ * Bottom sheet listing a full collection. The panel itself is
+ * `MeBottomSheet`, shared with the edit-profile drawer; only the rows are
+ * local to this one.
  */
 export function MeCollectionSheet({
   title,
@@ -55,107 +42,10 @@ export function MeCollectionSheet({
   onClose,
 }: Props) {
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
-  const translateY = useSharedValue(OFFSCREEN);
-  const backdrop = useSharedValue(0);
-  const dragStartY = useSharedValue(0);
-
-  useEffect(() => {
-    if (title) {
-      translateY.value = withSpring(0, SPRING);
-      backdrop.value = withTiming(1, { duration: 220 });
-    } else {
-      translateY.value = withTiming(OFFSCREEN, { duration: 200 });
-      backdrop.value = withTiming(0, { duration: 180 });
-    }
-  }, [title, backdrop, translateY]);
-
-  const dismiss = useCallback(() => {
-    translateY.value = withTiming(OFFSCREEN, { duration: 200 });
-    backdrop.value = withTiming(0, { duration: 180 }, (finished) => {
-      if (finished) {
-        runOnJS(onClose)();
-      }
-    });
-  }, [backdrop, onClose, translateY]);
-
-  const pan = Gesture.Pan()
-    .onBegin(() => {
-      dragStartY.value = translateY.value;
-    })
-    .onUpdate((event) => {
-      translateY.value = Math.max(0, dragStartY.value + event.translationY);
-    })
-    .onEnd((event) => {
-      if (translateY.value > DISMISS_DISTANCE || event.velocityY > 900) {
-        translateY.value = withTiming(OFFSCREEN, { duration: 200 });
-        backdrop.value = withTiming(0, { duration: 180 }, (finished) => {
-          if (finished) {
-            runOnJS(onClose)();
-          }
-        });
-      } else {
-        translateY.value = withSpring(0, SPRING);
-      }
-    });
-
-  const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: backdrop.value * 0.35,
-  }));
-
-  if (!title) {
-    return null;
-  }
 
   return (
-    <Modal
-      visible
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      presentationStyle="overFullScreen"
-      onRequestClose={dismiss}
-    >
-      <GestureHandlerRootView style={styles.modalRoot}>
-        <Animated.View style={[styles.backdrop, backdropStyle]}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Dismiss ${title}`}
-            onPress={dismiss}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-
-        <GestureDetector gesture={pan}>
-          <Animated.View
-            style={[
-              styles.sheet,
-              sheetStyle,
-              { paddingBottom: insets.bottom + 26 },
-            ]}
-          >
-            <View style={styles.handleRow}>
-              <View style={styles.handle} />
-            </View>
-
-            <Text
-              variant="heading3"
-              style={{
-                fontSize: 19,
-                lineHeight: 22,
-                fontWeight: '600',
-                color: meTheme.headingText,
-                marginBottom: 14,
-              }}
-            >
-              {title}
-            </Text>
-
-            <View style={styles.rows}>
+    <MeBottomSheet visible={title != null} title={title ?? ''} onClose={onClose}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.rows}>
               {rows.map((row) => {
                 const saved = savedIds.has(row.id);
                 const tinted = row.tint != null;
@@ -225,43 +115,15 @@ export function MeCollectionSheet({
                   </Pressable>
                 );
               })}
-            </View>
-          </Animated.View>
-        </GestureDetector>
-      </GestureHandlerRootView>
-    </Modal>
+      </ScrollView>
+    </MeBottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  modalRoot: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#000000',
-  },
-  sheet: {
-    backgroundColor: meTheme.cardBackground,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    borderCurve: 'continuous',
-    paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingTop: 10,
-  },
-  handleRow: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: meTheme.sheetHandle,
-  },
   rows: {
     gap: 8,
+    paddingBottom: 8,
   },
   row: {
     flexDirection: 'row',

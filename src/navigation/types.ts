@@ -37,6 +37,10 @@ export type MeRoutes = {
   MeHome: undefined;
   Settings: undefined;
   Appearance: undefined;
+  /** The inbox, reached from the bell in the Me masthead. */
+  Notifications: undefined;
+  /** One notification from the inbox, by its `NotificationItem` id. */
+  NotificationDetail: { id: string };
   Profile: undefined;
   Grades: undefined;
   Balance: undefined;

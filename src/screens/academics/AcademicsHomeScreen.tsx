@@ -132,22 +132,24 @@ export function AcademicsHomeScreen({ navigation }: Props) {
           style={[styles.hero, { paddingTop: insets.top + 18 }]}
         >
           <Text
-            variant="heading2"
-            style={{ fontSize: 27, lineHeight: 30, color: '#FFFFFF' }}
+            variant="heading1"
+            style={{ fontSize: 32, lineHeight: 36, color: '#FFFFFF' }}
           >
             {ACADEMIC_TERM.title}
           </Text>
           <Text
-            variant="bodySmall"
-            style={{ fontSize: 14, fontWeight: '500', color: academicsTheme.heroSubtitle, marginTop: 7 }}
+            variant="body"
+            style={{ fontSize: 18, lineHeight: 22, fontWeight: '500', color: academicsTheme.heroSubtitle, marginTop: 7 }}
           >
             {termStatus.label}
           </Text>
-          <Text variant="caption" style={{ fontSize: 12, color: academicsTheme.heroMeta, marginTop: 9 }}>
-            {termStatus.week
-              ? `Week ${termStatus.week.current} of ${termStatus.week.total} · ${termStatus.phase}`
-              : termStatus.phase}
-          </Text>
+          {termStatus.phase !== 'Between terms' ? (
+            <Text variant="caption" style={{ fontSize: 12, color: academicsTheme.heroMeta, marginTop: 9 }}>
+              {termStatus.week
+                ? `Week ${termStatus.week.current} of ${termStatus.week.total} · ${termStatus.phase}`
+                : termStatus.phase}
+            </Text>
+          ) : null}
 
           <View style={styles.statsRow}>
             {TERM_STATS.map((stat, index) => (

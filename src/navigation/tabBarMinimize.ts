@@ -52,6 +52,55 @@ export function reportTabBarScrollOffset(offsetY: number, previousY: number): vo
   }
 }
 
+export type TabBarMinimizeDecision = {
+  behavior: TabBarMinimizeBehavior;
+  /** Offset the next frame measures its direction against. */
+  anchorY: number;
+};
+
+/**
+ * The minimize rule as a pure decision, callable from the UI thread.
+ *
+ * `useAnimatedScrollHandler` callers run this inline and only cross to the JS
+ * thread when the answer changes. Calling `reportTabBarScrollOffset` through
+ * `runOnJS` instead costs a thread hop on every scroll frame — at
+ * `scrollEventThrottle={1}` that is one per frame, and the congestion shows up
+ * as jitter in any scroll-linked animation on the same screen.
+ *
+ * Unlike the JS path, the anchor holds while the offset stays inside the
+ * threshold, so a slow drag still accumulates into a direction change rather
+ * than having its own reference point moved out from under it each frame.
+ */
+export function tabBarMinimizeDecision(
+  offsetY: number,
+  anchorY: number,
+  behavior: TabBarMinimizeBehavior,
+): TabBarMinimizeDecision {
+  'worklet';
+  const y = Math.max(0, offsetY);
+
+  if (y <= AT_TOP_EPSILON) {
+    return { behavior: 'onScrollDown', anchorY: y };
+  }
+
+  const dy = y - anchorY;
+
+  if (dy < -DIRECTION_THRESHOLD) {
+    return { behavior: 'none', anchorY: y };
+  }
+  if (dy > DIRECTION_THRESHOLD) {
+    return { behavior: 'onScrollDown', anchorY: y };
+  }
+
+  return { behavior, anchorY };
+}
+
+/** Commit a behavior decided by `tabBarMinimizeDecision` on the UI thread. */
+export function applyTabBarMinimizeBehavior(behavior: TabBarMinimizeBehavior): void {
+  if (Platform.OS !== 'ios') return;
+  useTabBarMinimizeStore.getState().setBehavior(behavior);
+}
+
 /** Scroll handler for tab-root ScrollViews / Animated.ScrollViews. */
 export function useTabBarMinimizeScrollHandler() {
   const lastYRef = useRef(0);

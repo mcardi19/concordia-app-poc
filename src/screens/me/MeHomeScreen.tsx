@@ -9,6 +9,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import {
+  EditProfileDrawer,
   MeAccountsGrid,
   MeCollectionSheet,
   MeCommunitySection,
@@ -20,7 +21,11 @@ import {
   heroStretch,
   type MeCollectionRow,
 } from '@/components/feature/me';
-import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
+import {
+  applyTabBarMinimizeBehavior,
+  tabBarMinimizeDecision,
+  type TabBarMinimizeBehavior,
+} from '@/navigation/tabBarMinimize';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { useAuthStore } from '@/state/authStore';
 import { useAccountBalance } from '@/hooks/useAccountBalance';
@@ -59,6 +64,8 @@ export function MeHomeScreen({ navigation }: Props) {
   const idCardOverlap = Math.round(idCardHeight / 2);
 
   const [open, setOpen] = useState<OpenCollection>(null);
+  /** 05r · Edit profile is a drawer over this page, not a pushed screen. */
+  const [editingProfile, setEditingProfile] = useState(false);
   const [savedIds, setSavedIds] = useState<ReadonlySet<string>>(
     () => new Set([...meCommunities, ...meFavouriteServices].map((item) => item.id)),
   );
@@ -77,12 +84,32 @@ export function MeHomeScreen({ navigation }: Props) {
     }, []),
   );
 
+  /**
+   * Mirrors the store on the UI thread so the scroll handler can tell whether
+   * the behavior actually changed without reading JS state.
+   */
+  const tabBarBehavior = useSharedValue<TabBarMinimizeBehavior>('onScrollDown');
+
+  /*
+    The hero stretch below is driven straight off `scrollY`, so this handler
+    runs on every frame of the rubber-band. It therefore has to stay cheap:
+    the minimize rule is decided here on the UI thread and only committed to
+    the store when the answer changes. Reporting the raw offset through
+    `runOnJS` each frame instead put a thread hop between the finger and the
+    stretch, which is what the jitter was.
+  */
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
       const y = event.contentOffset.y;
       scrollY.value = y;
-      runOnJS(reportTabBarScrollOffset)(y, lastTabMinimizeY.value);
-      lastTabMinimizeY.value = y;
+
+      const next = tabBarMinimizeDecision(y, lastTabMinimizeY.value, tabBarBehavior.value);
+      lastTabMinimizeY.value = next.anchorY;
+
+      if (next.behavior !== tabBarBehavior.value) {
+        tabBarBehavior.value = next.behavior;
+        runOnJS(applyTabBarMinimizeBehavior)(next.behavior);
+      }
     },
   });
 
@@ -184,7 +211,7 @@ export function MeHomeScreen({ navigation }: Props) {
           stats={meProfileStats}
           scrollY={scrollY}
           idCardOverlap={idCardOverlap}
-          onEditPress={() => navigation.navigate('Profile')}
+          onEditPress={() => setEditingProfile(true)}
         />
 
         {/*
@@ -223,6 +250,7 @@ export function MeHomeScreen({ navigation }: Props) {
 
       <MeHeaderChrome
         notificationCount={meNotificationCount}
+        onNotificationsPress={() => navigation.navigate('Notifications')}
         onSettingsPress={() => navigation.navigate('Settings')}
         onSearchPress={() => navigation.navigate('Search')}
         onBackPress={navigation.canGoBack() ? () => navigation.goBack() : undefined}
@@ -241,6 +269,12 @@ export function MeHomeScreen({ navigation }: Props) {
         savedIds={savedIds}
         onToggleSaved={toggleSaved}
         onClose={() => setOpen(null)}
+      />
+
+      <EditProfileDrawer
+        visible={editingProfile}
+        profile={profile}
+        onClose={() => setEditingProfile(false)}
       />
     </View>
   );

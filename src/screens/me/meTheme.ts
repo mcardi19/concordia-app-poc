@@ -44,6 +44,32 @@ const meThemeLight = {
   sheetRowBorder: 'rgba(0, 0, 0, 0.08)',
 
   barcode: '#1A1A1A',
+
+  /*
+    Settings, the notifications inbox, and the edit-profile drawer. Unlike the
+    keys above these are consumed through `useMeTheme()` from the start, so
+    both halves of the pair are real values rather than placeholders.
+  */
+
+  /**
+   * Destructive rows — sign out. The design's muted brick, not CDS `error`
+   * (magenta): next to burgundy a true magenta reads as a second brand.
+   */
+  danger: '#B04A4A',
+  /** Hairline between rows inside one grouped card. */
+  rowDivider: 'rgba(0, 0, 0, 0.06)',
+  /**
+   * Hairline between rows that sit straight on the page, with no card around
+   * them — the notifications inbox. Heavier than `rowDivider`: inside a white
+   * card the surface edge already does most of the separating, and on open
+   * page background a 6% line all but disappears.
+   */
+  listDivider: 'rgba(0, 0, 0, 0.14)',
+  /** Resting form field in the edit-profile drawer. */
+  fieldBorder: 'rgba(0, 0, 0, 0.08)',
+  /** Unselected filter chip on the notifications inbox. */
+  chipIdleBackground: '#FFFFFF',
+  chipIdleBorder: 'rgba(0, 0, 0, 0.08)',
 } as const;
 
 /**
@@ -91,6 +117,16 @@ const meThemeDark = {
 
   /** Unverified — no dark-mode consumer yet. */
   barcode: '#1A1A1A',
+
+  /* Settings / notifications / edit profile — real dark values, see light. */
+
+  /** Lifted off the light brick, which disappears against a dark page. */
+  danger: '#E08585',
+  rowDivider: 'rgba(255, 255, 255, 0.10)',
+  listDivider: 'rgba(255, 255, 255, 0.20)',
+  fieldBorder: 'rgba(255, 255, 255, 0.14)',
+  chipIdleBackground: '#242426',
+  chipIdleBorder: 'rgba(255, 255, 255, 0.12)',
 } as const;
 
 export function useMeTheme() {

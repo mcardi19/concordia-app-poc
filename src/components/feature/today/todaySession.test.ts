@@ -24,6 +24,18 @@ describe('deriveTodaySession', () => {
     expect(session.room).toBe('H-407');
   });
 
+  it('names the teaching component, which is not always a lecture', () => {
+    // Same course code, different components — the code alone cannot say which.
+    expect(deriveTodaySession(monday(9, 12)).componentLabel).toBe('Lecture');
+    expect(deriveTodaySession(monday(14)).componentLabel).toBe('Seminar');
+  });
+
+  it('still names the component when the card rolls to another day', () => {
+    // Saturday has no classes, so the card shows Monday's first — which is
+    // still a real meeting and still has a component to name.
+    expect(deriveTodaySession(saturday(11)).componentLabel).toBe('Lecture');
+  });
+
   it('counts down to a class that is close', () => {
     const session = deriveTodaySession(monday(8, 35));
     expect(session.state).toBe('imminent');

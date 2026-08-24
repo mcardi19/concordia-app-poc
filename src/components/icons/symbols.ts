@@ -10,6 +10,14 @@ import { msNorthEast } from '@material-symbols-react-native/rounded-400/msNorthE
 import { msArrowForward } from '@material-symbols-react-native/rounded-400/msArrowForward';
 import { msArrowBack } from '@material-symbols-react-native/rounded-400/msArrowBack';
 import { msCall } from '@material-symbols-react-native/rounded-400/msCall';
+/* Settings rows, the notifications inbox, and the edit-profile drawer. */
+import { msLanguage } from '@material-symbols-react-native/rounded-400/msLanguage';
+import { msHelp } from '@material-symbols-react-native/rounded-400/msHelp';
+import { msInfo } from '@material-symbols-react-native/rounded-400/msInfo';
+import { msLogout } from '@material-symbols-react-native/rounded-400/msLogout';
+import { msMail } from '@material-symbols-react-native/rounded-400/msMail';
+import { msEdit } from '@material-symbols-react-native/rounded-400/msEdit';
+import { msPhotoCamera } from '@material-symbols-react-native/rounded-400/msPhotoCamera';
 import { msGridViewFill } from '@material-symbols-react-native/rounded-400/msGridViewFill';
 import { msLocationOnFill } from '@material-symbols-react-native/rounded-400/msLocationOnFill';
 import { msLocalCafeFill } from '@material-symbols-react-native/rounded-400/msLocalCafeFill';
@@ -160,6 +168,13 @@ export {
   msStorefront,
   msCalendarMonth,
   msEvent,
+  msLanguage,
+  msHelp,
+  msInfo,
+  msLogout,
+  msMail,
+  msEdit,
+  msPhotoCamera,
 };
 
 /** Icon per "My accounts" tile kind. */

@@ -3,7 +3,10 @@ import { useNow } from '@/hooks';
 import { useAppearance } from '@/design-system/theme';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import { getDayKey, WEEK_ORDER_KEYS } from '@/components/feature/schedule/scheduleUtils';
-import type { ScheduleEvent } from '@/components/feature/schedule/scheduleTypes';
+import {
+  SESSION_COMPONENT_LABEL,
+  type ScheduleEvent,
+} from '@/components/feature/schedule/scheduleTypes';
 import { sessionHeroImage, type TodaySession } from './todayData';
 
 /**
@@ -116,6 +119,7 @@ function fromEvent(
   const inSession = state === 'inSession';
   return {
     courseCode: event.courseCode,
+    componentLabel: event.component ? SESSION_COMPONENT_LABEL[event.component] : undefined,
     title: event.title,
     statusLabel,
     statusTone,

@@ -657,8 +657,10 @@ export function SessionDetailScreen({ navigation }: Props) {
           >
             <Text variant="heading3">Class details</Text>
             <Text variant="body" color="secondary">
-              {session.courseCode} · {session.title}. {session.timeLabel} at {session.timeValue} in{' '}
-              {session.room} with {session.professor}.
+              {session.courseCode}
+              {session.componentLabel ? ` · ${session.componentLabel}` : ''} · {session.title}.{' '}
+              {session.timeLabel} at {session.timeValue} in {session.room} with{' '}
+              {session.professor}.
             </Text>
           </View>
         </Animated.ScrollView>

@@ -23,6 +23,8 @@ export const campusImage2 = require('../../../../assets/today/campus-2.png') as 
 
 export type TodaySession = {
   courseCode: string;
+  /** "Lecture", "Seminar" — absent on the no-classes state. */
+  componentLabel?: string;
   title: string;
   statusLabel: string;
   /** Dot colour for the status pill — see `todaySession`'s tones. */

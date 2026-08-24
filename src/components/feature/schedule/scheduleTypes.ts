@@ -6,6 +6,20 @@ export type ScheduleEventStatus = 'past' | 'active' | 'future';
 /** Delivery mode: in person, blended, online. */
 export type ScheduleDeliveryMode = 'P' | 'B' | 'OL';
 
+/**
+ * The teaching component a meeting belongs to. A course is the enrolment —
+ * ENGL 369 — while the thing in the timetable is one of its components, and
+ * which one changes what you bring: a lab is not a lecture.
+ */
+export type SessionComponent = 'lecture' | 'tutorial' | 'lab' | 'seminar';
+
+export const SESSION_COMPONENT_LABEL: Record<SessionComponent, string> = {
+  lecture: 'Lecture',
+  tutorial: 'Tutorial',
+  lab: 'Lab',
+  seminar: 'Seminar',
+};
+
 export type ScheduleEvent = {
   id: string;
   courseCode: string;
@@ -16,6 +30,8 @@ export type ScheduleEvent = {
   /** Lowercase three-letter day key: mon, tue, … */
   dayKey: string;
   kind?: 'class' | 'study';
+  /** Which component of the course this meeting is. Unset on study blocks. */
+  component?: SessionComponent;
   room?: string;
   professor?: string;
   mode?: ScheduleDeliveryMode;
