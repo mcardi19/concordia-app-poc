@@ -11,6 +11,8 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import Animated, {
+  withTiming,
+  Easing,
   type SharedValue,
   Extrapolation,
   interpolate,
@@ -40,6 +42,10 @@ type Props = {
   stepDays?: number;
   /** Pager offset in page units so day numbers can scale while you swipe. */
   scrollProgress?: SharedValue<number>;
+  /** Month view: the strip grows into a full grid you page vertically. */
+  expanded?: boolean;
+  /** Fires when vertical paging settles on a different month. */
+  onVisibleMonthChange?: (monthStart: Date) => void;
 };
 
 const CIRCLE = 40;
@@ -52,6 +58,43 @@ const CIRCLE = 40;
 const WEEK_RADIUS = 52;
 const PAGE_COUNT = WEEK_RADIUS * 2 + 1;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+/*
+  Fixed metrics rather than measured ones: a paging list needs to know its page
+  height before layout, and a month grid that changed height between a 5-row
+  and a 6-row month would make paging jump.
+*/
+const DAY_ROW_HEIGHT = 48;
+const WEEKDAY_HEADER_HEIGHT = 20;
+/** Always six, so every month page is the same height. */
+const MONTH_ROWS = 6;
+const MONTH_PAGE_HEIGHT = MONTH_ROWS * DAY_ROW_HEIGHT;
+/* The animated height is set on the padded root, so it has to carry the padding. */
+const ROOT_VERTICAL_PADDING = 14 * 2;
+const COLLAPSED_HEIGHT = 71 + ROOT_VERTICAL_PADDING;
+const EXPANDED_HEIGHT = WEEKDAY_HEADER_HEIGHT + MONTH_PAGE_HEIGHT + ROOT_VERTICAL_PADDING;
+/** Months either side of the anchor reachable by vertical paging. */
+const MONTH_RADIUS = 24;
+const MONTH_COUNT = MONTH_RADIUS * 2 + 1;
+
+const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+function startOfMonth(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(1);
+  return d;
+}
+
+function addMonths(date: Date, months: number): Date {
+  const d = startOfMonth(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function monthsBetween(from: Date, to: Date): number {
+  return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+}
 
 /** Spring for the press bounce on day circles. */
 const PRESS_SPRING = { damping: 15, stiffness: 260, mass: 0.6 } as const;
@@ -125,6 +168,8 @@ function DayCell({
   scrollProgress,
   selectedStamp,
   onPress,
+  showLetter = true,
+  muted = false,
 }: {
   date: Date;
   selected: boolean;
@@ -134,6 +179,10 @@ function DayCell({
   scrollProgress?: SharedValue<number>;
   selectedStamp: SharedValue<number>;
   onPress: () => void;
+  /** The month grid labels its columns once at the top instead. */
+  showLetter?: boolean;
+  /** A day from the neighbouring month, filling out the grid. */
+  muted?: boolean;
 }) {
   const theme = useTheme();
   const primary = theme.color.primary;
@@ -190,21 +239,23 @@ function DayCell({
         month: 'long',
         day: 'numeric',
       })}
-      style={styles.day}
+      style={[styles.day, muted ? styles.dayMuted : null]}
     >
-      <Text
-        variant="caption"
-        style={{
-          fontSize: 12,
-          fontWeight: '600',
-          letterSpacing: 0.2,
-          color: isWeekend ? scheduleTheme.timeSubText : scheduleTheme.headingText,
-        }}
-      >
-        {getDayLetter(date)}
-      </Text>
+      {showLetter ? (
+        <Text
+          variant="caption"
+          style={{
+            fontSize: 12,
+            fontWeight: '600',
+            letterSpacing: 0.2,
+            color: isWeekend ? scheduleTheme.timeSubText : scheduleTheme.headingText,
+          }}
+        >
+          {getDayLetter(date)}
+        </Text>
+      ) : null}
 
-      <Animated.View style={[styles.circle, circleStyle]}>
+      <Animated.View style={[styles.circle, showLetter ? null : styles.circleFlush, circleStyle]}>
         <Animated.Text style={[styles.dayNum, styles.dayNumIdle, idleNumberStyle]}>
           {date.getDate()}
         </Animated.Text>
@@ -232,6 +283,8 @@ export function ScheduleWeekStrip({
   selectedDate,
   onSelectDate,
   onVisibleWeekChange,
+  expanded = false,
+  onVisibleMonthChange,
   stepDays = 1,
   scrollProgress,
 }: Props) {
@@ -347,8 +400,123 @@ export function ScheduleWeekStrip({
     [width],
   );
 
+  /*
+    Month view. Anchored on its own first-render month for the same reason the
+    week pager is: re-deriving the anchor from the selection would shift every
+    page index under a list mid-scroll.
+  */
+  const monthAnchor = useRef(startOfMonth(selectedDate)).current;
+  const months = useMemo(
+    () => Array.from({ length: MONTH_COUNT }, (_, i) => addMonths(monthAnchor, i - MONTH_RADIUS)),
+    [monthAnchor],
+  );
+  const monthIndex = MONTH_RADIUS + monthsBetween(monthAnchor, selectedDate);
+  const visibleMonthIndex = useRef(monthIndex);
+
+  const renderMonth = useCallback(
+    ({ item }: ListRenderItemInfo<Date>) => {
+      const gridStart = startOfWeek(item);
+      return (
+        <View style={{ height: MONTH_PAGE_HEIGHT }}>
+          {Array.from({ length: MONTH_ROWS }, (_, row) => (
+            <View key={row} style={[styles.page, styles.monthRow]}>
+              {Array.from({ length: 7 }, (_, col) => {
+                const date = addDays(gridStart, row * 7 + col);
+                return (
+                  <DayCell
+                    key={date.toISOString()}
+                    date={date}
+                    selected={isSameDay(date, selectedDate)}
+                    pulseId={pulseId}
+                    stepDays={stepDays}
+                    selectedStamp={selectedStampSv}
+                    onPress={() => onSelectDate(date)}
+                    showLetter={false}
+                    muted={date.getMonth() !== item.getMonth()}
+                  />
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      );
+    },
+    [selectedDate, onSelectDate, pulseId, stepDays, selectedStampSv],
+  );
+
+  const getMonthLayout = useCallback(
+    (_: ArrayLike<Date> | null | undefined, index: number) => ({
+      length: MONTH_PAGE_HEIGHT,
+      offset: MONTH_PAGE_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
+
+  const onMonthScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const index = Math.round(event.nativeEvent.contentOffset.y / MONTH_PAGE_HEIGHT);
+      if (index === visibleMonthIndex.current) return;
+      visibleMonthIndex.current = index;
+      const month = months[index];
+      if (month) onVisibleMonthChange?.(month);
+    },
+    [months, onVisibleMonthChange],
+  );
+
+  /*
+    The container grows into the grid rather than swapping height instantly,
+    so the timetable below slides down with it.
+  */
+  const heightStyle = useAnimatedStyle(() => ({
+    height: withTiming(expanded ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT, {
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+    }),
+  }));
+
+  if (expanded) {
+    return (
+      <Animated.View style={[styles.root, heightStyle]}>
+        <View style={[styles.page, styles.weekdayHeader]}>
+          {WEEKDAY_LETTERS.map((letter, i) => (
+            <Text
+              key={`${letter}-${i}`}
+              variant="caption"
+              style={[
+                styles.weekdayLetter,
+                {
+                  color:
+                    i === 0 || i === 6
+                      ? scheduleTheme.timeSubText
+                      : scheduleTheme.headingText,
+                },
+              ]}
+            >
+              {letter}
+            </Text>
+          ))}
+        </View>
+
+        <FlatList
+          data={months}
+          renderItem={renderMonth}
+          keyExtractor={(item) => item.toISOString()}
+          getItemLayout={getMonthLayout}
+          initialScrollIndex={monthIndex}
+          pagingEnabled
+          showsVerticalScrollIndicator={false}
+          onMomentumScrollEnd={onMonthScrollEnd}
+          windowSize={3}
+          initialNumToRender={1}
+          maxToRenderPerBatch={2}
+        />
+      </Animated.View>
+    );
+  }
+
   return (
-    <View style={styles.root}>
+    <Animated.View style={[styles.root, heightStyle]}>
       <FlatList
         ref={listRef}
         data={weeks}
@@ -367,7 +535,7 @@ export function ScheduleWeekStrip({
         initialNumToRender={1}
         maxToRenderPerBatch={2}
       />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -400,6 +568,28 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 4,
+  },
+  /** Spill days from the neighbouring month, present but recessive. */
+  dayMuted: {
+    opacity: 0.32,
+  },
+  monthRow: {
+    height: DAY_ROW_HEIGHT,
+  },
+  weekdayHeader: {
+    height: WEEKDAY_HEADER_HEIGHT,
+    flexDirection: 'row',
+  },
+  weekdayLetter: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  /** No weekday letter above it in the month grid, so it does not need the gap. */
+  circleFlush: {
+    marginTop: 0,
   },
   circle: {
     width: CIRCLE,

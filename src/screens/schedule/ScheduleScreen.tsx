@@ -197,6 +197,8 @@ export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedul
   const [pagerWidth, setPagerWidth] = useState(0);
 
   const [viewMode, setViewMode] = useState<ScheduleViewMode>('day');
+  /** Month grid open. The title's chevron is its disclosure control. */
+  const [monthExpanded, setMonthExpanded] = useState(false);
 
   /*
     The selected day is a date, not an index into a fixed week — the strip
@@ -284,10 +286,14 @@ export function ScheduleScreen({ navigation }: ScheduleStackScreenProps<'Schedul
           onTodayPress={() => {
             goToDate(new Date());
           }}
+          monthExpanded={monthExpanded}
+          onToggleMonth={() => setMonthExpanded((open) => !open)}
           showAdd={viewMode !== 'week'}
         />
         <ScheduleWeekStrip
           selectedDate={selectedDate}
+          expanded={monthExpanded}
+          onVisibleMonthChange={setVisibleWeek}
           onSelectDate={goToDate}
           stepDays={stepDays}
           scrollProgress={pagerProgress}

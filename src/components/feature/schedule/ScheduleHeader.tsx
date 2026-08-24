@@ -35,6 +35,9 @@ type Props = {
   onViewModeChange: (mode: ScheduleViewMode) => void;
   onTodayPress?: () => void;
   onAddPress?: () => void;
+  /** Month grid showing — flips the chevron and is announced to a11y. */
+  monthExpanded?: boolean;
+  onToggleMonth?: () => void;
   /** Add is offered on agenda and day, not on the 3-day planner. */
   showAdd?: boolean;
 };
@@ -143,6 +146,8 @@ export function ScheduleHeader({
   onViewModeChange,
   onTodayPress,
   onAddPress,
+  monthExpanded = false,
+  onToggleMonth,
   showAdd = true,
 }: Props) {
   const theme = useTheme();
@@ -198,12 +203,17 @@ export function ScheduleHeader({
     <View style={styles.root}>
       <View style={styles.titleRow}>
         <Pressable
+          onPress={onToggleMonth}
           style={styles.title}
           accessibilityRole="button"
-          accessibilityLabel={`${month}, change month`}
+          accessibilityLabel={`${month}, ${monthExpanded ? 'hide' : 'show'} month`}
+          accessibilityState={{ expanded: monthExpanded }}
         >
           <MonthTitle month={month} />
-          <MaterialSymbol icon={msExpandMore} size={18} color={scheduleTheme.headingText} />
+          {/* Points up while the grid is open, the way a disclosure should. */}
+          <View style={monthExpanded ? styles.chevronFlipped : undefined}>
+            <MaterialSymbol icon={msExpandMore} size={18} color={scheduleTheme.headingText} />
+          </View>
         </Pressable>
 
         <View style={styles.controls}>
@@ -283,6 +293,9 @@ export function ScheduleHeader({
 }
 
 const styles = StyleSheet.create({
+  chevronFlipped: {
+    transform: [{ rotate: '180deg' }],
+  },
   root: {
     backgroundColor: scheduleTheme.pageBackground,
     zIndex: 10,
