@@ -40,13 +40,15 @@ const ON_SCRIM_TEXT_COLOR = '#FFFFFF';
 
 /**
  * The session card is the only surface opted into Gill Sans Nova for now.
- * Uses the condensed family (CDS `gill-sans-nova-condensed`) at Cn Heavy (800);
- * the condensed romans available locally are Medium (500), Heavy (800) and
- * ExtraBold (900).
+ * Roman family (CDS `gill-sans-nova`) at Book (400).
+ *
+ * Book is the only roman lighter than Heavy we ship: the local set is Book
+ * (400), Heavy (800), ExtraBold (900), UltraBold. There is no medium or
+ * semi-bold roman, so this is an 800 → 400 step with nothing in between.
  */
-const SESSION_CARD_BRAND_FACE = fonts.brandCondensedHeavy;
+const SESSION_CARD_BRAND_FACE = fonts.brandBook;
 
-export const SESSION_HERO_MIN_HEIGHT = 440;
+export const SESSION_HERO_MIN_HEIGHT = 420;
 export const SESSION_HERO_CONTENT_PAD = 20;
 /** Natural height of the in-session pill (padding + label line). */
 export const SESSION_STATUS_BADGE_HEIGHT = 34;
@@ -328,7 +330,6 @@ function SessionHeroOverlay({
               color: todayTheme.sessionCourseCode,
               fontSize: 15,
               lineHeight: 15 * 1.2,
-              letterSpacing: 0.4,
             }}
           >
             {session.courseCode}
@@ -345,7 +346,19 @@ function SessionHeroOverlay({
             style={{
               color: ON_SCRIM_TEXT_COLOR,
               fontSize: 40,
-              lineHeight: 40 * 1.15,
+              /*
+                Tight display leading. Kept above 1.0 deliberately: the
+                condensed heavy face has real descenders ("y" in History) and
+                a line box smaller than the point size clips them.
+              */
+              lineHeight: 40 * 1.05,
+              /*
+                Tabular figures: the condensed face's proportional digits set
+                a year like "1867" unevenly, the 1 sitting in a narrower slot
+                than its neighbours. Lining figures make every digit the same
+                advance width.
+              */
+              fontVariant: ['tabular-nums'],
             }}
           >
             {session.title}
