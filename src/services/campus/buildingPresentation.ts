@@ -107,7 +107,14 @@ export function buildAmenityRows(
 }
 
 /** Map-rail filters on the campus overlay card. `buildings` is the unfiltered default. */
-export type CampusMapFilter = 'buildings' | 'cafe' | 'study' | 'print' | 'parking' | 'bike';
+export type CampusMapFilter =
+  | 'buildings'
+  | 'events'
+  | 'cafe'
+  | 'study'
+  | 'print'
+  | 'parking'
+  | 'bike';
 
 /**
  * One name per filter, shared by the overlay card's pills, the Campus search
@@ -116,6 +123,7 @@ export type CampusMapFilter = 'buildings' | 'cafe' | 'study' | 'print' | 'parkin
  */
 export const CAMPUS_FILTER_LABEL: Record<CampusMapFilter, string> = {
   buildings: 'Buildings',
+  events: 'Events',
   cafe: 'Cafés',
   study: 'Quiet study',
   print: 'Print',
@@ -124,6 +132,12 @@ export const CAMPUS_FILTER_LABEL: Record<CampusMapFilter, string> = {
 };
 
 const MAP_FILTER_MATCH: Record<Exclude<CampusMapFilter, 'buildings'>, RegExp> = {
+  /*
+    Venues that host events, not events themselves — the map places buildings,
+    and the featured-events feed carries no location to pin. So this answers
+    "where do things happen on campus", which is what the catalog can support.
+  */
+  events: /theatre|theater|auditorium|gallery|concert hall|performance|exhibition|black box/,
   cafe: /café|cafe|coffee|cafeteria|hive|people'?s potato|restaurant/,
   study: /study|library|reading room|quiet/,
   print: /print/,

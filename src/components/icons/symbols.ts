@@ -25,6 +25,7 @@ import { msMeetingRoomFill } from '@material-symbols-react-native/rounded-400/ms
 import { msPrintFill } from '@material-symbols-react-native/rounded-400/msPrintFill';
 import { msLocalParkingFill } from '@material-symbols-react-native/rounded-400/msLocalParkingFill';
 import { msPedalBikeFill } from '@material-symbols-react-native/rounded-400/msPedalBikeFill';
+import { msLocalActivityFill } from '@material-symbols-react-native/rounded-400/msLocalActivityFill';
 import { msSearchOff } from '@material-symbols-react-native/rounded-400/msSearchOff';
 import { msHistory } from '@material-symbols-react-native/rounded-400/msHistory';
 import { msHome } from '@material-symbols-react-native/rounded-400/msHome';
@@ -204,6 +205,7 @@ export { msMeetingRoomFill };
 export { msPrintFill };
 export { msLocalParkingFill };
 export { msPedalBikeFill };
+export { msLocalActivityFill };
 export { msSearchOff };
 export { msHistory };
 export { msDirectionsBus };

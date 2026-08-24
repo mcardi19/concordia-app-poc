@@ -66,6 +66,7 @@ export {
   msMeetingRoomFill,
   msPrintFill,
   msLocalParkingFill,
+  msLocalActivityFill,
   msPedalBikeFill,
   msSearchOff,
   msHistory,

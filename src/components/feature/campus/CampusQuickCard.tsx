@@ -12,6 +12,7 @@ import {
 import {
   MaterialSymbol,
   msGridViewFill,
+  msLocalActivityFill,
   msLocalCafeFill,
   msLocalParkingFill,
   msLocationOnFill,
@@ -45,6 +46,7 @@ type AmenityPill = {
  */
 const AMENITY_PILLS: AmenityPill[] = [
   { id: 'buildings', icon: msGridViewFill },
+  { id: 'events', icon: msLocalActivityFill },
   { id: 'cafe', icon: msLocalCafeFill },
   { id: 'study', icon: msMeetingRoomFill },
   { id: 'print', icon: msPrintFill },
