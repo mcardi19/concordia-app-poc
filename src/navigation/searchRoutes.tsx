@@ -2,11 +2,12 @@ import React from 'react';
 import type { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GlobalSearchScreen } from '@/screens/search/GlobalSearchScreen';
 import { SearchCategoryScreen } from '@/screens/search/SearchCategoryScreen';
+import { ServiceDetailScreen } from '@/screens/search/ServiceDetailScreen';
 import type { SearchRoutes } from './types';
 
 /**
  * Search is not a tab: a header action button pushes it into the stack the
- * user is already in, so Home, Academic and Me each register the same two
+ * user is already in, so Home, Academic and Me each register the same
  * screens. Declaring them once here is what keeps the copies identical — an
  * option changed in one stack would otherwise silently differ from the others.
  *
@@ -37,6 +38,11 @@ export function searchScreens<P extends SearchRoutes>(
       <Screen
         name="SearchCategory"
         component={SearchCategoryScreen}
+        options={{ headerShown: false }}
+      />
+      <Screen
+        name="ServiceDetail"
+        component={ServiceDetailScreen}
         options={{ headerShown: false }}
       />
     </>

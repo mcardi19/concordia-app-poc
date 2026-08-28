@@ -19,6 +19,8 @@ export type RootStackParamList = {
 export type SearchRoutes = {
   Search: undefined;
   SearchCategory: { categoryKey: string };
+  /** Record id from `CAMPUS_SERVICE_RECORDS`. */
+  ServiceDetail: { serviceId: string };
 };
 
 /**

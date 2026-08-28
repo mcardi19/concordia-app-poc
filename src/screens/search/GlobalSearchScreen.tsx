@@ -242,6 +242,22 @@ export function GlobalSearchScreen({ navigation }: Props) {
     [navigation]
   );
 
+  /**
+   * Every result is remembered; only the ones that resolve to a seeded
+   * service record can be opened. A row without a record would push an empty
+   * page, so it stays a plain row.
+   */
+  const openHit = useCallback(
+    (hit: { title: string; category: SearchCategory; recordId?: string }) => {
+      remember(hit.title, categoryIcon(hit.category));
+      if (hit.recordId) {
+        navigation.navigate('ServiceDetail', { serviceId: hit.recordId });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [navigation],
+  );
+
   const remember = useCallback((label: string, icon: typeof msSearch) => {
     setRecents((prev) =>
       [{ label, icon }, ...prev.filter((r) => r.label !== label)].slice(0, 4)
@@ -444,12 +460,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
                     icon={categoryIcon(bestMatch.category)}
                     highlight={trimmed}
                     last
-                    onPress={() =>
-                      remember(
-                        bestMatch.title,
-                        categoryIcon(bestMatch.category)
-                      )
-                    }
+                    onPress={() => openHit(bestMatch)}
                   />
                 </SearchResultGroup>
               </View>
@@ -469,9 +480,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
                     icon={categoryIcon(hit.category)}
                     highlight={trimmed}
                     last={i === group.hits.length - 1}
-                    onPress={() =>
-                      remember(hit.title, categoryIcon(hit.category))
-                    }
+                    onPress={() => openHit(hit)}
                   />
                 ))}
               </SearchResultGroup>

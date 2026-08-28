@@ -1,12 +1,15 @@
 import type { MsIconDefinition } from 'material-symbols-react-native';
 import { msLocationOn, msMenuBook, msSchool, msSupportAgent } from '@/components/icons';
 import type { BuildingSummary, ServiceSearchResult } from '@/types/campus';
+import { matchServiceRecord } from '@/data/campusServiceRecords';
 import type { ScheduleEvent } from '@/components/feature/schedule/scheduleTypes';
 import type { CuratedBook, LibraryLoan } from '@/components/feature/library/libraryData';
 
 export type SearchCategory = 'course' | 'building' | 'library' | 'service';
 
 export type SearchHit = {
+  /** Set on service hits that resolve to a seeded record. */
+  recordId?: string;
   id: string;
   category: SearchCategory;
   title: string;
@@ -116,6 +119,9 @@ export function searchServices(services: ServiceSearchResult[], query: string): 
       title: s.label,
       subtitle: s.buildingName,
       meta: s.kind === 'department' ? 'Dept.' : undefined,
+      // Present only where a seeded record exists; the row is a dead end
+      // without one, so the screen uses this to decide whether it opens.
+      recordId: matchServiceRecord(s.label)?.id,
     }));
 }
 
