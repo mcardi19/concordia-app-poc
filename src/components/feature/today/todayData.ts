@@ -1,3 +1,4 @@
+import type { ScheduleDeliveryMode } from '@/components/feature/schedule/scheduleTypes';
 import { useMemo } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import type { MsIconDefinition } from 'material-symbols-react-native';
@@ -25,6 +26,8 @@ export type TodaySession = {
   courseCode: string;
   /** "Lecture", "Seminar" — absent on the no-classes state. */
   componentLabel?: string;
+  /** Delivery mode from the timetable: in person, blended, online. */
+  mode?: ScheduleDeliveryMode;
   title: string;
   statusLabel: string;
   /** Dot colour for the status pill — see `todaySession`'s tones. */

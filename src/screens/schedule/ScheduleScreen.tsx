@@ -39,6 +39,8 @@ import { semanticSpacing } from '@/design-system/tokens';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
 import { HEADER_CHROME_TOP_GAP } from '@/navigation/HeaderIconButton';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
+import { useNavigation } from '@react-navigation/native';
+import type { ScheduleEvent } from '@/components/feature/schedule/scheduleTypes';
 import type { ScheduleStackScreenProps } from '@/navigation/types';
 import { formatWeekMonday } from '@/api/schedule';
 
@@ -102,6 +104,19 @@ function SchedulePage({
   embedTimeline = false,
 }: PageProps) {
   const scrollRef = useRef<ScrollView>(null);
+  /*
+    Read off the context rather than passed down: the pager memoises this page
+    on its own deps, so a handler threaded through as a prop would have to be
+    added to those deps to avoid going stale. Nothing here needs the screen's
+    own navigation object.
+  */
+  const navigation = useNavigation<ScheduleStackScreenProps<'Schedule'>['navigation']>();
+  const openCourse = useCallback(
+    (event: ScheduleEvent) => {
+      navigation.navigate('CourseDetail', { eventId: event.id });
+    },
+    [navigation],
+  );
   const onScroll = useTabBarMinimizeScrollHandler();
   const dayKey = getDayKey(date);
   const isViewingToday = isSameDay(date, now);
@@ -139,6 +154,7 @@ function SchedulePage({
     <>
       {viewMode === 'agenda' ? (
         <ScheduleAgendaView
+          onSelectEvent={openCourse}
           date={date}
           events={dayEvents}
           allDayItems={allDayItemsFor(date)}
@@ -149,6 +165,7 @@ function SchedulePage({
 
       {viewMode === 'day' ? (
         <ScheduleDayTimeline
+          onSelectEvent={openCourse}
           events={dayEvents}
           nowMinutes={nowMinutes}
           hideRail={embedTimeline}
@@ -157,6 +174,7 @@ function SchedulePage({
 
       {viewMode === 'week' ? (
         <ScheduleThreeDayView
+          onSelectEvent={openCourse}
           days={plannerDays}
           events={plannerEvents}
           hideRail={embedTimeline}

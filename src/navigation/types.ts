@@ -56,6 +56,8 @@ export type TodayStackParamList = SearchRoutes & {
 
 export type ScheduleStackParamList = AcademicDateRoutes & {
   Schedule: undefined;
+  /** Timetable row id — the screen resolves the event from it. */
+  CourseDetail: { eventId: string };
 };
 
 export type CampusStackParamList = {

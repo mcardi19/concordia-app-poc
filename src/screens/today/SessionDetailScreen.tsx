@@ -31,12 +31,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text } from '@/components/design-system';
 import { MaterialSymbol, msClose } from '@/components/icons';
 import {
   SESSION_HERO_MIN_HEIGHT,
   SessionHero,
 } from '@/components/feature/today/SessionHero';
+import { CourseDetailBody } from '@/components/feature/today/CourseDetailBody';
 import { useSessionExpansionStore } from '@/components/feature/today/sessionExpansionStore';
 import {
   cardScaleSV,
@@ -655,13 +655,7 @@ export function SessionDetailScreen({ navigation }: Props) {
               minHeight: SCREEN_H - DETAIL_HERO_HEIGHT * 0.45,
             }}
           >
-            <Text variant="heading3">Class details</Text>
-            <Text variant="body" color="secondary">
-              {session.courseCode}
-              {session.componentLabel ? ` · ${session.componentLabel}` : ''} · {session.title}.{' '}
-              {session.timeLabel} at {session.timeValue} in {session.room} with{' '}
-              {session.professor}.
-            </Text>
+            <CourseDetailBody session={session} />
           </View>
         </Animated.ScrollView>
 

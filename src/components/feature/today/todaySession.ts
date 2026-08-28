@@ -128,6 +128,7 @@ function fromEvent(
     // number is when to be there.
     timeLabel: inSession ? 'Ends' : 'Starts',
     timeValue: formatClock(inSession ? event.endMinutes : event.startMinutes),
+    mode: event.mode,
     room: event.room ?? 'Room TBA',
     professor: event.professor ?? '—',
     image: sessionHeroImage,

@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { CourseDetailScreen } from '@/screens/schedule/CourseDetailScreen';
 import { ScheduleScreen } from '@/screens/schedule/ScheduleScreen';
 import { academicDateScreens } from './academicDateRoutes';
 import { useStackScreenOptions } from './screenOptions';
@@ -13,6 +14,11 @@ export function ScheduleStack() {
   return (
     <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen name="Schedule" component={ScheduleScreen} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="CourseDetail"
+        component={CourseDetailScreen}
+        options={{ title: '' }}
+      />
       {academicDateScreens(Stack)}
     </Stack.Navigator>
   );
