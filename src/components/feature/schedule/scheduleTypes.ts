@@ -34,6 +34,12 @@ export type ScheduleEvent = {
   component?: SessionComponent;
   room?: string;
   professor?: string;
+  /**
+   * Faculty profile slug, for the avatar and the link to their page. Optional
+   * because SIS gives a name, not a profile id — anyone unmatched simply
+   * renders as text.
+   */
+  professorFpid?: string;
   mode?: ScheduleDeliveryMode;
   /**
    * Accent rail colour. Falls back to brand for classes, grey for study.

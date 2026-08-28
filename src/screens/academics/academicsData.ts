@@ -79,10 +79,10 @@ export const TERM_STATS: TermStat[] = [
 
 /** Course accent colours are literal design values, not semantic roles. */
 export const COURSES: Course[] = [
-  { code: 'ENGL 369', title: 'Modernism in English Literature', prof: 'I. Ashwell', grade: 'A−', pct: 87, color: '#912238' },
-  { code: 'PHIL 232', title: 'Philosophy of Mind', prof: 'O. Fenn', grade: 'B+', pct: 82, color: '#7a7a7c' },
-  { code: 'HIST 287', title: 'History of Quebec since 1867', prof: 'A. Moreau', grade: 'A', pct: 91, color: '#5a7a6a' },
-  { code: 'FRAN 200', title: 'Production écrite I', prof: 'J. Tremblay', grade: '—', pct: null, color: '#8a6a5a' },
+  { code: 'ENGL 369', title: 'African-American Literature', prof: 'I. Ashwell', grade: 'A−', pct: 87, color: '#912238' },
+  { code: 'PHIL 232', title: 'Introduction to Ethics', prof: 'O. Fenn', grade: 'B+', pct: 82, color: '#7a7a7c' },
+  { code: 'HIST 210', title: 'Quebec since Confederation', prof: 'A. Moreau', grade: 'A', pct: 91, color: '#5a7a6a' },
+  { code: 'FRAN 219', title: 'Initiation au français écrit', prof: 'J. Tremblay', grade: '—', pct: null, color: '#8a6a5a' },
 ];
 
 export const ACADEMIC_RESOURCES: AcademicResource[] = [

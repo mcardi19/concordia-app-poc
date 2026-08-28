@@ -9,6 +9,8 @@ export { useBuildings } from './useBuildings';
 export { useBuildingPlace } from './useBuildingPlace';
 export { useBuildingEnrichment } from './useBuildingEnrichment';
 export { useCampusUserLocation } from './useCampusUserLocation';
+export { useCourseDetail } from './useCourseDetail';
+export { useFacultyProfile } from './useFacultyProfile';
 export { useFeaturedEvents } from './useFeaturedEvents';
 export { useShuttleTracker } from './useShuttleTracker';
 export { useShuttleLive } from './useShuttleLive';

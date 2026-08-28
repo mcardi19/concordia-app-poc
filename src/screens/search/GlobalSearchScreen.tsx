@@ -91,7 +91,7 @@ const CATEGORY_RAIL_GAP = 12;
 /** Seeded so the zero state has something to show before any search is run. */
 const SEED_RECENTS = [
   { label: 'Webster Library', icon: msLocalLibrary },
-  { label: 'HIST 287', icon: msSchool },
+  { label: 'HIST 210', icon: msSchool },
   { label: 'Shuttle schedule', icon: msDirectionsBus },
 ];
 

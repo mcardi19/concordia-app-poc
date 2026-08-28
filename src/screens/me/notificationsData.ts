@@ -77,8 +77,8 @@ export const notificationGroups: NotificationGroup[] = [
         id: 'grade',
         category: 'academic',
         icon: msWorkspacePremium,
-        title: 'Grade posted — HIST 287',
-        body: 'Midterm essay returned. You received an A on “History of Quebec since 1867.”',
+        title: 'Grade posted — HIST 210',
+        body: 'Midterm essay returned. You received an A on “Quebec since Confederation.”',
         time: '4:12 PM',
       },
       {

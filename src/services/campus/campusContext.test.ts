@@ -4,7 +4,7 @@ import type { BuildingSummary } from '@/types/campus';
 /**
  * Monday's mock timetable, which these cases are pinned to:
  *   PHIL 232  08:45–10:00  H-407
- *   HIST 287  10:15–11:30  H-302
+ *   HIST 210  10:15–11:30  H-302
  *   ENGL 369  13:15–15:30  LB-625
  */
 const monday = (hours: number, minutes = 0) => new Date(2026, 3, 20, hours, minutes);

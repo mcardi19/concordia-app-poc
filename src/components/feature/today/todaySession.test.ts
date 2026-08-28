@@ -3,7 +3,7 @@ import { deriveTodaySession } from './todaySession';
 /**
  * The mock timetable's Monday, which these cases are pinned to:
  *   PHIL 232  08:45–10:00  H-407
- *   HIST 287  10:15–11:30  H-302
+ *   HIST 210  10:15–11:30  H-302
  *   ENGL 369  13:15–15:30  LB-625
  *   Study     16:00–17:30  (kind: 'study' — never the card's subject)
  */
@@ -79,6 +79,6 @@ describe('deriveTodaySession', () => {
   it('is exclusive at the end boundary — a class that just ended is not in session', () => {
     const session = deriveTodaySession(monday(10, 0));
     expect(session.state).not.toBe('inSession');
-    expect(session.courseCode).toBe('HIST 287');
+    expect(session.courseCode).toBe('HIST 210');
   });
 });

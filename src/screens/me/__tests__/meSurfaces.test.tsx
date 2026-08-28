@@ -106,7 +106,7 @@ describe('NotificationsScreen (05a)', () => {
     fireEvent.press(screen.getByLabelText('Unread, 2'));
 
     expect(screen.getByText('Payment plan reminder')).toBeTruthy();
-    expect(screen.queryByText('Grade posted — HIST 287')).toBeNull();
+    expect(screen.queryByText('Grade posted — HIST 210')).toBeNull();
   });
 });
 

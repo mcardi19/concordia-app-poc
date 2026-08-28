@@ -8,6 +8,8 @@ export const queryKeys = {
   shuttleLive: ['shuttleLive'] as const,
   buildings: ['buildings'] as const,
   campusServices: (campus: string) => ['campusServices', campus] as const,
+  courseDetail: (courseCode: string) => ['courseDetail', courseCode] as const,
+  facultyProfile: (fpid: string) => ['facultyProfile', fpid] as const,
   libraryHours: (dateIso: string) => ['libraryHours', dateIso] as const,
   libraryComputers: ['libraryComputers'] as const,
   libraryRooms: ['libraryRooms'] as const,
