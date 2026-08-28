@@ -49,10 +49,34 @@ const LOCATIONS = [0, 0.22, 0.4, 0.58, 0.74, 0.88, 1] as const;
  * the discontinuity at the edge — with every layer equal, that edge was a full
  * -strength blur stopping dead, which is the line you could see. Weakest at the
  * bottom, strongest at the top.
+ *
+ * Ten layers rather than six, and the intensity ramps to a fixed top value
+ * instead of a fixed per-layer step: more layers across the same range means a
+ * smaller jump at each edge, which is the other half of what made the steps
+ * visible. Ten `UIVisualEffectView`s is not free, but the curtain is static —
+ * only its opacity animates — so they are composited, not re-rendered.
  */
-const BLUR_LAYERS = 6;
+const BLUR_LAYERS = 10;
 const BLUR_BASE_INTENSITY = 3;
-const BLUR_INTENSITY_STEP = 4;
+const BLUR_TOP_INTENSITY = 24;
+
+/**
+ * Where the layer edges fall. Each layer ends in a hard line, so the fewer of
+ * those that land in the open, the better.
+ *
+ * Above 1 the heights collapse faster than the layer index, which crowds the
+ * edges up under the opaque part of the colour wash where they are covered.
+ * Spacing them evenly — the obvious choice — put half of them in the lower
+ * half of the curtain, which is exactly where the wash has thinned out and
+ * cannot hide anything. That was the visible banding.
+ */
+const BLUR_EDGE_CURVE = 1.6;
+
+/** Intensity for layer `i`, ramped from the weakest at the bottom. */
+function blurIntensity(i: number): number {
+  const t = i / Math.max(1, BLUR_LAYERS - 1);
+  return BLUR_BASE_INTENSITY + (BLUR_TOP_INTENSITY - BLUR_BASE_INTENSITY) * t;
+}
 
 function rgba(hex: string, alpha: number): string {
   const value = hex.replace('#', '');
@@ -128,7 +152,7 @@ export function ScrollCurtain({
           {Array.from({ length: BLUR_LAYERS }, (_, i) => (
             <BlurView
               key={i}
-              intensity={BLUR_BASE_INTENSITY + i * BLUR_INTENSITY_STEP}
+              intensity={blurIntensity(i)}
               tint="light"
               style={{
                 position: 'absolute',
@@ -136,7 +160,9 @@ export function ScrollCurtain({
                 left: 0,
                 right: 0,
                 // Full reach for the first, then progressively shorter.
-                height: (blurHeight ?? height) * (1 - i / BLUR_LAYERS),
+                height:
+                  (blurHeight ?? height) *
+                  Math.pow(1 - i / BLUR_LAYERS, BLUR_EDGE_CURVE),
               }}
             />
           ))}

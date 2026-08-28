@@ -10,7 +10,12 @@ import {
 import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '@/components/design-system';
-import { CURTAIN_FADE_IN, ScrollCurtain } from '@/components/design-system/ScrollCurtain';
+import {
+  CURTAIN_BLUR_DEPTH,
+  CURTAIN_FADE_DEPTH,
+  CURTAIN_FADE_IN,
+  ScrollCurtain,
+} from '@/components/design-system/ScrollCurtain';
 import {
   ATTENTION_ITEMS,
   CAMPUS_TODAY,
@@ -27,12 +32,19 @@ import {
   type PinnedChip,
 } from '@/components/feature/today';
 import { useTheme } from '@/design-system/theme';
-import { HomeCompactTitle, HomeLargeTitle } from '@/navigation/HomeHeaderTitle';
+import {
+  GREETING_BLOCK_HEIGHT,
+  HomeGreetingCompact,
+  HomeGreetingLarge,
+} from '@/navigation/HomeHeaderTitle';
+import { useAuthStore } from '@/state/authStore';
+import { useNow } from '@/hooks';
+import { profileFromAuthUser } from '@/screens/me/accountData';
 import {
   nextTopBaseline,
   scrollDistanceFromTop,
 } from '@/navigation/homeScrollTitle';
-import { HEADER_BAR_BUTTON_SIZE, HEADER_CHROME_TOP_GAP } from '@/navigation/HeaderIconButton';
+import { HEADER_CHROME_TOP_GAP } from '@/navigation/HeaderIconButton';
 import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
 import { useTabBarScrollInset } from '@/navigation/tabBarInset';
 import type { TodayStackScreenProps } from '@/navigation/types';
@@ -40,8 +52,6 @@ import { useTodayTheme } from './todayTheme';
 
 type Props = TodayStackScreenProps<'Today'>;
 
-/** Masthead veil turns on with scroll and stays while scrolled. */
-const MASTHEAD_OVERLAP = 56;
 
 export function TodayScreen({ navigation }: Props) {
   const theme = useTheme();
@@ -82,7 +92,38 @@ export function TodayScreen({ navigation }: Props) {
     [scrollY],
   );
 
-  const gradientHeight = insets.top + HEADER_CHROME_TOP_GAP + HEADER_BAR_BUTTON_SIZE + MASTHEAD_OVERLAP;
+  /*
+    Greet with the signed-in student's first name. `displayName` is uppercased
+    for the ID card, so it is title-cased back here — "MAYA R. OKONKWO" would
+    otherwise shout from the masthead.
+  */
+  const user = useAuthStore((state) => state.user);
+  const greetingName = useMemo(() => {
+    const first = profileFromAuthUser(user).displayName.trim().split(/\s+/)[0] ?? '';
+    return first.charAt(0) + first.slice(1).toLowerCase();
+  }, [user]);
+
+  /* Live clock so the date rolls over at midnight rather than at next launch. */
+  const now = useNow();
+  const dateLabel = useMemo(
+    () =>
+      now.toLocaleDateString('en-CA', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      }),
+    [now],
+  );
+
+  /*
+    Sized like Search's: the band the chrome occupies, plus the curtain's own
+    depths past it. The blur stops well short of the colour fade on purpose —
+    a BlurView has a hard bottom edge, so it has to end while the wash above
+    still has enough body to hide the seam.
+  */
+  const chromeBandHeight = insets.top + HEADER_CHROME_TOP_GAP + GREETING_BLOCK_HEIGHT;
+  const gradientHeight = chromeBandHeight + CURTAIN_FADE_DEPTH;
+  const curtainBlurHeight = chromeBandHeight + CURTAIN_BLUR_DEPTH;
 
   useLayoutEffect(() => {
     if (Platform.OS !== 'ios') return;
@@ -100,12 +141,15 @@ export function TodayScreen({ navigation }: Props) {
         only one; this is the one that keeps both states working.
       */
       scrollEdgeEffects: { top: 'soft' },
-      headerTitle: () => (
-        <HomeCompactTitle color={theme.color.text.primary} scrollY={scrollY} />
-      ),
+      /*
+        No native title. The greeting is one left-aligned overlay that scales
+        with scroll, and `headerTitle` can only ever be centred — a compact
+        copy there would sit in a different place from the resting one.
+      */
+      headerTitle: '',
       unstable_headerLeftItems: () => [],
     });
-  }, [navigation, scrollY, theme.color.text.primary]);
+  }, [navigation, theme.color.text.primary]);
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -258,7 +302,13 @@ export function TodayScreen({ navigation }: Props) {
           </View>
         </Animated.ScrollView>
 
-        <ScrollCurtain color={PAGE_BG} height={gradientHeight} opacity={gradientOpacity} />
+        <ScrollCurtain
+          color={PAGE_BG}
+          height={gradientHeight}
+          blurHeight={curtainBlurHeight}
+          blurred
+          opacity={gradientOpacity}
+        />
 
         {/*
           Mounted for the life of the screen, not while it happens to be
@@ -274,12 +324,22 @@ export function TodayScreen({ navigation }: Props) {
               left: inset,
               right: inset,
               zIndex: 12,
-              height: HEADER_BAR_BUTTON_SIZE,
+              height: GREETING_BLOCK_HEIGHT,
               justifyContent: 'center',
             }}
           >
-            <HomeLargeTitle
+            <HomeGreetingLarge
+              name={greetingName}
+              dateLabel={dateLabel}
               color={theme.color.text.primary}
+              subtitleColor={theme.color.text.subtle}
+              scrollY={scrollY}
+            />
+            <HomeGreetingCompact
+              name={greetingName}
+              dateLabel={dateLabel}
+              color={theme.color.text.primary}
+              subtitleColor={theme.color.text.subtle}
               scrollY={scrollY}
             />
           </View>
