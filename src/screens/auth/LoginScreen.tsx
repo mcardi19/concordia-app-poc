@@ -38,38 +38,47 @@ export function LoginScreen() {
         <Text style={styles.wordmarkSub}>University</Text>
       </LinearGradient>
 
+      {/*
+        Copy at the top, action at the bottom: the button is the only thing to
+        do on this screen, so it belongs in the thumb's reach rather than
+        halfway up under the text.
+      */}
       <View style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}>
-        <Text variant="heading2" style={styles.heading}>
-          Sign in to continue
-        </Text>
-        <Text variant="body" color="secondary" style={styles.body}>
-          Use your Concordia NetName to see your schedule, grades, and campus
-          services in one place.
-        </Text>
-
-        <Button
-          onPress={login}
-          disabled={isLoading}
-          accessibilityLabel={isLoading ? 'Signing in' : 'Sign in with Concordia'}
-          style={styles.signInButton}
-        >
-          {isLoading ? (
-            <ActivityIndicator color={theme.color.text.inverse} />
-          ) : (
-            <Text
-              variant="body"
-              style={[styles.signInLabel, { color: theme.color.text.inverse }]}
-            >
-              Sign in with Concordia
-            </Text>
-          )}
-        </Button>
-
-        <View style={styles.trustRow}>
-          <MaterialSymbol icon={msSecurity} size={14} color={theme.color.text.subtle} />
-          <Text variant="caption" color="subtle" style={styles.trustLabel}>
-            Secured by Concordia single sign-on
+        <View>
+          <Text variant="heading2" style={styles.heading}>
+            Sign in to continue
           </Text>
+          <Text variant="body" color="secondary" style={styles.body}>
+            Use your Concordia NetName to see your schedule, grades, and campus
+            services in one place.
+          </Text>
+        </View>
+
+        <View>
+          <Button
+            onPress={login}
+            disabled={isLoading}
+            accessibilityLabel={isLoading ? 'Signing in' : 'Sign in with Concordia'}
+            style={styles.signInButton}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={theme.color.text.inverse} />
+            ) : (
+              <Text
+                variant="body"
+                style={[styles.signInLabel, { color: theme.color.text.inverse }]}
+              >
+                Sign in with Concordia
+              </Text>
+            )}
+          </Button>
+
+          <View style={styles.trustRow}>
+            <MaterialSymbol icon={msSecurity} size={14} color={theme.color.text.subtle} />
+            <Text variant="caption" color="subtle" style={styles.trustLabel}>
+              Secured by Concordia single sign-on
+            </Text>
+          </View>
         </View>
       </View>
     </View>
@@ -113,6 +122,7 @@ const styles = StyleSheet.create({
   },
   sheet: {
     flex: 1,
+    justifyContent: 'space-between',
     paddingHorizontal: semanticSpacing.screenHorizontal + 6,
     paddingTop: 36,
   },
@@ -121,7 +131,6 @@ const styles = StyleSheet.create({
   },
   body: {
     lineHeight: 21,
-    marginBottom: 32,
   },
   signInButton: {
     height: 56,
