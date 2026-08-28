@@ -1,5 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Linking, Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import type { MsIconDefinition } from 'material-symbols-react-native';
 import { Text } from '@/components/design-system';
@@ -125,12 +132,17 @@ function Section({
  * worse than the plain name already listed in the meeting block above, so
  * nothing appears while loading or after a 404 — the name is never lost.
  */
+/**
+ * Sits inside "This class", under the key/value rows — the instructor is one
+ * of that block's facts, and as its own section it read as a separate topic.
+ * No `Section` wrapper for the same reason.
+ */
 function InstructorCard({ profile }: { profile: FacultyProfile }) {
   const theme = useTheme();
   const todayTheme = useTodayTheme();
 
   return (
-    <Section title="Instructor">
+    <View style={styles.instructorBlock}>
       <Pressable
         onPress={() => {
           // Nothing to recover to if it fails; the row simply stays put.
@@ -176,14 +188,15 @@ function InstructorCard({ profile }: { profile: FacultyProfile }) {
             </Text>
           </View>
 
+          {/* Brand and larger — the only affordance saying the card opens. */}
           <MaterialSymbol
             icon={msChevronRight}
-            size={18}
-            color={theme.color.text.subtle}
+            size={24}
+            color={theme.color.primary}
           />
         </View>
       </Pressable>
-    </Section>
+    </View>
   );
 }
 
@@ -194,6 +207,107 @@ function InstructorCard({ profile }: { profile: FacultyProfile }) {
  * on campus, Email needs an address off the faculty profile. An online class
  * with an unmatched instructor shows neither rather than a dead row.
  */
+/**
+ * Rule under every key/value row. Darker than a hairline border on a card:
+ * with the cards gone these rules are the only thing structuring the page, so
+ * they have to read on their own.
+ */
+const DETAIL_DIVIDER = 'rgba(0, 0, 0, 0.12)';
+
+/** Widths chosen so the block reads as a paragraph, not a progress bar. */
+const SKELETON_LINES = ['96%', '99%', '92%', '61%'] as const;
+
+/** One clock for every placeholder, so nothing shimmers out of step. */
+function useSkeletonPulse() {
+  const pulse = useSharedValue(0.5);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withTiming(1, { duration: 820, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true,
+    );
+  }, [pulse]);
+
+  return useAnimatedStyle(() => ({ opacity: pulse.value }));
+}
+
+/**
+ * Placeholder for a key/value row, carrying the same rule as a real one so
+ * the list keeps its height and the rows below do not shift on arrival.
+ */
+function SkeletonDetailRow() {
+  const theme = useTheme();
+  const pulseStyle = useSkeletonPulse();
+  const bar = { backgroundColor: theme.color.borderSubtle };
+
+  return (
+    <Animated.View style={[styles.row, pulseStyle]}>
+      <View style={[styles.skeletonLine, bar, { width: 62 }]} />
+      <View style={[styles.skeletonLine, bar, { width: 34 }]} />
+    </Animated.View>
+  );
+}
+
+/** Placeholder for the instructor card, matched to its resting height. */
+function SkeletonInstructorCard() {
+  const theme = useTheme();
+  const pulseStyle = useSkeletonPulse();
+  const bar = { backgroundColor: theme.color.borderSubtle };
+
+  return (
+    <Animated.View style={[styles.instructorBlock, pulseStyle]}>
+      <View style={styles.skeletonInstructorRow}>
+        <View style={[styles.skeletonAvatar, bar]} />
+        <View style={styles.skeletonInstructorText}>
+          <View style={[styles.skeletonLine, bar, { width: 132 }]} />
+          <View style={[styles.skeletonLine, bar, { width: 196 }]} />
+        </View>
+      </View>
+    </Animated.View>
+  );
+}
+
+/**
+ * Stands in for About + Requirements while the catalog resolves.
+ *
+ * Rendered where those sections will land rather than as a status line at the
+ * foot of the page: the two-hop course lookup takes long enough to notice, and
+ * the page was reflowing around content that appeared above the message.
+ *
+ * One shared value drives every bar, so they breathe together instead of
+ * shimmering independently.
+ */
+function CourseDetailSkeleton() {
+  const theme = useTheme();
+  const pulseStyle = useSkeletonPulse();
+  const bar = { backgroundColor: theme.color.borderSubtle };
+
+  return (
+    <>
+      <Animated.View style={[styles.skeletonBlock, pulseStyle]}>
+        {SKELETON_LINES.map((width) => (
+          <View
+            key={width}
+            style={[styles.skeletonLine, bar, { width: width as `${number}%` }]}
+          />
+        ))}
+      </Animated.View>
+
+      <Section title="Requirements">
+        <Animated.View style={pulseStyle}>
+          {[0, 1].map((i) => (
+            <View key={i} style={styles.skeletonRow}>
+              <View style={[styles.skeletonLine, bar, { width: 74 }]} />
+              <View style={[styles.skeletonLine, bar, { width: 52 }]} />
+            </View>
+          ))}
+        </Animated.View>
+      </Section>
+    </>
+  );
+}
+
 function QuickActions({
   buildingCode,
   email,
@@ -290,7 +404,6 @@ function CourseSchedule({
   currentEventId?: string;
 }) {
   const theme = useTheme();
-  const todayTheme = useTodayTheme();
   const now = useNow();
   const todayKey = getDayKey(now);
 
@@ -302,19 +415,8 @@ function CourseSchedule({
 
   return (
     <Section title="Schedule">
-      <View
-        style={[
-          styles.card,
-          styles.cardFlush,
-          cardEdge(theme.color.borderSubtle),
-        ]}
-      >
-        <GlassSurface
-          corner={CARD_CORNER}
-          tint={CARD_GLASS_TINT}
-          intensity={CARD_BLUR_INTENSITY}
-          fallback={todayTheme.cardBackground}
-        />
+      {/* Bare, matching "This class" — the row dividers carry the structure. */}
+      <View>
         {meetings.map((meeting, i) => {
           const isToday = meeting.dayKey === todayKey;
           return (
@@ -401,6 +503,7 @@ const DESCRIPTION_COLLAPSED_LINES = 5;
 function CourseDescription({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
   const [overflows, setOverflows] = useState(false);
+  const [measured, setMeasured] = useState(false);
 
   return (
     <View style={styles.descriptionBlock}>
@@ -409,15 +512,33 @@ function CourseDescription({ text }: { text: string }) {
         color="secondary"
         style={styles.description}
         numberOfLines={expanded ? undefined : DESCRIPTION_COLLAPSED_LINES}
-        // Fires with the unclipped line count, so this measures the full text
-        // rather than what is currently on screen.
-        onTextLayout={(e) => {
-          if (e.nativeEvent.lines.length > DESCRIPTION_COLLAPSED_LINES)
-            setOverflows(true);
-        }}
       >
         {text}
       </Text>
+
+      {/*
+        Hidden twin, measured once and then dropped.
+
+        The visible copy cannot report this: `onTextLayout` gives the lines it
+        actually drew, and with `numberOfLines` set that can never exceed the
+        limit — so asking it whether it overflowed always answers no, and the
+        toggle never appeared. This copy is unclipped, so its line count is the
+        real one. Absolute with both edges pinned so it wraps at the same width.
+      */}
+      {!measured ? (
+        <Text
+          variant="body"
+          style={[styles.description, styles.descriptionMeasure]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          onTextLayout={(e) => {
+            setOverflows(e.nativeEvent.lines.length > DESCRIPTION_COLLAPSED_LINES);
+            setMeasured(true);
+          }}
+        >
+          {text}
+        </Text>
+      ) : null}
 
       {overflows ? (
         <Pressable
@@ -457,13 +578,14 @@ const SHORT_DAY: Record<string, string> = {
  */
 export function CourseDetailBody({ session }: Props) {
   const theme = useTheme();
-  const todayTheme = useTodayTheme();
   const {
     data: course,
     isLoading,
     isError,
   } = useCourseDetail(session.courseCode);
-  const { data: profile } = useFacultyProfile(session.professorFpid);
+  const { data: profile, isLoading: profileLoading } = useFacultyProfile(
+    session.professorFpid,
+  );
   const instructorEmail = profile?.email || null;
 
   /* Online classes have no room to name — the timetable puts "Online" there. */
@@ -471,6 +593,16 @@ export function CourseDetailBody({ session }: Props) {
 
   return (
     <>
+      {isLoading ? <CourseDetailSkeleton /> : null}
+
+      {/* No heading: it sits under the course title, which already says this. */}
+      {course?.description ? <CourseDescription text={course.description} /> : null}
+
+      <QuickActions
+        buildingCode={roomBuildingCode(session.room)}
+        email={instructorEmail}
+      />
+
       <Section title="This class">
         {/*
           Bare, unlike the cards below it: these are the facts you already saw
@@ -489,43 +621,37 @@ export function CourseDetailBody({ session }: Props) {
           {session.mode && !isOnline ? (
             <DetailRow label="Delivery" value={DELIVERY_LABEL[session.mode]} />
           ) : null}
-          <DetailRow label="Instructor" value={session.professor} />
+          {/*
+            Credits arrive with the catalog, everything above it comes off the
+            timetable. Without a placeholder the list rendered four rows and
+            grew a fifth a beat later, nudging the instructor card down.
+          */}
+          {isLoading ? (
+            <SkeletonDetailRow />
+          ) : course?.credits != null ? (
+            <DetailRow
+              label="Credits"
+              value={course.credits.toFixed(2).replace(/\.00$/, '')}
+            />
+          ) : null}
         </View>
+
+        {/* The instructor is a fact of this class, not a topic of its own. */}
+        {profileLoading ? (
+          <SkeletonInstructorCard />
+        ) : profile ? (
+          <InstructorCard profile={profile} />
+        ) : null}
       </Section>
-
-      <QuickActions
-        buildingCode={roomBuildingCode(session.room)}
-        email={instructorEmail}
-      />
-
-      {course?.description ? (
-        <Section title="About this course">
-          <CourseDescription text={course.description} />
-        </Section>
-      ) : null}
 
       <CourseSchedule
         courseCode={session.courseCode}
         currentEventId={session.eventId}
       />
 
-      {profile ? <InstructorCard profile={profile} /> : null}
-
-      {course && (course.credits != null || course.prerequisites) ? (
+      {course && (course.prerequisites || course.crosslisted) ? (
         <Section title="Requirements">
-          <View style={[styles.card, cardEdge(theme.color.borderSubtle)]}>
-            <GlassSurface
-              corner={CARD_CORNER}
-              tint={CARD_GLASS_TINT}
-              intensity={CARD_BLUR_INTENSITY}
-              fallback={todayTheme.cardBackground}
-            />
-            {course.credits != null ? (
-              <DetailRow
-                label="Credits"
-                value={course.credits.toFixed(2).replace(/\.00$/, '')}
-              />
-            ) : null}
+          <View>
             {course.crosslisted ? (
               <DetailRow label="Cross-listed" value={course.crosslisted} />
             ) : null}
@@ -540,13 +666,7 @@ export function CourseDetailBody({ session }: Props) {
 
       {course?.enrolment ? (
         <Section title="Enrolment">
-          <View style={[styles.card, cardEdge(theme.color.borderSubtle)]}>
-            <GlassSurface
-              corner={CARD_CORNER}
-              tint={CARD_GLASS_TINT}
-              intensity={CARD_BLUR_INTENSITY}
-              fallback={todayTheme.cardBackground}
-            />
+          <View>
             <DetailRow
               label="Enrolled"
               value={`${course.enrolment.enrolled} of ${course.enrolment.capacity}`}
@@ -570,15 +690,6 @@ export function CourseDetailBody({ session }: Props) {
             Across all sections this term.
           </Text>
         </Section>
-      ) : null}
-
-      {isLoading ? (
-        <Text
-          variant="caption"
-          style={[styles.note, { color: theme.color.text.subtle }]}
-        >
-          Loading course details…
-        </Text>
       ) : null}
 
       {isError ? (
@@ -615,6 +726,9 @@ const CARD_CORNER = { borderRadius: 12, borderCurve: 'continuous' as const };
 const AVATAR = 52;
 
 const styles = StyleSheet.create({
+  instructorBlock: {
+    paddingTop: 14,
+  },
   instructorRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -638,8 +752,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   instructorTitle: {
-    fontSize: 14,
-    lineHeight: 19,
+    fontSize: 15.5,
+    lineHeight: 21,
   },
   actionRow: {
     flexDirection: 'row',
@@ -667,7 +781,7 @@ const styles = StyleSheet.create({
   },
   rowDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0, 0, 0, 0.08)',
+    borderTopColor: DETAIL_DIVIDER,
   },
   dayBadge: {
     width: 42,
@@ -716,6 +830,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 16,
     paddingVertical: 10,
+    /* Under every row including the last — a ruled list, not separators. */
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: DETAIL_DIVIDER,
   },
   rowLabel: {
     fontSize: 14,
@@ -727,6 +844,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '600',
     textAlign: 'right',
+  },
+  descriptionMeasure: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    opacity: 0,
+    zIndex: -1,
   },
   descriptionBlock: {
     gap: 8,
@@ -742,13 +867,47 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   description: {
-    /* The longest read on the page — sized for prose, not for a meta row. */
-    fontSize: 17,
-    lineHeight: 26,
+    /*
+      The longest read on the page, and now the first thing under the title —
+      sized for prose, not for a meta row. Leading tracks the size at ~1.5 so
+      the paragraph keeps its rhythm.
+    */
+    fontSize: 18,
+    lineHeight: 27,
+    fontWeight: '500',
   },
   prerequisites: {
     fontSize: 14,
     lineHeight: 21,
+  },
+  skeletonBlock: {
+    gap: 9,
+  },
+  skeletonLine: {
+    height: 13,
+    borderRadius: 6,
+  },
+  skeletonInstructorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 13,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+  },
+  skeletonAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+  },
+  skeletonInstructorText: {
+    flex: 1,
+    gap: 9,
+  },
+  skeletonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 13,
   },
   note: {
     fontSize: 12.5,

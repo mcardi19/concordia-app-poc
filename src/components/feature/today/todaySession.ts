@@ -131,6 +131,8 @@ function fromEvent(
     mode: event.mode,
     room: event.room ?? 'Room TBA',
     professor: event.professor ?? '—',
+    professorFpid: event.professorFpid,
+    eventId: event.id,
     image: sessionHeroImage,
   };
 }

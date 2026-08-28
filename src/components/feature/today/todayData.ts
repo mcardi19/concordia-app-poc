@@ -38,6 +38,10 @@ export type TodaySession = {
   timeValue: string;
   room: string;
   professor: string;
+  /** Faculty profile slug, when the instructor could be matched to one. */
+  professorFpid?: string;
+  /** Timetable row this was derived from, so the detail page can mark it. */
+  eventId?: string;
   image: ImageSourcePropType;
 };
 
