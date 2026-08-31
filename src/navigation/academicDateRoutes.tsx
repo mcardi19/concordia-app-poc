@@ -1,6 +1,7 @@
 import React from 'react';
 import type { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AcademicDateScreen } from '@/screens/schedule/AcademicDateScreen';
+import { CURTAIN_HEADER } from './screenOptions';
 import type { AcademicDateRoutes } from './types';
 
 /**
@@ -28,7 +29,7 @@ export function academicDateScreens<P extends AcademicDateRoutes>(
     <Screen
       name="AcademicDate"
       component={AcademicDateScreen}
-      options={{ title: 'Calendar event' }}
+      options={{ title: 'Calendar event', ...CURTAIN_HEADER }}
     />
   );
 }

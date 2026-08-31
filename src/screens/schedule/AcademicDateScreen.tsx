@@ -1,7 +1,14 @@
-import React, { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useMemo, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { Text } from '@/components/design-system';
+import {
+  CURTAIN_BLUR_DEPTH,
+  CURTAIN_FADE_DEPTH,
+  CURTAIN_FADE_IN,
+  ScrollCurtain,
+} from '@/components/design-system/ScrollCurtain';
 import { CardGlass } from '@/components/design-system/GlassSurface';
 import { SECTION_HEADING_TEXT } from '@/components/feature/today/TodaySectionHeader';
 import { academicsTheme } from '@/screens/academics/academicsTheme';
@@ -37,36 +44,36 @@ function daysUntil(iso: string, now: Date): number {
  * three weeks out is "21 days"; one tomorrow is "Tomorrow". The number is the
  * point of the card, so it only stays a number while a number is informative.
  */
-function countdown(entry: AcademicDateEntry, now: Date): { value: string; unit?: string } {
+function countdown(
+  entry: AcademicDateEntry,
+  now: Date,
+): { value: string; unit?: string; label: string } {
   const days = daysUntil(entry.date, now);
-  if (days > 1) return { value: String(days), unit: days === 1 ? 'day' : 'days' };
-  if (days === 1) return { value: 'Tomorrow' };
-  if (days === 0) return { value: 'Today' };
+  const until = `Until ${COUNTDOWN_SUBJECT[entry.category] ?? 'the deadline'}`;
 
+  if (days > 1) return { value: String(days), unit: 'days', label: until };
+  if (days === 1) return { value: 'Tomorrow', label: until };
+  if (days === 0) return { value: 'Today', label: until };
+
+  // Nothing is counting down any more, so a "time until" heading would lie.
   const end = entry.endDate ? daysUntil(entry.endDate, now) : days;
-  if (end >= 0) return { value: 'In progress' };
-  return { value: 'Passed' };
+  if (end >= 0) return { value: 'In progress', label: 'Status' };
+  return { value: 'Passed', label: 'Status' };
 }
 
-/** "Time until deadline" reads wrong on a holiday. */
-function countdownLabel(entry: AcademicDateEntry): string {
-  switch (entry.category) {
-    case 'closure':
-      return 'Campus closed';
-    case 'exam':
-    case 'term':
-      return entry.endDate ? 'Period' : 'Starts';
-    default:
-      return 'Time until deadline';
-  }
-}
-
-function formatLong(iso: string): string {
-  return parseDay(iso).toLocaleDateString('en-CA', {
-    month: 'long',
-    year: 'numeric',
-  });
-}
+/**
+ * What the number is counting down to, phrased to complete "Until ...".
+ *
+ * The label used to name the event rather than the measurement — a closure
+ * read "Campus closed / 7 days", which says the campus is shut for a week
+ * when it means Labour Day is a week away. The category is already on the
+ * overline and in Details, so this only has to explain the number.
+ */
+const COUNTDOWN_SUBJECT: Partial<Record<AcademicDateEntry['category'], string>> = {
+  closure: 'campus closes',
+  exam: 'it starts',
+  term: 'it starts',
+};
 
 function formatRange(entry: AcademicDateEntry): string | null {
   if (!entry.endDate) return null;
@@ -110,6 +117,19 @@ export function AcademicDateScreen() {
   }>();
   const theme = useTheme();
   const now = useNow();
+
+  /* Transparent bar, so the curtain is what keeps content legible under it. */
+  const headerHeight = useHeaderHeight();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const curtainOpacity = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [...CURTAIN_FADE_IN, 9999],
+        outputRange: [0, 1, 1],
+        extrapolate: 'clamp',
+      }),
+    [scrollY],
+  );
   const tabBarPadding = useTabBarContentPadding();
 
   const entry = useMemo(() => academicDateById(route.params.id), [route.params.id]);
@@ -143,11 +163,39 @@ export function AcademicDateScreen() {
   ];
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={styles.root}>
+      <Animated.ScrollView
+        contentContainerStyle={{
+          paddingTop: headerHeight + 8,
+          paddingBottom: tabBarPadding + 24,
+        }}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+      >
+      {/*
+        Title first, hero second. The countdown is the more striking block, but
+        it only qualifies something you have to already know — which deadline
+        this is. Leading with the date meant reading "31 / Today" before
+        finding out what was due.
+      */}
+      <View style={styles.block}>
+        <Text variant="caption" style={[styles.eyebrow, { color: theme.color.primary }]}>
+          {ACADEMIC_CATEGORY_LABEL[entry.category]}
+        </Text>
+        <Text variant="heading2" style={styles.title}>
+          {entry.title}
+        </Text>
+        {entry.detail ? (
+          <Text variant="body" color="secondary" style={styles.lede}>
+            {entry.detail}
+          </Text>
+        ) : null}
+      </View>
+
       {/* Hero — the date, and how long you have. */}
       <View style={styles.block}>
         {/*
@@ -157,15 +205,24 @@ export function AcademicDateScreen() {
         <View style={[styles.heroShadow, { shadowColor: theme.color.primary }]}>
         <View style={styles.hero}>
           <CardGlass radius={PANEL_RADIUS} />
+          {/*
+            Weekday and month together on top, year underneath. The month
+            belonged with the weekday rather than the year: "Mon, Sep" is how
+            you say the date, and it leaves the numeral as the only thing at
+            that size.
+          */}
           <View style={styles.heroDate}>
             <Text variant="caption" style={[styles.dow, { color: theme.color.primary }]}>
-              {day.toLocaleDateString('en-CA', { weekday: 'short' }).toUpperCase()}
+              {/*
+                Composed, not one `toLocaleDateString` call: asking for
+                weekday and month together returns "Sep Mon" — month first and
+                no separator.
+              */}
+              {`${day.toLocaleDateString('en-CA', { weekday: 'short' })}, ` +
+                `${day.toLocaleDateString('en-CA', { month: 'short' })}`.toUpperCase()}
             </Text>
             <Text variant="heading1" style={styles.dayNumber}>
               {day.getDate()}
-            </Text>
-            <Text variant="caption" style={styles.month}>
-              {formatLong(entry.date)}
             </Text>
           </View>
 
@@ -173,7 +230,7 @@ export function AcademicDateScreen() {
 
           <View style={styles.heroMeta}>
             <Text variant="caption" style={styles.heroLabel}>
-              {countdownLabel(entry)}
+              {clock.label}
             </Text>
             <View style={styles.countRow}>
               <Text variant="heading1" style={[styles.count, { color: theme.color.primary }]}>
@@ -193,21 +250,6 @@ export function AcademicDateScreen() {
           </View>
         </View>
         </View>
-      </View>
-
-      {/* Title block. */}
-      <View style={styles.block}>
-        <Text variant="caption" style={[styles.eyebrow, { color: theme.color.primary }]}>
-          {ACADEMIC_CATEGORY_LABEL[entry.category]}
-        </Text>
-        <Text variant="heading2" style={styles.title}>
-          {entry.title}
-        </Text>
-        {entry.detail ? (
-          <Text variant="body" color="secondary" style={styles.lede}>
-            {entry.detail}
-          </Text>
-        ) : null}
       </View>
 
       {/*
@@ -235,16 +277,14 @@ export function AcademicDateScreen() {
         <Text variant="heading3" style={styles.sectionHeading}>
           Details
         </Text>
-        <View style={[styles.panel, { borderColor: academicsTheme.cardBorder }]}>
-          <CardGlass radius={PANEL_RADIUS} />
-          {details.map((row, index) => (
-            <View
-              key={row.key}
-              style={[
-                styles.detailRow,
-                index < details.length - 1 ? styles.detailRowDivided : null,
-              ]}
-            >
+        {/*
+          Bare and ruled, matching the course detail page. Boxing key/value
+          rows in a glass panel gave the page two competing card treatments,
+          and the rules alone carry the structure.
+        */}
+        <View>
+          {details.map((row) => (
+            <View key={row.key} style={styles.detailRow}>
               <Text variant="caption" style={styles.detailKey}>
                 {row.key}
               </Text>
@@ -274,7 +314,7 @@ export function AcademicDateScreen() {
                   accessibilityLabel={`${other.title}, ${ACADEMIC_CATEGORY_LABEL[other.category]}`}
                   style={({ pressed }) => [
                     styles.relatedRow,
-                    index < related.length - 1 ? styles.detailRowDivided : null,
+                    index < related.length - 1 ? styles.relatedRowDivided : null,
                     pressed ? styles.relatedRowPressed : null,
                   ]}
                 >
@@ -319,7 +359,17 @@ export function AcademicDateScreen() {
           </Text>
         </View>
       </View>
-    </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Above the content, below the bar — drawn only once content scrolls up. */}
+      <ScrollCurtain
+        color={academicsTheme.pageBackground}
+        height={headerHeight + CURTAIN_FADE_DEPTH}
+        blurHeight={headerHeight + CURTAIN_BLUR_DEPTH}
+        blurred
+        opacity={curtainOpacity}
+      />
+    </View>
   );
 }
 
@@ -329,6 +379,9 @@ export function AcademicDateScreen() {
  * tracking there, one that never uppercased.
  */
 /** One radius for every panel on the page, glass and border alike. */
+/** Matches the course detail page's ruled key/value rows. */
+const DETAIL_DIVIDER = 'rgba(0, 0, 0, 0.12)';
+
 const PANEL_RADIUS = 12;
 
 const OVERLINE = {
@@ -363,7 +416,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 20,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: academicsTheme.cardBorder,
@@ -379,18 +432,19 @@ const styles = StyleSheet.create({
   dow: {
     ...OVERLINE,
   },
+  /*
+    Deliberately the same size and leading as `count` opposite. The two
+    columns each run overline-then-value, so matching them lets both rows
+    align rather than only the overlines — the numeral was 44 against the
+    countdown's 34, which pushed the second row out of step.
+  */
   dayNumber: {
-    fontSize: 56,
-    lineHeight: 56,
+    fontSize: 34,
+    lineHeight: 36,
     fontWeight: '600',
-    letterSpacing: -2,
+    letterSpacing: -1.4,
     color: academicsTheme.headingText,
-    marginTop: 4,
-  },
-  month: {
-    fontSize: 12,
-    color: academicsTheme.metaText,
-    marginTop: 4,
+    marginTop: 6,
   },
   heroRule: {
     width: StyleSheet.hairlineWidth,
@@ -408,6 +462,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 5,
+    /* Matches `dayNumber.marginTop` so both value rows start together. */
     marginTop: 6,
   },
   count: {
@@ -470,11 +525,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
     paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  detailRowDivided: {
+    /*
+      Under every row including the last — a ruled list, not separators. The
+      same weight the course detail page uses: with no card around them these
+      rules are the only structure, so a 6% hairline all but disappears.
+    */
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: academicsTheme.cardBorder,
+    borderBottomColor: DETAIL_DIVIDER,
   },
   detailKey: {
     width: 84,
@@ -487,6 +544,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: academicsTheme.headingText,
+  },
+  /*
+    Separators, not a ruled list: these rows sit inside a card whose edge does
+    part of the separating, so this stays the lighter card hairline rather
+    than the heavier `DETAIL_DIVIDER` used on the bare rows above.
+  */
+  relatedRowDivided: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: academicsTheme.cardBorder,
   },
   relatedRowPressed: {
     opacity: 0.55,
