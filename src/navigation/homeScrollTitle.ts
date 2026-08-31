@@ -7,14 +7,14 @@
  */
 
 /** Scroll distance (pt) at which large Home is fully faded out. */
-export const LARGE_HOME_FADE_END = 10;
+export const LARGE_HOME_FADE_END = 16;
 
 /**
  * Compact title stays hidden until content has cleared the header band
  * (session card CTAs must not sit under the centred title).
  */
 export const COMPACT_HOME_FADE_START = 56;
-export const COMPACT_HOME_FADE_END = 84;
+export const COMPACT_HOME_FADE_END = 100;
 
 /**
  * Distance scrolled from the true top.

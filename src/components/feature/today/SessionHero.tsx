@@ -330,6 +330,7 @@ function SessionHeroOverlay({
               color: todayTheme.sessionCourseCode,
               fontSize: 15,
               lineHeight: 15 * 1.2,
+              letterSpacing: 0,
             }}
           >
             {session.courseCode}
@@ -531,6 +532,7 @@ function MetaField({
           color: todayTheme.sessionMetaLabel,
           fontSize: 16,
           lineHeight: 16 * 1.2,
+          letterSpacing: 0,
           marginBottom: 4,
         }}
       >
@@ -543,6 +545,7 @@ function MetaField({
           color: ON_SCRIM_TEXT_COLOR,
           fontSize: 17,
           lineHeight: 17 * 1.2,
+          letterSpacing: 0,
         }}
       >
         {value}

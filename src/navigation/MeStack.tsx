@@ -1,5 +1,4 @@
 import React from 'react';
-import { Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MeHomeScreen } from '@/screens/me/MeHomeScreen';
 import { SettingsScreen } from '@/screens/me/SettingsScreen';
@@ -10,23 +9,10 @@ import { ProfileScreen } from '@/screens/profile/ProfileScreen';
 import { GradesScreen } from '@/screens/grades/GradesScreen';
 import { BalanceScreen } from '@/screens/balance/BalanceScreen';
 import { searchScreens } from './searchRoutes';
-import { useStackScreenOptions } from './screenOptions';
+import { CURTAIN_HEADER, useStackScreenOptions } from './screenOptions';
 import type { MeStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<MeStackParamList>();
-
-/**
- * For screens that draw their own gradient curtain behind the bar: the bar
- * itself must not paint, or there would be two backgrounds.
- *
- * iOS only. `headerTransparent` there keeps the liquid-glass bar, while on
- * Android the header is a solid surface and content running under it would
- * just collide.
- */
-const CURTAIN_HEADER = Platform.select({
-  ios: { headerTransparent: true, headerShadowVisible: false, headerStyle: undefined },
-  default: {},
-});
 
 export function MeStack() {
   const screenOptions = useStackScreenOptions();

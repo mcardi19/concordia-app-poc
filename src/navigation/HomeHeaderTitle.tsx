@@ -1,5 +1,6 @@
 import React from 'react';
 import { Animated, StyleSheet, Text as RNText } from 'react-native';
+import { HEADER_BAR_BUTTON_SIZE } from './HeaderIconButton';
 import {
   COMPACT_HOME_FADE_END,
   COMPACT_HOME_FADE_START,
@@ -46,6 +47,17 @@ const COMPACT_SUBTITLE_LEADING = 17;
 
 /** Resting height of the two-line block — the overlay reserves this much. */
 export const GREETING_BLOCK_HEIGHT = LARGE_TITLE_LEADING + LARGE_SUBTITLE_LEADING + 2;
+
+/**
+ * How far to lift the greeting so it centres on the action buttons.
+ *
+ * Both start at the same top edge, but the two-line greeting is taller than a
+ * 44pt button, so sharing a top leaves its centre sitting below theirs — read
+ * on screen as dead space above the title. Derived rather than a literal, so
+ * it stays right if the type scale moves.
+ */
+export const GREETING_BUTTON_OFFSET =
+  (GREETING_BLOCK_HEIGHT - HEADER_BAR_BUTTON_SIZE) / 2;
 
 type GreetingProps = {
   name: string;

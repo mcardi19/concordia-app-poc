@@ -6,6 +6,19 @@ import { primitiveFontWeight } from '@/design-system/tokens/primitive';
 /** Inactive tab label / icon chrome — matches iOS unselected tab label (~secondaryLabel). */
 export const NAV_TAB_INACTIVE = '#3B3B3C';
 
+/**
+ * For screens that draw their own gradient curtain behind the bar: the bar
+ * itself must not paint, or there would be two backgrounds.
+ *
+ * iOS only. `headerTransparent` there keeps the liquid-glass bar, while on
+ * Android the header is a solid surface and content running under it would
+ * just collide.
+ */
+export const CURTAIN_HEADER = Platform.select({
+  ios: { headerTransparent: true, headerShadowVisible: false, headerStyle: undefined },
+  default: {},
+});
+
 export function useStackContentStyle() {
   const theme = useTheme();
   return { backgroundColor: theme.color.background };

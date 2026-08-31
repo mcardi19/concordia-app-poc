@@ -9,8 +9,15 @@ import { LinearGradient } from 'expo-linear-gradient';
  */
 export const CURTAIN_FADE_IN = [0, 20] as const;
 
-/** How far the colour fade runs past the chrome it sits behind. */
-export const CURTAIN_FADE_DEPTH = 40;
+/**
+ * How far the colour fade runs past the chrome it sits behind.
+ *
+ * The stops are proportional, so a deeper curtain is also a denser one over
+ * the chrome band itself: the greeting sits at a smaller fraction of a taller
+ * ramp, and keeps its contrast as content passes beneath it. At 40 the wash
+ * had already thinned out by the time it reached the greeting's baseline.
+ */
+export const CURTAIN_FADE_DEPTH = 76;
 
 /**
  * How far the blur runs past it — much shorter than the colour fade, and

@@ -34,6 +34,7 @@ import {
 import { useTheme } from '@/design-system/theme';
 import {
   GREETING_BLOCK_HEIGHT,
+  GREETING_BUTTON_OFFSET,
   HomeGreetingCompact,
   HomeGreetingLarge,
 } from '@/navigation/HomeHeaderTitle';
@@ -320,7 +321,7 @@ export function TodayScreen({ navigation }: Props) {
             pointerEvents="none"
             style={{
               position: 'absolute',
-              top: insets.top + HEADER_CHROME_TOP_GAP,
+              top: insets.top + HEADER_CHROME_TOP_GAP - GREETING_BUTTON_OFFSET,
               left: inset,
               right: inset,
               zIndex: 12,
@@ -332,14 +333,14 @@ export function TodayScreen({ navigation }: Props) {
               name={greetingName}
               dateLabel={dateLabel}
               color={theme.color.text.primary}
-              subtitleColor={theme.color.text.subtle}
+              subtitleColor={theme.color.text.subtler}
               scrollY={scrollY}
             />
             <HomeGreetingCompact
               name={greetingName}
               dateLabel={dateLabel}
               color={theme.color.text.primary}
-              subtitleColor={theme.color.text.subtle}
+              subtitleColor={theme.color.text.subtler}
               scrollY={scrollY}
             />
           </View>

@@ -1,11 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
 import { useNow } from '@/hooks';
 import { academicTermStatus } from '@/services/academic';
-import { MeGlassCard, MeSectionLabel } from '@/components/feature/me';
+import { MeGlassCard, MeHeaderChrome, MeSectionLabel } from '@/components/feature/me';
 import { horizontalCarouselProps } from '@/components/feature/today';
 import {
   MaterialSymbol,
@@ -17,10 +19,10 @@ import {
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import {
+  HEADER_BAR_BUTTON_SIZE,
   HEADER_CHROME_HORIZONTAL_INSET,
   HEADER_CHROME_TOP_GAP,
 } from '@/navigation/HeaderIconButton';
-import { HeroSearchButton } from '@/navigation/HeroSearchButton';
 import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { useTabBarMinimizeScrollHandler } from '@/navigation/tabBarMinimize';
 import type { AcademicsStackScreenProps } from '@/navigation/types';
@@ -111,6 +113,13 @@ export function AcademicsHomeScreen({ navigation }: Props) {
   const tabBarPadding = useTabBarContentPadding();
   const onScroll = useTabBarMinimizeScrollHandler();
 
+  useFocusEffect(
+    useCallback(() => {
+      setStatusBarStyle('light');
+      return () => setStatusBarStyle('auto');
+    }, []),
+  );
+
   const openResource = (resource: AcademicResource) => {
     if (resource.id === 'grades') {
       navigation.navigate('Grades');
@@ -126,25 +135,37 @@ export function AcademicsHomeScreen({ navigation }: Props) {
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
       >
-        {/* Masthead — white on the brand gradient, matching the Me hero. */}
-        <LinearGradient
-          colors={[theme.color.primary, academicsTheme.heroGradientEnd]}
-          style={[styles.hero, { paddingTop: insets.top + 18 }]}
-        >
+        {/* Masthead — flat brand wash and chrome spacing, matching the Me hero. */}
+        <View style={[styles.hero, { paddingTop: insets.top + HEADER_CHROME_TOP_GAP }]}>
+          <View
+            pointerEvents="none"
+            style={[styles.heroWash, { backgroundColor: theme.color.primary }]}
+          />
+
+          <View style={styles.chromeSpacer} />
+
           <Text
-            variant="heading1"
-            style={{ fontSize: 32, lineHeight: 36, color: '#FFFFFF' }}
+            variant="heading2"
+            style={{
+              fontSize: 27,
+              lineHeight: 30,
+              color: '#FFFFFF',
+            }}
           >
             {ACADEMIC_TERM.title}
           </Text>
           <Text
-            variant="body"
-            style={{ fontSize: 18, lineHeight: 22, fontWeight: '500', color: academicsTheme.heroSubtitle, marginTop: 7 }}
+            variant="bodySmall"
+            style={{
+              fontSize: 14,
+              color: academicsTheme.heroSubtitle,
+              marginTop: 3,
+            }}
           >
             {termStatus.label}
           </Text>
           {termStatus.phase !== 'Between terms' ? (
-            <Text variant="caption" style={{ fontSize: 12, color: academicsTheme.heroMeta, marginTop: 9 }}>
+            <Text variant="caption" style={{ fontSize: 12, color: academicsTheme.heroMeta, marginTop: 6 }}>
               {termStatus.week
                 ? `Week ${termStatus.week.current} of ${termStatus.week.total} · ${termStatus.phase}`
                 : termStatus.phase}
@@ -156,19 +177,6 @@ export function AcademicsHomeScreen({ navigation }: Props) {
               <React.Fragment key={stat.label}>
                 {index > 0 ? <View style={styles.statDivider} /> : null}
                 <View style={[styles.stat, { paddingLeft: index === 0 ? 0 : 14 }]}>
-                  <Text
-                    variant="heading3"
-                    numberOfLines={1}
-                    style={{
-                      fontSize: 20,
-                      lineHeight: 21,
-                      fontWeight: '600',
-                      letterSpacing: -0.6,
-                      color: '#FFFFFF',
-                    }}
-                  >
-                    {stat.value}
-                  </Text>
                   <Text
                     variant="caption"
                     numberOfLines={1}
@@ -182,11 +190,24 @@ export function AcademicsHomeScreen({ navigation }: Props) {
                   >
                     {stat.label}
                   </Text>
+                  <Text
+                    variant="heading3"
+                    numberOfLines={1}
+                    style={{
+                      fontSize: 20,
+                      lineHeight: 21,
+                      fontWeight: '600',
+                      letterSpacing: -0.6,
+                      color: '#FFFFFF',
+                    }}
+                  >
+                    {stat.value}
+                  </Text>
                 </View>
               </React.Fragment>
             ))}
           </View>
-        </LinearGradient>
+        </View>
 
         {/* My courses */}
         <View style={styles.section}>
@@ -410,17 +431,7 @@ export function AcademicsHomeScreen({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/*
-        Fixed rather than inline in the masthead: the hero scrolls away, and
-        search has to stay reachable the way Home's header button is. Same
-        coordinates as `MeHeaderChrome` so the two burgundy surfaces line up.
-      */}
-      <View
-        pointerEvents="box-none"
-        style={[styles.chromeOverlay, { top: insets.top + HEADER_CHROME_TOP_GAP }]}
-      >
-        <HeroSearchButton onPress={() => navigation.navigate('Search')} />
-      </View>
+      <MeHeaderChrome onSearchPress={() => navigation.navigate('Search')} />
     </View>
   );
 }
@@ -435,18 +446,24 @@ const styles = StyleSheet.create({
     backgroundColor: academicsTheme.pageBackground,
   },
   hero: {
-    paddingHorizontal: 22,
+    paddingHorizontal: HEADER_CHROME_HORIZONTAL_INSET,
     paddingBottom: 22,
+    overflow: 'visible',
   },
-  chromeOverlay: {
+  heroWash: {
     position: 'absolute',
-    right: HEADER_CHROME_HORIZONTAL_INSET,
-    zIndex: 20,
+    left: 0,
+    right: 0,
+    top: -400,
+    bottom: -1,
+  },
+  chromeSpacer: {
+    height: HEADER_BAR_BUTTON_SIZE,
   },
   statsRow: {
     flexDirection: 'row',
-    marginTop: 32,
-    paddingTop: 20,
+    marginTop: 20,
+    paddingTop: 18,
     borderTopWidth: StyleSheet.hairlineWidth * 2,
     borderTopColor: academicsTheme.heroDivider,
   },

@@ -1,8 +1,14 @@
-import React, { useCallback } from 'react';
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { Animated, Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { Text } from '@/components/design-system';
-import { MeGlassCard } from '@/components/feature/me';
-import { SECTION_HEADING_TEXT } from '@/components/feature/today/TodaySectionHeader';
+import {
+  CURTAIN_BLUR_DEPTH,
+  CURTAIN_FADE_DEPTH,
+  CURTAIN_FADE_IN,
+  ScrollCurtain,
+} from '@/components/design-system/ScrollCurtain';
+import { MeGlassCard, MeSectionLabel } from '@/components/feature/me';
 import { MaterialSymbol, msCall, msChevronRight, msNorthEast } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -36,6 +42,17 @@ export function EmergencyScreen() {
   const theme = useTheme();
   const meTheme = useMeTheme();
   const bottomPadding = useTabBarContentPadding();
+  const headerHeight = useHeaderHeight();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const curtainOpacity = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [...CURTAIN_FADE_IN, 9999],
+        outputRange: [0, 1, 1],
+        extrapolate: 'clamp',
+      }),
+    [scrollY],
+  );
 
   const open = useCallback((url: string) => {
     void Linking.openURL(url);
@@ -43,9 +60,18 @@ export function EmergencyScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: meTheme.pageBackground }]}>
-      <ScrollView
+      <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: bottomPadding + 24 }}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: headerHeight + 8, paddingBottom: bottomPadding + 24 },
+        ]}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+        contentInsetAdjustmentBehavior="never"
       >
         {/*
           The design's masthead headline is the navigation title here, so only
@@ -80,12 +106,12 @@ export function EmergencyScreen() {
 
         <Section label="Hospital emergency rooms">
           <MeGlassCard style={styles.card} contentStyle={styles.erCard}>
-            <Text variant="bodySmall" style={[styles.rowTitle, { color: meTheme.headingText }]}>
+            <Text variant="body" style={[styles.rowTitle, { color: meTheme.headingText }]}>
               Find ERs & wait times in Montreal
             </Text>
-            <Text variant="caption" style={[styles.rowDetail, { color: meTheme.metaText }]}>
+            <Text variant="bodySmall" style={[styles.rowDetail, { color: meTheme.metaText }]}>
               Including psychiatric emergency departments. Unsure if you need the ER? Call{' '}
-              <Text variant="caption" color="brand" style={styles.inlineStrong}>
+              <Text variant="bodySmall" color="brand" style={styles.inlineStrong}>
                 8-1-1
               </Text>{' '}
               or read Health Services&rsquo; guide.
@@ -117,14 +143,14 @@ export function EmergencyScreen() {
                 ]}
               >
                 <View style={styles.rowText}>
-                  <Text variant="bodySmall" style={[styles.rowTitle, { color: meTheme.headingText }]}>
+                  <Text variant="body" style={[styles.rowTitle, { color: meTheme.headingText }]}>
                     {resource.label}
                   </Text>
-                  <Text variant="caption" style={[styles.rowDetail, { color: meTheme.metaText }]}>
+                  <Text variant="bodySmall" style={[styles.rowDetail, { color: meTheme.metaText }]}>
                     {resource.detail}
                   </Text>
                 </View>
-                <MaterialSymbol icon={msChevronRight} size={18} color={meTheme.chevron} />
+                <MaterialSymbol icon={msChevronRight} size={20} color={meTheme.chevron} />
               </Pressable>
             ))}
           </MeGlassCard>
@@ -134,7 +160,15 @@ export function EmergencyScreen() {
           Concordia is located on the unceded Indigenous lands of the Kanien&rsquo;kehá:ka
           Nation. If you&rsquo;re in immediate danger, call 911 first.
         </Text>
-      </ScrollView>
+      </Animated.ScrollView>
+
+      <ScrollCurtain
+        color={meTheme.pageBackground}
+        height={headerHeight + CURTAIN_FADE_DEPTH}
+        blurHeight={headerHeight + CURTAIN_BLUR_DEPTH}
+        blurred
+        opacity={curtainOpacity}
+      />
     </View>
   );
 }
@@ -190,7 +224,7 @@ function CallAction({ call, onPress }: { call: EmergencyCall; onPress: () => voi
           {call.scope}
         </Text>
         <Text
-          variant="bodySmall"
+          variant="body"
           style={[
             styles.callName,
             { color: primary ? theme.color.text.inverse : meTheme.headingText },
@@ -199,7 +233,7 @@ function CallAction({ call, onPress }: { call: EmergencyCall; onPress: () => voi
           {call.name}
         </Text>
         <Text
-          variant="bodySmall"
+          variant="body"
           style={[
             styles.callPhone,
             { color: primary ? theme.color.text.inverse : theme.color.primary },
@@ -211,7 +245,7 @@ function CallAction({ call, onPress }: { call: EmergencyCall; onPress: () => voi
 
       <MaterialSymbol
         icon={msChevronRight}
-        size={18}
+        size={20}
         color={primary ? 'rgba(255,255,255,0.7)' : meTheme.chevron}
       />
     </Pressable>
@@ -242,16 +276,16 @@ function HelplineRow({
         { opacity: pressed ? 0.6 : 1 },
       ]}
     >
-      <Text variant="bodySmall" style={[styles.rowTitle, { color: meTheme.headingText }]}>
+      <Text variant="body" style={[styles.rowTitle, { color: meTheme.headingText }]}>
         {line.name}
       </Text>
-      <Text variant="caption" style={[styles.rowDetail, { color: meTheme.metaText }]}>
+      <Text variant="bodySmall" style={[styles.rowDetail, { color: meTheme.metaText }]}>
         {line.detail}
       </Text>
       <View style={styles.helplineMeta}>
         <View style={[styles.phoneChip, { backgroundColor: `${theme.color.primary}10` }]}>
           <MaterialSymbol icon={msCall} size={12} color={theme.color.primary} />
-          <Text variant="caption" style={[styles.phoneChipLabel, { color: theme.color.primary }]}>
+          <Text variant="bodySmall" style={[styles.phoneChipLabel, { color: theme.color.primary }]}>
             {line.phone}
           </Text>
         </View>
@@ -278,22 +312,20 @@ function LinkButton({ label, onPress }: { label: string; onPress: () => void }) 
         { backgroundColor: meTheme.stackFill, opacity: pressed ? 0.6 : 1 },
       ]}
     >
-      <Text variant="caption" style={[styles.linkLabel, { color: meTheme.headingText }]}>
+      <Text variant="bodySmall" style={[styles.linkLabel, { color: meTheme.headingText }]}>
         {label}
       </Text>
-      <MaterialSymbol icon={msNorthEast} size={13} color={meTheme.headingText} />
+      <MaterialSymbol icon={msNorthEast} size={14} color={meTheme.headingText} />
     </Pressable>
   );
 }
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
-  const meTheme = useMeTheme();
-
   return (
     <View style={styles.section}>
-      <Text variant="heading3" style={[styles.sectionLabel, { color: meTheme.headingText }]}>
-        {label}
-      </Text>
+      <View style={styles.sectionHeader}>
+        <MeSectionLabel>{label}</MeSectionLabel>
+      </View>
       {children}
     </View>
   );
@@ -303,13 +335,13 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  content: {},
   masthead: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingTop: 4,
   },
   eyebrow: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: '700',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
@@ -355,32 +387,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   callScope: {
-    fontSize: 10,
-    lineHeight: 13,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
   callName: {
-    fontSize: 17,
-    lineHeight: 20,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: '600',
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
     marginTop: 3,
   },
   callPhone: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '600',
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
     marginTop: 4,
   },
   section: {
-    paddingTop: 26,
+    paddingTop: 16,
+    marginTop: 12,
   },
-  sectionLabel: {
-    ...SECTION_HEADING_TEXT,
+  sectionHeader: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    marginBottom: 12,
   },
   card: {
     marginHorizontal: semanticSpacing.screenHorizontal,
@@ -413,39 +444,40 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   phoneChipLabel: {
-    fontSize: 12,
-    lineHeight: 15,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: '600',
   },
   altLabel: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 15,
   },
   resourceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    minHeight: 56,
   },
   rowText: {
     flex: 1,
     minWidth: 0,
   },
   rowTitle: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '600',
-    letterSpacing: -0.3,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    letterSpacing: -0.2,
   },
   rowDetail: {
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 3,
+    fontSize: 15,
+    lineHeight: 21,
+    marginTop: 4,
   },
   inlineStrong: {
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 15,
+    lineHeight: 21,
     fontWeight: '600',
   },
   linkRow: {
@@ -460,20 +492,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 7,
     borderCurve: 'continuous',
   },
   linkLabel: {
-    fontSize: 12,
-    lineHeight: 15,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '600',
   },
   footer: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingTop: 20,
-    fontSize: 11,
-    lineHeight: 16,
+    paddingTop: 28,
+    fontSize: 12.5,
+    lineHeight: 18,
     textAlign: 'center',
   },
 });

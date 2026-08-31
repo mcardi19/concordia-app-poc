@@ -182,7 +182,10 @@ function InstructorCard({ profile }: { profile: FacultyProfile }) {
             <Text
               variant="caption"
               numberOfLines={2}
-              style={{ color: theme.color.text.secondary }}
+              style={[
+                styles.instructorTitle,
+                { color: theme.color.text.subtle },
+              ]}
             >
               {profile.title}
             </Text>
@@ -752,8 +755,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   instructorTitle: {
-    fontSize: 15.5,
-    lineHeight: 21,
+    fontSize: 13,
+    lineHeight: 18,
   },
   actionRow: {
     flexDirection: 'row',

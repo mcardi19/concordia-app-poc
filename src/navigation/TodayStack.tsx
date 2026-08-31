@@ -7,7 +7,7 @@ import { CampusTodayScreen } from '@/screens/campusToday/CampusTodayScreen';
 import { EmergencyScreen } from '@/screens/today/EmergencyScreen';
 import { useTheme } from '@/design-system/theme';
 import { searchScreens } from './searchRoutes';
-import { useStackScreenOptions } from './screenOptions';
+import { CURTAIN_HEADER, useStackScreenOptions } from './screenOptions';
 import { TodayHeaderActions } from './TodayHeaderActions';
 import type { TodayStackParamList } from './types';
 
@@ -87,7 +87,7 @@ export function TodayStack() {
       <Stack.Screen
         name="Emergency"
         component={EmergencyScreen}
-        options={{ title: 'Emergency & crisis' }}
+        options={{ title: 'Emergency & crisis', ...CURTAIN_HEADER }}
       />
       <Stack.Screen
         name="CampusToday"
