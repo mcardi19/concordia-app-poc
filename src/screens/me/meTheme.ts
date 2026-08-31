@@ -8,8 +8,8 @@ import { useAppearance } from '@/design-system/theme';
  * and rounding them to the nearest token flattens the card hierarchy.
  */
 const meThemeLight = {
-  /** Source is a near-flat linear-gradient(#F2EFEF → #F3F3F3); rendered flat. */
-  pageBackground: '#F3F3F3',
+  /** Matches the Home (Today) tab surface so the tabs share one page fill. */
+  pageBackground: '#F7F7F8',
   cardBackground: '#FFFFFF',
   cardBorder: 'rgba(0, 0, 0, 0.06)',
   /**

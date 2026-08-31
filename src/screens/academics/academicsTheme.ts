@@ -4,7 +4,8 @@
  * warmer, lower-contrast neutral ramp and rounding flattens the hierarchy.
  */
 export const academicsTheme = {
-  pageBackground: '#F3F3F3',
+  /** Matches the Home (Today) tab surface so the tabs share one page fill. */
+  pageBackground: '#F7F7F8',
   cardBackground: '#FFFFFF',
   cardBorder: 'rgba(0, 0, 0, 0.05)',
 
