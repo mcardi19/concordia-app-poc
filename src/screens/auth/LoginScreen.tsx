@@ -1,6 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Text } from '@/components/design-system';
 import { MaterialSymbol, msSchool, msSecurity } from '@/components/icons';
@@ -9,11 +8,13 @@ import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 
 /**
- * Bottom stop of the masthead gradient — matches the Academics and Me hero
- * bands, so this is the same brand gradient the student sees right after
- * signing in rather than a one-off shade.
+ * IDSS self-serve reset. Deliberately opened in the browser rather than the
+ * in-app SSO flow: this is a separate system from the sign-in redirect, and
+ * resetting a NetName is something a student should watch happen in a real
+ * address bar.
  */
-const HERO_GRADIENT_END = '#5E1626';
+const PASSWORD_RESET_URL =
+  'https://fcms.concordia.ca/idss/pages/account/passwordreset.aspx';
 
 /**
  * The one door into the app. There is no form to get wrong — this is an SSO
@@ -27,16 +28,15 @@ export function LoginScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: theme.color.background }]}>
-      <LinearGradient
-        colors={[theme.color.primary, HERO_GRADIENT_END]}
-        style={[styles.hero, { paddingTop: insets.top + 28 }]}
-      >
-        <View style={styles.crest}>
-          <MaterialSymbol icon={msSchool} size={30} color="#FFFFFF" />
+      <View style={[styles.hero, { paddingTop: insets.top + 28 }]}>
+        <View style={[styles.crest, { backgroundColor: `${theme.color.primary}12` }]}>
+          <MaterialSymbol icon={msSchool} size={30} color={theme.color.primary} />
         </View>
-        <Text style={styles.wordmark}>CONCORDIA</Text>
-        <Text style={styles.wordmarkSub}>University</Text>
-      </LinearGradient>
+        <Text style={[styles.wordmark, { color: theme.color.primary }]}>CONCORDIA</Text>
+        <Text style={[styles.wordmarkSub, { color: theme.color.text.secondary }]}>
+          University
+        </Text>
+      </View>
 
       {/*
         Copy at the top, action at the bottom: the button is the only thing to
@@ -49,12 +49,10 @@ export function LoginScreen() {
             Sign in to continue
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
-            Use your Concordia NetName to see your schedule, grades, and campus
-            services in one place.
+            Sign in to see your schedule, grades, and campus services in one
+            place.
           </Text>
-        </View>
 
-        <View>
           <Button
             onPress={login}
             disabled={isLoading}
@@ -73,6 +71,18 @@ export function LoginScreen() {
             )}
           </Button>
 
+          <Pressable
+            onPress={() => Linking.openURL(PASSWORD_RESET_URL)}
+            accessibilityRole="link"
+            accessibilityLabel="Forgot your password? Opens Concordia password reset in your browser"
+            hitSlop={8}
+            style={({ pressed }) => [styles.forgotRow, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Text variant="bodySmall" color="brand" style={styles.forgotLabel}>
+              Forgot your password?
+            </Text>
+          </Pressable>
+
           <View style={styles.trustRow}>
             <MaterialSymbol icon={msSecurity} size={14} color={theme.color.text.subtle} />
             <Text variant="caption" color="subtle" style={styles.trustLabel}>
@@ -89,20 +99,23 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  forgotRow: {
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  forgotLabel: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
+  },
   hero: {
     alignItems: 'center',
     paddingBottom: 40,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    borderCurve: 'continuous',
   },
   crest: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -111,26 +124,31 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: 3,
-    color: '#FFFFFF',
   },
   wordmarkSub: {
     fontSize: 13,
     fontWeight: '500',
     letterSpacing: 0.5,
-    color: 'rgba(255,255,255,0.72)',
     marginTop: 4,
   },
+  /*
+    One block, pushed to the foot. The copy reads as the button's own caption
+    rather than a paragraph stranded at the top of an empty page.
+  */
   sheet: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: semanticSpacing.screenHorizontal + 6,
     paddingTop: 36,
   },
   heading: {
     marginBottom: 10,
+    textAlign: 'center',
   },
   body: {
     lineHeight: 21,
+    textAlign: 'center',
+    marginBottom: 28,
   },
   signInButton: {
     height: 56,

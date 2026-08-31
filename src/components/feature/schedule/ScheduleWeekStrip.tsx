@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     borderBottomColor: scheduleTheme.mastheadBorder,
   },
   dayNum: {
-    fontSize: 19,
+    fontSize: 17,
     fontFamily: Platform.select({ ios: 'System', android: 'sans-serif' }),
   },
   dayNumIdle: {

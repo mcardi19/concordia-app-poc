@@ -64,6 +64,11 @@ const DETAIL_HERO_HEIGHT = Math.max(
  * because it arrives with zero velocity on a schedule; a critically damped
  * spring decelerates into the frame the way the App Store expand does.
  * `dampingRatio: 1` = fastest settle with no overshoot.
+ *
+ * Measured, not guessed: relaxing this to `dampingRatio: 0.9` over 620ms was
+ * tried and changed the per-frame profile by almost nothing (peak 49.9 -> 45.0,
+ * same collapse by the third frame). The abruptness is not in this spring —
+ * see `BACKDROP_FADE_MS`.
  */
 const OPEN_SPRING = { duration: 520, dampingRatio: 1, overshootClamping: true } as const;
 /**
@@ -92,8 +97,19 @@ const BACKDROP_BLUR_INTENSITY = 100;
  * it costs ~9 and looks identical in motion.
  */
 const BLUR_STEP = 12;
-/** Catch-up fade for the frost once the overlay owns the hero. */
-const BACKDROP_FADE_MS = 160;
+/**
+ * Catch-up fade for the frost once the overlay owns the hero.
+ *
+ * Widened from 160ms to land with the card rather than a third of the way
+ * through it. The frost covers the whole viewport, so its ramp dominates what
+ * the eye reads as "the transition" — at 160ms against a 520ms spring, the
+ * screen was fully frosted while the card was still travelling, which is the
+ * snap-then-drift that made the expand feel abrupt.
+ *
+ * Not matched exactly to the spring: the spring's last stretch is
+ * sub-perceptual settle, so the frost only has to cover the part that moves.
+ */
+const BACKDROP_FADE_MS = 420;
 /**
  * Last-resort escape hatch for an onLoad that never arrives — NOT a timing
  * knob. Revealing the sheet before the photo has painted shows the opaque page
