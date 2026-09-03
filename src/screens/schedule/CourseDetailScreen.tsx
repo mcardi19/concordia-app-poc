@@ -1,12 +1,20 @@
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, { useLayoutEffect, useMemo, useRef } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
+import {
+  CURTAIN_BLUR_DEPTH,
+  CURTAIN_FADE_DEPTH,
+  CURTAIN_FADE_IN,
+  ScrollCurtain,
+} from '@/components/design-system/ScrollCurtain';
 import {
   CourseDetailBody,
   meetingFromEvent,
 } from '@/components/feature/today/CourseDetailBody';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
+import { SESSION_COMPONENT_LABEL } from '@/components/feature/schedule/scheduleTypes';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { scheduleTheme } from '@/components/feature/schedule/scheduleTheme';
@@ -26,14 +34,47 @@ type Props = ScheduleStackScreenProps<'CourseDetail'>;
  * whole shape exists to grow out of the card it was tapped on, and there is no
  * such card here.
  */
-export function CourseDetailScreen({ route }: Props) {
+export function CourseDetailScreen({ route, navigation }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+
+  /* Transparent bar, so the curtain is what keeps content legible under it. */
+  const headerHeight = useHeaderHeight();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const curtainOpacity = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [...CURTAIN_FADE_IN, 9999],
+        outputRange: [0, 1, 1],
+        extrapolate: 'clamp',
+      }),
+    [scrollY],
+  );
 
   const event = useMemo(
     () => MOCK_WEEK_EVENTS.find((e) => e.id === route.params.eventId),
     [route.params.eventId],
   );
+
+  /*
+    The header names what kind of meeting this is — Lecture, Tutorial, Lab.
+    Set here rather than in the navigator because it varies per event, and the
+    navigator would have to repeat this lookup to know it.
+
+    `useLayoutEffect` so the title is in place on the first painted frame; a
+    plain effect lets the header render empty and then fill in mid-push.
+  */
+  useLayoutEffect(() => {
+    if (!event) return;
+    navigation.setOptions({
+      // "Course" alone would not say which meeting; the component alone would
+      // not say what kind of thing you opened.
+      title: event.component
+        ? `Course · ${SESSION_COMPONENT_LABEL[event.component]}`
+        : // Study and TA blocks carry no teaching component.
+          'Study block',
+    });
+  }, [navigation, event]);
 
   if (!event) {
     return (
@@ -48,11 +89,19 @@ export function CourseDetailScreen({ route }: Props) {
   const meeting = meetingFromEvent(event);
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={styles.root}>
+      <Animated.ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: headerHeight + 8, paddingBottom: insets.bottom + 32 },
+        ]}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+      >
       <View style={styles.masthead}>
         <Text variant="caption" style={[styles.eyebrow, { color: theme.color.primary }]}>
           {event.courseCode}
@@ -64,7 +113,17 @@ export function CourseDetailScreen({ route }: Props) {
       </View>
 
       <CourseDetailBody session={meeting} />
-    </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Above the content, below the bar — drawn only once content scrolls up. */}
+      <ScrollCurtain
+        color={scheduleTheme.pageBackground}
+        height={headerHeight + CURTAIN_FADE_DEPTH}
+        blurHeight={headerHeight + CURTAIN_BLUR_DEPTH}
+        blurred
+        opacity={curtainOpacity}
+      />
+    </View>
   );
 }
 
@@ -75,7 +134,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingTop: 8,
     gap: 24,
   },
   masthead: {

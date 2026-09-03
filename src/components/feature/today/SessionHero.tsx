@@ -40,13 +40,15 @@ const ON_SCRIM_TEXT_COLOR = '#FFFFFF';
 
 /**
  * The session card is the only surface opted into Gill Sans Nova for now.
- * Roman family (CDS `gill-sans-nova`) at Book (400).
+ * Roman family (CDS `gill-sans-nova`) at SemiBold.
  *
- * Book is the only roman lighter than Heavy we ship: the local set is Book
- * (400), Heavy (800), ExtraBold (900), UltraBold. There is no medium or
- * semi-bold roman, so this is an 800 → 400 step with nothing in between.
+ * The weight this title always wanted. It ran at Heavy (800) until the extra
+ * width pushed the course name to three lines, then dropped to Book (400)
+ * because nothing existed in between — the local set was Book, Heavy,
+ * ExtraBold, UltraBold. SemiBold is now licensed and registered, so the title
+ * no longer has to choose between too heavy and too light.
  */
-const SESSION_CARD_BRAND_FACE = fonts.brandBook;
+const SESSION_CARD_BRAND_FACE = fonts.brandSemiBold;
 
 export const SESSION_HERO_MIN_HEIGHT = 420;
 export const SESSION_HERO_CONTENT_PAD = 20;

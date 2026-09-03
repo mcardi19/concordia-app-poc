@@ -12,6 +12,7 @@
 export const FONT_FILES = {
   'GillSansNova-Book': require('../../../assets/fonts/GillSansNova-Book.ttf'),
   'GillSansNova-BookItalic': require('../../../assets/fonts/GillSansNova-BookItalic.ttf'),
+  'GillSansNova-SemiBold': require('../../../assets/fonts/GillSansNova-SemiBold.ttf'),
   'GillSansNova-Heavy': require('../../../assets/fonts/GillSansNova-Heavy.ttf'),
   'GillSansNova-HeavyItalic': require('../../../assets/fonts/GillSansNova-HeavyItalic.ttf'),
   'GillSansNova-ExtraBold': require('../../../assets/fonts/GillSansNova-ExtraBold.ttf'),
@@ -38,6 +39,12 @@ export const fonts = {
   brand: 'GillSansNova-Book',
   brandBook: 'GillSansNova-Book',
   brandBookItalic: 'GillSansNova-BookItalic',
+  /**
+   * The roman middleweight. Closes the gap this map used to document: before
+   * it arrived the only step below Heavy was Book, so anything wanting 500–700
+   * fell back to 400 or jumped to 800.
+   */
+  brandSemiBold: 'GillSansNova-SemiBold',
   /** OS/2 800 — maps to CDS `--cds-font-weight-extra-bold` (800). */
   brandHeavy: 'GillSansNova-Heavy',
   brandHeavyItalic: 'GillSansNova-HeavyItalic',
@@ -56,16 +63,18 @@ export const fonts = {
 
 /**
  * Map CDS numeric brand weights to the closest registered roman face.
- * Missing Typekit faces (200/300/500/600/700 roman) fall back to nearest local file.
+ *
+ * 500–700 now resolve to the real SemiBold rather than rounding out to Book or
+ * Heavy. 100–300 still round up to Book: there is no light roman shipped.
  */
 export const brandFaceForWeight: Record<string, RegisteredFontKey> = {
   '100': fonts.brandBook,
   '200': fonts.brandBook,
   '300': fonts.brandBook,
   '400': fonts.brandBook,
-  '500': fonts.brandBook,
-  '600': fonts.brandHeavy,
-  '700': fonts.brandHeavy,
+  '500': fonts.brandSemiBold,
+  '600': fonts.brandSemiBold,
+  '700': fonts.brandSemiBold,
   '800': fonts.brandHeavy,
   '900': fonts.brandExtraBold,
 };

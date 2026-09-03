@@ -416,12 +416,54 @@ export function ScheduleWeekStrip({
   const renderMonth = useCallback(
     ({ item }: ListRenderItemInfo<Date>) => {
       const gridStart = startOfWeek(item);
+
+      /*
+        Only the rows this month actually occupies, sharing the fixed page
+        height between them.
+
+        Six rows always was leaving a dead row under any month that spans five
+        weeks — September ran out at the 30th and left an empty band. Dropping
+        the row instead would change the page height, which the pager cannot
+        have: `getItemLayout` and `pagingEnabled` both assume every page is
+        MONTH_PAGE_HEIGHT. Dividing the same height by the rows in use keeps
+        the page constant and the grid full; rows breathe a little taller in a
+        five-week month, which reads as deliberate.
+      */
+      const daysInMonth = new Date(
+        item.getFullYear(),
+        item.getMonth() + 1,
+        0,
+      ).getDate();
+      const usedRows = Math.ceil((item.getDay() + daysInMonth) / 7);
+      const rowHeight = MONTH_PAGE_HEIGHT / usedRows;
+
       return (
         <View style={{ height: MONTH_PAGE_HEIGHT }}>
-          {Array.from({ length: MONTH_ROWS }, (_, row) => (
-            <View key={row} style={[styles.page, styles.monthRow]}>
+          {Array.from({ length: usedRows }, (_, row) => (
+            <View key={row} style={[styles.page, styles.monthRow, { height: rowHeight }]}>
               {Array.from({ length: 7 }, (_, col) => {
                 const date = addDays(gridStart, row * 7 + col);
+
+                /*
+                  Days outside this month are left blank rather than shown
+                  muted.
+
+                  Every page is six rows starting from the week of the 1st, so
+                  neighbouring pages overlap on the boundary week: August's
+                  last row and September's first row were both
+                  "30 31 1 2 3 4 5". Mid-drag both pages are on screen, so that
+                  week appeared twice, stacked — which read as a rendering bug.
+
+                  Blanking makes the shared week resolve differently on each
+                  page ("30 31 · · · · ·" against "· · 1 2 3 4 5"), so no two
+                  rows on screen are ever identical. It also empties September's
+                  trailing Oct 4–10 row. The six-row height is unchanged, which
+                  the pager depends on.
+                */
+                if (date.getMonth() !== item.getMonth()) {
+                  return <View key={date.toISOString()} style={styles.day} />;
+                }
+
                 return (
                   <DayCell
                     key={date.toISOString()}
@@ -432,7 +474,6 @@ export function ScheduleWeekStrip({
                     selectedStamp={selectedStampSv}
                     onPress={() => onSelectDate(date)}
                     showLetter={false}
-                    muted={date.getMonth() !== item.getMonth()}
                   />
                 );
               })}
@@ -453,7 +494,20 @@ export function ScheduleWeekStrip({
     [],
   );
 
-  const onMonthScrollEnd = useCallback(
+  /*
+    Report the month as soon as the grid has mostly turned over, not when the
+    fling finishes.
+
+    This used to run only on `onMomentumScrollEnd`, so the title sat on the old
+    month for the whole deceleration — a visible lag between the grid reading
+    September and the header still saying August. Rounding the offset means it
+    flips as the page passes its halfway point, which is when the eye has
+    already decided which month it is looking at.
+
+    The early return makes this cheap: it fires on every scroll frame but only
+    does work on the frame that crosses a boundary.
+  */
+  const onMonthScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const index = Math.round(event.nativeEvent.contentOffset.y / MONTH_PAGE_HEIGHT);
       if (index === visibleMonthIndex.current) return;
@@ -506,7 +560,11 @@ export function ScheduleWeekStrip({
           initialScrollIndex={monthIndex}
           pagingEnabled
           showsVerticalScrollIndicator={false}
-          onMomentumScrollEnd={onMonthScrollEnd}
+          onScroll={onMonthScroll}
+          scrollEventThrottle={16}
+          // Still needed: a slow drag that never flings emits no momentum end,
+          // and a fling can settle a page away from where onScroll last fired.
+          onMomentumScrollEnd={onMonthScroll}
           windowSize={3}
           initialNumToRender={1}
           maxToRenderPerBatch={2}

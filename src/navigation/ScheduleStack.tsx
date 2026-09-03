@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CourseDetailScreen } from '@/screens/schedule/CourseDetailScreen';
 import { ScheduleScreen } from '@/screens/schedule/ScheduleScreen';
 import { academicDateScreens } from './academicDateRoutes';
-import { useStackScreenOptions } from './screenOptions';
+import { CURTAIN_HEADER, useStackScreenOptions } from './screenOptions';
 import type { ScheduleStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<ScheduleStackParamList>();
@@ -17,7 +17,7 @@ export function ScheduleStack() {
       <Stack.Screen
         name="CourseDetail"
         component={CourseDetailScreen}
-        options={{ title: '' }}
+        options={{ title: '', ...CURTAIN_HEADER }}
       />
       {academicDateScreens(Stack)}
     </Stack.Navigator>

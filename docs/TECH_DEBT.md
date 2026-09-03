@@ -182,15 +182,16 @@ It also truncates an empty query to the first 50 rows, which is why
 
 ---
 
-## 9. No roman middleweight in the brand font
+## 9. ~~No roman middleweight in the brand font~~ — resolved 2026-09-02
 
-Local Gill Sans Nova is Book (400), Heavy (800), ExtraBold (900), UltraBold —
-nothing between. The session card title therefore steps 800 → 400 with no
-intermediate. `brandFaceForWeight` maps 500/600/700 onto the nearest file,
-which is a lie the type system cannot catch.
+`GillSansNova-SemiBold.ttf` is licensed and in `assets/fonts/`, registered as
+`fonts.brandSemiBold`. `brandFaceForWeight` maps 500/600/700 to it rather than
+rounding out to Book or Heavy, and the session card title uses it directly —
+it had been sitting at Book (400) only because Heavy (800) was too wide and
+nothing existed in between.
 
-**Done looks like:** the licensed Medium or Semibold TTF in `assets/fonts/`.
-Not a code change.
+Still no light roman: 100–300 continue to round up to Book. Worth licensing
+only if a design actually calls for it.
 
 ---
 
