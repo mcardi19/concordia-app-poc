@@ -28,10 +28,12 @@ export {
   ATTENTION_ITEMS,
   LATEST_UPDATES,
   CAMPUS_TODAY,
+  CAMPUS_EVENT_FILTERS,
   type TodaySession,
   type PinnedChip,
   type AttentionItem,
   type UpdateItem,
   type CampusTodayItem,
+  type CampusEventCategory,
 } from './todayData';
 export { horizontalCarouselProps } from './TodayCarousels';

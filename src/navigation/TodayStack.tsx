@@ -92,7 +92,7 @@ export function TodayStack() {
       <Stack.Screen
         name="CampusToday"
         component={CampusTodayScreen}
-        options={{ title: 'Campus today' }}
+        options={{ title: 'Campus events', ...CURTAIN_HEADER }}
       />
       {searchScreens(Stack)}
     </Stack.Navigator>

@@ -71,13 +71,36 @@ export type UpdateItem = {
   image: ImageSourcePropType;
 };
 
+/** Filter scopes on the Campus Events screen. */
+export type CampusEventCategory =
+  | 'career'
+  | 'food'
+  | 'wellness'
+  | 'arts'
+  | 'academic';
+
 export type CampusTodayItem = {
   id: string;
   title: string;
   location: string;
   time: string;
   image: ImageSourcePropType;
+  category: CampusEventCategory;
+  /**
+   * Days from today this event falls on (0 = today). Mock-only until a real
+   * events calendar feeds dates.
+   */
+  dayOffset: number;
 };
+
+export const CAMPUS_EVENT_FILTERS: { id: CampusEventCategory | 'all'; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'career', label: 'Career' },
+  { id: 'food', label: 'Food' },
+  { id: 'wellness', label: 'Wellness' },
+  { id: 'arts', label: 'Arts' },
+  { id: 'academic', label: 'Academic' },
+];
 
 type PinnedChipBase = Omit<PinnedChip, 'iconColor'>;
 
@@ -196,6 +219,8 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'EV Building',
     time: '11 AM–4 PM',
     image: campusImage1,
+    category: 'career',
+    dayOffset: 0,
   },
   {
     id: '2',
@@ -203,6 +228,8 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'EV Building',
     time: '11 AM–4 PM',
     image: campusImage2,
+    category: 'food',
+    dayOffset: 0,
   },
   {
     id: '3',
@@ -210,6 +237,8 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'SGW Hall Building',
     time: '12–2 PM',
     image: campusImage1,
+    category: 'wellness',
+    dayOffset: 0,
   },
   {
     id: '4',
@@ -217,5 +246,43 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'Loyola Campus Centre',
     time: '5–7 PM',
     image: campusImage2,
+    category: 'arts',
+    dayOffset: 1,
+  },
+  {
+    id: '5',
+    title: 'Research poster session',
+    location: 'LB Building',
+    time: '1–3 PM',
+    image: campusImage1,
+    category: 'academic',
+    dayOffset: 1,
+  },
+  {
+    id: '6',
+    title: 'Alumni networking mixer',
+    location: 'MB Building',
+    time: '5–7 PM',
+    image: campusImage2,
+    category: 'career',
+    dayOffset: 2,
+  },
+  {
+    id: '7',
+    title: 'Yoga on the Quad',
+    location: 'Loyola Quad',
+    time: '8–9 AM',
+    image: campusImage1,
+    category: 'wellness',
+    dayOffset: 3,
+  },
+  {
+    id: '8',
+    title: 'Student film screening',
+    location: 'VA Cinema',
+    time: '6–8 PM',
+    image: campusImage2,
+    category: 'arts',
+    dayOffset: 4,
   },
 ];

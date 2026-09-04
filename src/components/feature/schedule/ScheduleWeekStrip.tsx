@@ -71,7 +71,9 @@ const MONTH_ROWS = 6;
 const MONTH_PAGE_HEIGHT = MONTH_ROWS * DAY_ROW_HEIGHT;
 /* The animated height is set on the padded root, so it has to carry the padding. */
 const ROOT_VERTICAL_PADDING = 14 * 2;
-const COLLAPSED_HEIGHT = 71 + ROOT_VERTICAL_PADDING;
+/** Weekday row stays fixed; only the day numbers page under it. */
+const COLLAPSED_HEIGHT =
+  WEEKDAY_HEADER_HEIGHT + DAY_ROW_HEIGHT + ROOT_VERTICAL_PADDING;
 const EXPANDED_HEIGHT = WEEKDAY_HEADER_HEIGHT + MONTH_PAGE_HEIGHT + ROOT_VERTICAL_PADDING;
 /** Months either side of the anchor reachable by vertical paging. */
 const MONTH_RADIUS = 24;
@@ -347,7 +349,7 @@ export function ScheduleWeekStrip({
 
   const renderWeek = useCallback(
     ({ item }: ListRenderItemInfo<Date>) => (
-      <View style={[styles.page, { width }]}>
+      <View style={[styles.page, styles.weekRow, { width }]}>
         {Array.from({ length: 7 }, (_, i) => {
           const date = addDays(item, i);
           return (
@@ -360,6 +362,7 @@ export function ScheduleWeekStrip({
               scrollProgress={scrollProgress}
               selectedStamp={selectedStampSv}
               onPress={() => onSelectDate(date)}
+              showLetter={false}
             />
           );
         })}
@@ -529,28 +532,32 @@ export function ScheduleWeekStrip({
     }),
   }));
 
+  const weekdayHeader = (
+    <View style={[styles.page, styles.weekdayHeader]}>
+      {WEEKDAY_LETTERS.map((letter, i) => (
+        <Text
+          key={`${letter}-${i}`}
+          variant="caption"
+          style={[
+            styles.weekdayLetter,
+            {
+              color:
+                i === 0 || i === 6
+                  ? scheduleTheme.timeSubText
+                  : scheduleTheme.headingText,
+            },
+          ]}
+        >
+          {letter}
+        </Text>
+      ))}
+    </View>
+  );
+
   if (expanded) {
     return (
       <Animated.View style={[styles.root, heightStyle]}>
-        <View style={[styles.page, styles.weekdayHeader]}>
-          {WEEKDAY_LETTERS.map((letter, i) => (
-            <Text
-              key={`${letter}-${i}`}
-              variant="caption"
-              style={[
-                styles.weekdayLetter,
-                {
-                  color:
-                    i === 0 || i === 6
-                      ? scheduleTheme.timeSubText
-                      : scheduleTheme.headingText,
-                },
-              ]}
-            >
-              {letter}
-            </Text>
-          ))}
-        </View>
+        {weekdayHeader}
 
         <FlatList
           data={months}
@@ -575,6 +582,7 @@ export function ScheduleWeekStrip({
 
   return (
     <Animated.View style={[styles.root, heightStyle]}>
+      {weekdayHeader}
       <FlatList
         ref={listRef}
         data={weeks}
@@ -630,6 +638,9 @@ const styles = StyleSheet.create({
   /** Spill days from the neighbouring month, present but recessive. */
   dayMuted: {
     opacity: 0.32,
+  },
+  weekRow: {
+    height: DAY_ROW_HEIGHT,
   },
   monthRow: {
     height: DAY_ROW_HEIGHT,

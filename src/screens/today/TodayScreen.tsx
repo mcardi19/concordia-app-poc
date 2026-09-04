@@ -294,7 +294,7 @@ export function TodayScreen({ navigation }: Props) {
           <View>
             <View style={{ paddingHorizontal: inset }}>
               <TodaySectionHeader
-                title="Campus today"
+                title="Campus events"
                 showChevron
                 onPress={() => navigation.navigate('CampusToday')}
               />

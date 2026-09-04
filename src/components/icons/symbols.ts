@@ -55,6 +55,14 @@ import { msSearch } from '@material-symbols-react-native/rounded-400/msSearch';
 import { msChevronLeft } from '@material-symbols-react-native/rounded-400/msChevronLeft';
 import { msChevronRight } from '@material-symbols-react-native/rounded-400/msChevronRight';
 import { msChevronRight as msChevronRightSemibold } from '@material-symbols-react-native/rounded-600/msChevronRight';
+import { msAdd as msAddSemibold } from '@material-symbols-react-native/rounded-600/msAdd';
+import { msCheck as msCheckSemibold } from '@material-symbols-react-native/rounded-600/msCheck';
+import {
+  msCalendarAddOn as msCalendarAddOnSemibold,
+} from '@material-symbols-react-native/rounded-600/msCalendarAddOn';
+import {
+  msCalendarAddOnFill as msCalendarAddOnFillSemibold,
+} from '@material-symbols-react-native/rounded-600/msCalendarAddOnFill';
 import { msWbSunny } from '@material-symbols-react-native/rounded-400/msWbSunny';
 import { msDocumentScanner } from '@material-symbols-react-native/rounded-400/msDocumentScanner';
 import { msMeetingRoom } from '@material-symbols-react-native/rounded-400/msMeetingRoom';
@@ -156,7 +164,11 @@ export {
   msBookmarkFill,
   msExpandMore,
   msCheck,
+  msCheckSemibold,
   msAdd,
+  msAddSemibold,
+  msCalendarAddOnSemibold,
+  msCalendarAddOnFillSemibold,
   msAccessible,
   msDirections,
   msDirectionsWalk,
@@ -168,6 +180,7 @@ export {
   msPedalBike,
   msStorefront,
   msCalendarMonth,
+  msCalendarMonthFill,
   msEvent,
   msLanguage,
   msHelp,
