@@ -23,6 +23,7 @@ export { TodayPinnedChips } from './TodayPinnedChips';
 export { TodayPinnedAddDrawer } from './TodayPinnedAddDrawer';
 export { TodayAttentionList } from './TodayAttentionList';
 export { TodayUpdatesCarousel, TodayCampusCarousel } from './TodayCarousels';
+export { CampusEventCard } from './CampusEventCard';
 export {
   usePinnedChipCatalog,
   ATTENTION_ITEMS,

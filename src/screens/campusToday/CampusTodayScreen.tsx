@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Animated,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,7 +9,6 @@ import {
   View,
 } from 'react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { LinearGradient } from 'expo-linear-gradient';
 import Reanimated, {
   runOnJS,
   useAnimatedStyle,
@@ -26,19 +24,15 @@ import {
   ScrollCurtain,
 } from '@/components/design-system/ScrollCurtain';
 import { ScheduleWeekStrip } from '@/components/feature/schedule';
+import { CampusEventCard } from '@/components/feature/today/CampusEventCard';
 import {
   CAMPUS_EVENT_FILTERS,
   CAMPUS_TODAY,
   type CampusEventCategory,
-  type CampusTodayItem,
 } from '@/components/feature/today/todayData';
 import {
   MaterialSymbol,
-  msCalendarAddOnFillSemibold,
-  msCalendarAddOnSemibold,
   msExpandMore,
-  msLocationOn,
-  msScheduleClock,
   msSearch,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
@@ -309,7 +303,7 @@ export function CampusTodayScreen({}: Props) {
             </Text>
           ) : (
             filtered.map((item) => (
-              <EventCard
+              <CampusEventCard
                 key={item.id}
                 item={item}
                 radius={radius}
@@ -352,107 +346,6 @@ export function CampusTodayScreen({}: Props) {
         blurred
         opacity={curtainOpacity}
       />
-    </View>
-  );
-}
-
-const EVENT_SCRIM_COLORS = [
-  'transparent',
-  'rgba(0, 0, 0, 0.7)',
-  'rgba(0, 0, 0, 1)',
-] as const;
-const ON_EVENT_SCRIM = '#FFFFFF';
-
-function EventCard({
-  item,
-  radius,
-  added,
-  onToggleAdd,
-}: {
-  item: CampusTodayItem;
-  radius: number;
-  added: boolean;
-  onToggleAdd: () => void;
-}) {
-  const theme = useTheme();
-
-  return (
-    <View style={[styles.card, { borderRadius: radius }]}>
-      <Image source={item.image} style={styles.image} resizeMode="cover" />
-      <LinearGradient
-        pointerEvents="none"
-        colors={[...EVENT_SCRIM_COLORS]}
-        locations={[0.35, 0.68, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.scrim}
-      />
-      <View style={styles.cardBody}>
-        <View style={styles.titleRow}>
-          <View style={styles.copy}>
-            <Text
-              variant="body"
-              numberOfLines={2}
-              style={[styles.title, { color: ON_EVENT_SCRIM }]}
-            >
-              {item.title}
-            </Text>
-            <View style={styles.metaRow}>
-              <MaterialSymbol
-                icon={msScheduleClock}
-                size={16}
-                color={ON_EVENT_SCRIM}
-              />
-              <Text
-                variant="body"
-                numberOfLines={1}
-                style={[styles.metaTime, { color: ON_EVENT_SCRIM }]}
-              >
-                {item.time}
-              </Text>
-              <View style={styles.metaLocationIcon}>
-                <MaterialSymbol
-                  icon={msLocationOn}
-                  size={16}
-                  color={ON_EVENT_SCRIM}
-                />
-              </View>
-              <Text
-                variant="body"
-                numberOfLines={1}
-                style={[styles.meta, { color: 'rgba(255, 255, 255, 0.85)' }]}
-              >
-                {item.location}
-              </Text>
-            </View>
-          </View>
-          <Pressable
-            onPress={onToggleAdd}
-            accessibilityRole="button"
-            accessibilityState={{ selected: added }}
-            accessibilityLabel={
-              added ? 'Remove from schedule' : 'Add to schedule'
-            }
-            style={({ pressed }) => [
-              styles.addButton,
-              {
-                backgroundColor: added
-                  ? theme.color.primary
-                  : ON_EVENT_SCRIM,
-                opacity: pressed ? 0.85 : 1,
-              },
-            ]}
-          >
-            <MaterialSymbol
-              icon={msCalendarAddOnSemibold}
-              filled={msCalendarAddOnFillSemibold}
-              active={added}
-              size={20}
-              color={added ? ON_EVENT_SCRIM : theme.color.primary}
-            />
-          </Pressable>
-        </View>
-      </View>
     </View>
   );
 }
@@ -531,70 +424,5 @@ const styles = StyleSheet.create({
     lineHeight: 15 * 1.4,
     paddingVertical: 24,
     textAlign: 'center',
-  },
-  card: {
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    height: 260,
-  },
-  image: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  },
-  scrim: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  cardBody: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 16,
-    paddingTop: 28,
-    paddingBottom: 16,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 10,
-  },
-  copy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  title: {
-    fontWeight: '600',
-    fontSize: 22,
-    lineHeight: 22 * 1.2,
-    letterSpacing: -0.4,
-  },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexWrap: 'nowrap',
-  },
-  metaTime: {
-    flexShrink: 0,
-    fontSize: 14,
-    lineHeight: 14 * 1.35,
-  },
-  metaLocationIcon: {
-    marginLeft: 8,
-  },
-  meta: {
-    flexShrink: 1,
-    minWidth: 0,
-    fontSize: 14,
-    lineHeight: 14 * 1.35,
   },
 });

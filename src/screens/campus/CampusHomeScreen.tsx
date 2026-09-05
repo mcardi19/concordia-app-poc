@@ -51,6 +51,7 @@ import { SHUTTLE_STOPS } from '@/services/shuttle/shuttleRoute';
 import {
   CAMPUS_MAP_DEFAULTS,
   type BuildingSummary,
+  type CampusCode,
   type ShuttleCampus,
 } from '@/types/campus';
 
@@ -58,7 +59,16 @@ type Props = CampusStackScreenProps<'CampusHome'>;
 
 const DEFAULT_CAMPUS = CAMPUS_MAP_DEFAULTS.sgw;
 
+/** Short labels for the resting card; the full names read long in a sentence. */
+const CAMPUS_SHORT_LABEL: Record<CampusCode, string> = {
+  sgw: 'SGW campus',
+  loy: 'Loyola campus',
+};
+
 const MAP_FOCUS_DELTA = 0.004;
+
+/** iOS system blue — the default Apple Maps current-location dot color. */
+const USER_LOCATION_TINT = '#007AFF';
 
 /** Side breathing room when framing pins; top and bottom come from the chrome. */
 const FIT_SIDE_PADDING = 48;
@@ -135,11 +145,12 @@ export function CampusHomeScreen({ navigation, route }: Props) {
     if (showShuttle) {
       return [];
     }
-    const campus = buildings.filter((building) => building.campusId === 'sgw');
+    // Both campuses on the map at once — SGW and Loyola pins together, framed
+    // by the fit-to-coordinates effect so the user can pan/zoom between them.
     const matching =
       mapFilter === 'buildings'
-        ? campus
-        : campus.filter((building) =>
+        ? buildings
+        : buildings.filter((building) =>
             buildingMatchesMapFilter(
               getBuildingCatalogRecord(building.campusId, building.code),
               mapFilter
@@ -155,6 +166,24 @@ export function CampusHomeScreen({ navigation, route }: Props) {
         walkMinutesFromCoords(from, { lat: b.lat, lng: b.lng })
     );
   }, [buildings, mapFilter, coords, showShuttle]);
+
+  /**
+   * With both campuses on the map, the resting card's "You're at …" line names
+   * whichever campus the user is nearest. Falls back to SGW before a fix.
+   */
+  const nearestCampus = useMemo<CampusCode>(() => {
+    if (!coords) return DEFAULT_CAMPUS.id;
+    const from = { lat: coords.latitude, lng: coords.longitude };
+    const toSgw = walkMinutesFromCoords(from, {
+      lat: CAMPUS_MAP_DEFAULTS.sgw.defaultLat,
+      lng: CAMPUS_MAP_DEFAULTS.sgw.defaultLng,
+    });
+    const toLoy = walkMinutesFromCoords(from, {
+      lat: CAMPUS_MAP_DEFAULTS.loy.defaultLat,
+      lng: CAMPUS_MAP_DEFAULTS.loy.defaultLng,
+    });
+    return toLoy < toSgw ? 'loy' : 'sgw';
+  }, [coords]);
 
 
   /**
@@ -359,10 +388,10 @@ export function CampusHomeScreen({ navigation, route }: Props) {
       now,
       buildings,
       coords,
-      campusId: 'sgw',
+      campusId: nearestCampus,
     });
     return card && card.id !== dismissedContextId ? card : null;
-  }, [now, buildings, coords, dismissedContextId]);
+  }, [now, buildings, coords, dismissedContextId, nearestCampus]);
 
   const onContextDirections = useCallback(() => {
     if (!contextCard?.building) return;
@@ -499,6 +528,9 @@ export function CampusHomeScreen({ navigation, route }: Props) {
           style={StyleSheet.absoluteFill}
           initialRegion={initialRegion}
           showsUserLocation={permissionGranted}
+          // Keep the current-location dot the platform default blue rather than
+          // inheriting the app's brand tint.
+          tintColor={USER_LOCATION_TINT}
           showsMyLocationButton={false}
           showsCompass={false}
           mapPadding={mapPadding}
@@ -739,7 +771,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
               }}
             >
             <CampusQuickCard
-              campusName="SGW campus"
+              campusName={CAMPUS_SHORT_LABEL[nearestCampus]}
               activeFilter={mapFilter}
               shuttleActive={showShuttle}
               onPressShuttle={onPressShuttle}

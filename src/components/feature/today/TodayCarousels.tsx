@@ -1,14 +1,15 @@
-import React from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
+import { CampusEventCard } from './CampusEventCard';
 import type { CampusTodayItem, UpdateItem } from './todayData';
 import { TodaySurfaceFill } from './TodaySurface';
 
 const UPDATE_CARD_WIDTH = 294;
 const UPDATE_IMAGE_HEIGHT = 152;
-const CAMPUS_CARD_WIDTH = 228;
-const CAMPUS_IMAGE_HEIGHT = 106;
+const CAMPUS_CARD_WIDTH = 260;
+const CAMPUS_CARD_HEIGHT = 220;
 const CAROUSEL_GAP = 14;
 
 /**
@@ -140,6 +141,7 @@ type CampusProps = {
 
 export function TodayCampusCarousel({ items, onPress }: CampusProps) {
   const theme = useTheme();
+  const [addedIds, setAddedIds] = useState<Set<string>>(() => new Set());
 
   return (
     <ScrollView
@@ -152,68 +154,48 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
         alignItems: 'flex-start',
       }}
     >
-      {items.map((item) => (
-        <Pressable
-          key={item.id}
-          onPress={() => onPress?.(item)}
-          accessibilityRole="button"
-          accessibilityLabel={`${item.title}, ${item.location}, ${item.time}`}
-          style={{
-            width: CAMPUS_CARD_WIDTH,
-            borderRadius: theme.radius.lg,
-            borderCurve: 'continuous',
-            overflow: 'hidden',
-          }}
-        >
-          <TodaySurfaceFill radius={theme.radius.lg} />
-
-          <Image
-            source={item.image}
-            style={{ width: CAMPUS_CARD_WIDTH, height: CAMPUS_IMAGE_HEIGHT }}
-            resizeMode="cover"
-          />
-          <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
-            <Text
-              variant="body"
-              numberOfLines={2}
-              style={{
-                fontWeight: '600',
-                fontSize: 17,
-                lineHeight: 17 * 1.2,
-                letterSpacing: -0.4,
+      {items.map((item) => {
+        const added = addedIds.has(item.id);
+        return (
+          <Pressable
+            key={item.id}
+            onPress={() => onPress?.(item)}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.title}, ${item.location}, ${item.time}`}
+          >
+            <CampusEventCard
+              item={item}
+              radius={theme.radius.lg}
+              compact
+              added={added}
+              onToggleAdd={() => {
+                Alert.alert(
+                  added ? 'On your schedule' : 'Add to schedule?',
+                  added
+                    ? `Remove “${item.title}” from your schedule?`
+                    : `Add “${item.title}” to your schedule?`,
+                  [
+                    { text: added ? 'Keep' : 'Not now', style: 'cancel' },
+                    {
+                      text: added ? 'Remove' : 'Add',
+                      style: added ? 'destructive' : 'default',
+                      onPress: () => {
+                        setAddedIds((prev) => {
+                          const next = new Set(prev);
+                          if (added) next.delete(item.id);
+                          else next.add(item.id);
+                          return next;
+                        });
+                      },
+                    },
+                  ],
+                );
               }}
-            >
-              {item.title}
-            </Text>
-            <Text
-              variant="body"
-              color="subtle"
-              numberOfLines={1}
-              style={{
-                fontWeight: '400',
-                fontSize: 14,
-                lineHeight: 14 * 1.3,
-                marginTop: 6,
-              }}
-            >
-              {item.location}
-            </Text>
-            <Text
-              variant="body"
-              color="subtle"
-              numberOfLines={1}
-              style={{
-                fontWeight: '400',
-                fontSize: 14,
-                lineHeight: 14 * 1.3,
-                marginTop: 2,
-              }}
-            >
-              {item.time}
-            </Text>
-          </View>
-        </Pressable>
-      ))}
+              style={{ width: CAMPUS_CARD_WIDTH, height: CAMPUS_CARD_HEIGHT }}
+            />
+          </Pressable>
+        );
+      })}
     </ScrollView>
   );
 }
