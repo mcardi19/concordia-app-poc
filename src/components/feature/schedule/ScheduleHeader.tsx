@@ -12,12 +12,12 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
-  msAdd,
+  msAddSemibold,
   msCheck,
   msExpandMore,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
-import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
+import { HEADER_BAR_BUTTON_SIZE, HEADER_ICON_SIZE } from '@/navigation/HeaderIconButton';
 import { semanticSpacing } from '@/design-system/tokens';
 import { scheduleTheme } from './scheduleTheme';
 import type { ScheduleViewMode } from './scheduleTypes';
@@ -266,7 +266,7 @@ export function ScheduleHeader({
                   accessibilityLabel="Add event"
                   style={styles.iconFill}
                 >
-                  <MaterialSymbol icon={msAdd} size={20} color={theme.color.primary} />
+                  <MaterialSymbol icon={msAddSemibold} size={HEADER_ICON_SIZE} color={theme.color.primary} />
                 </Pressable>
               </GlassSurface>
             ) : null}

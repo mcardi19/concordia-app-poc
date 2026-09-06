@@ -175,6 +175,9 @@ export function deriveTodaySession(now: Date, scheme: 'light' | 'dark' = 'light'
   */
   const upcoming = nextTeachingDay(dayKey);
   if (upcoming) {
+    if (upcoming.daysAhead === 1) {
+      return fromEvent(upcoming.event, 'tomorrow', 'Next class · Tomorrow', TONE.rest);
+    }
     const label = today.length > 0 ? 'Done for today' : 'No classes today';
     const when = nextDayPhrase(upcoming.dayKey, upcoming.daysAhead);
     return fromEvent(upcoming.event, 'tomorrow', `${label} · ${when}`, TONE.rest);

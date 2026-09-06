@@ -50,8 +50,10 @@ export type PinnedChip = {
   label: string;
   icon: MsIconDefinition;
   iconColor: string;
-  tab?: 'Library' | 'Campus' | 'Me' | 'Schedule';
-  meRoute?: 'Grades';
+  tab?: 'Library' | 'Campus' | 'Schedule';
+  /** Opens the account experience (root modal), optionally at a nested screen. */
+  account?: boolean;
+  accountRoute?: 'Grades';
   campusRoute?: 'ShuttleSchedule';
 };
 
@@ -107,7 +109,7 @@ type PinnedChipBase = Omit<PinnedChip, 'iconColor'>;
 const PINNED_CHIPS_BASE: PinnedChipBase[] = [
   { id: 'moodle', label: 'Moodle', icon: msHomeFill },
   { id: 'library', label: 'Library', icon: msMenuBookFill, tab: 'Library' },
-  { id: 'grades', label: 'Grades', icon: msSchoolFill, tab: 'Me', meRoute: 'Grades' },
+  { id: 'grades', label: 'Grades', icon: msSchoolFill, account: true, accountRoute: 'Grades' },
   { id: 'room', label: 'Room booking', icon: msMeetingRoomFill },
   {
     id: 'shuttle',
@@ -121,7 +123,7 @@ const PINNED_CHIPS_BASE: PinnedChipBase[] = [
 /** Full set of pin-able shortcuts shown in the Add drawer. */
 const PINNED_CHIP_CATALOG_EXTRA_BASE: PinnedChipBase[] = [
   { id: 'schedule', label: 'Schedule', icon: msCalendarMonthFill, tab: 'Schedule' },
-  { id: 'wallet', label: 'Wallet', icon: msAccountBalanceWalletFill, tab: 'Me' },
+  { id: 'wallet', label: 'Wallet', icon: msAccountBalanceWalletFill, account: true },
   { id: 'events', label: 'Events', icon: msEventFill, tab: 'Campus' },
   { id: 'dining', label: 'Dining', icon: msRestaurantFill, tab: 'Campus' },
 ];

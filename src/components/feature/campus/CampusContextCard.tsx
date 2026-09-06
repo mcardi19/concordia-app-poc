@@ -4,7 +4,7 @@ import { Text } from '@/components/design-system';
 import { todayShadowMedium } from '@/components/feature/today/todayShadows';
 import {
   MaterialSymbol,
-  msClose,
+  msCloseSemibold,
   msDirections,
   msDirectionsWalk,
   msScheduleClock,
@@ -65,7 +65,7 @@ export function CampusContextCard({ card, onPrimaryPress, onDismiss }: Props) {
             ) : null}
           </View>
 
-          <GlassIconButton icon={msClose} label="Dismiss" onPress={onDismiss} />
+          <GlassIconButton icon={msCloseSemibold} label="Dismiss" onPress={onDismiss} />
         </View>
 
         <View style={[styles.metaRow, { backgroundColor: `${accent}0F` }]}>

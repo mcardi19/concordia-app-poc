@@ -24,9 +24,9 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
-  msBookmark,
-  msBookmarkFill,
-  msClose,
+  msBookmarkFillSemibold,
+  msBookmarkSemibold,
+  msCloseSemibold,
   msDirections,
   msDoorFront,
   msElevator,
@@ -512,12 +512,12 @@ export function BuildingDrawer({ building, onClose }: Props) {
 
                 <View style={styles.headerActions}>
                   <GlassIconButton
-                    icon={saved ? msBookmarkFill : msBookmark}
+                    icon={saved ? msBookmarkFillSemibold : msBookmarkSemibold}
                     label={saved ? 'Remove bookmark' : 'Bookmark building'}
                     onPress={() => setSaved((value) => !value)}
                   />
                   <GlassIconButton
-                    icon={msClose}
+                    icon={msCloseSemibold}
                     label="Close building details"
                     onPress={dismiss}
                   />

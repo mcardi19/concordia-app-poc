@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/design-system';
 import {
   MaterialSymbol,
-  msArrowBack,
+  msArrowBackSemibold,
   msChevronRight,
   msNorthEast,
 } from '@/components/icons';
@@ -19,6 +19,7 @@ import {
   formatServiceTime,
   serviceStatus,
 } from '@/services/campus/serviceStatus';
+import { HEADER_ICON_SIZE } from '@/navigation/HeaderIconButton';
 import type { SearchScreenProps } from '@/navigation/types';
 import type { CampusService, ServiceAction } from '@/types/services';
 import { searchTheme } from './searchTheme';
@@ -120,7 +121,7 @@ export function ServiceDetailScreen({ route, navigation }: Props) {
           style={[styles.back, { top: insets.top + 8 }]}
         >
           <SearchSurface style={styles.backSurface} radius={20}>
-            <MaterialSymbol icon={msArrowBack} size={20} color={theme.color.primary} />
+            <MaterialSymbol icon={msArrowBackSemibold} size={HEADER_ICON_SIZE} color={theme.color.primary} />
           </SearchSurface>
         </Pressable>
 

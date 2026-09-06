@@ -25,7 +25,7 @@ import {
   CampusSearchBar,
 } from '@/components/feature/campus/CampusSearchBar';
 import { todayShadowSoft } from '@/components/feature/today/todayShadows';
-import { MaterialSymbol, msDirectionsBus, msMyLocation } from '@/components/icons';
+import { MaterialSymbol, msDirectionsBus, msMyLocationSemibold } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useCampusUserLocation, type UserCoords } from '@/hooks/useCampusUserLocation';
@@ -737,7 +737,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
                     <ActivityIndicator color={theme.color.primary} />
                   ) : (
                     <MaterialSymbol
-                      icon={msMyLocation}
+                      icon={msMyLocationSemibold}
                       size={HEADER_ICON_SIZE}
                       color={theme.color.text.brand}
                     />

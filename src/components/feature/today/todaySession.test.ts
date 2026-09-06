@@ -61,7 +61,7 @@ describe('deriveTodaySession', () => {
     const session = deriveTodaySession(monday(21));
     expect(session.state).toBe('tomorrow');
     // Tuesday is tomorrow, and "next Tuesday" would read as the week after.
-    expect(session.statusLabel).toBe('Done for today · tomorrow');
+    expect(session.statusLabel).toBe('Next class · Tomorrow');
   });
 
   it('names the weekday once the next class is further out than tomorrow', () => {

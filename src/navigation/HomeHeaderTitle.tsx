@@ -35,8 +35,8 @@ const COMPACT_SUBTITLE_RANGE = [
 /** Points each compact line rises through as it fades in. */
 const COMPACT_RISE = 10;
 
-const LARGE_TITLE_SIZE = 28;
-const LARGE_TITLE_LEADING = 33;
+const LARGE_TITLE_SIZE = 34;
+const LARGE_TITLE_LEADING = 40;
 const LARGE_SUBTITLE_SIZE = 14;
 const LARGE_SUBTITLE_LEADING = 18;
 
@@ -46,7 +46,7 @@ const COMPACT_SUBTITLE_SIZE = 13;
 const COMPACT_SUBTITLE_LEADING = 17;
 
 /** Resting height of the two-line block — the overlay reserves this much. */
-export const GREETING_BLOCK_HEIGHT = LARGE_TITLE_LEADING + LARGE_SUBTITLE_LEADING + 2;
+export const GREETING_BLOCK_HEIGHT = LARGE_TITLE_LEADING + LARGE_SUBTITLE_LEADING;
 
 /**
  * How far to lift the greeting so it centres on the action buttons.
@@ -60,7 +60,6 @@ export const GREETING_BUTTON_OFFSET =
   (GREETING_BLOCK_HEIGHT - HEADER_BAR_BUTTON_SIZE) / 2;
 
 type GreetingProps = {
-  name: string;
   dateLabel: string;
   color: string;
   subtitleColor: string;
@@ -68,7 +67,6 @@ type GreetingProps = {
 };
 
 function GreetingText({
-  name,
   dateLabel,
   color,
   subtitleColor,
@@ -95,7 +93,7 @@ function GreetingText({
           color,
         }}
       >
-        {`Hey ${name}`}
+        Today
       </RNText>
       <RNText
         numberOfLines={1}
@@ -113,6 +111,28 @@ function GreetingText({
 }
 
 /**
+ * In-flow Home greeting: title + date, sitting in the page below the utility
+ * header. Not scroll-driven — it travels with the content.
+ */
+export function HomeGreeting({
+  dateLabel,
+  color,
+  subtitleColor,
+}: Omit<GreetingProps, 'scrollY'>) {
+  return (
+    <GreetingText
+      dateLabel={dateLabel}
+      color={color}
+      subtitleColor={subtitleColor}
+      titleSize={LARGE_TITLE_SIZE}
+      titleLeading={LARGE_TITLE_LEADING}
+      subtitleSize={LARGE_SUBTITLE_SIZE}
+      subtitleLeading={LARGE_SUBTITLE_LEADING}
+    />
+  );
+}
+
+/**
  * Resting greeting — fades out over the first few points of scroll.
  *
  * Opacity comes from `scrollY`, like the translate. It briefly took a
@@ -121,7 +141,6 @@ function GreetingText({
  * the overlay being unmounted and remounted as it faded.
  */
 export function HomeGreetingLarge({
-  name,
   dateLabel,
   color,
   subtitleColor,
@@ -144,7 +163,6 @@ export function HomeGreetingLarge({
       style={[styles.layer, { opacity, transform: [{ translateY }] }]}
     >
       <GreetingText
-        name={name}
         dateLabel={dateLabel}
         color={color}
         subtitleColor={subtitleColor}
@@ -168,12 +186,18 @@ export function HomeGreetingLarge({
  * navigator's `headerTitle` — that slot is centred and cannot be moved.
  */
 export function HomeGreetingCompact({
-  name,
   dateLabel,
   color,
   subtitleColor,
   scrollY,
-}: GreetingProps) {
+  inline = false,
+}: GreetingProps & {
+  /**
+   * Sit in the Home header row, to the right of Emergency, instead of filling
+   * a stacked overlay. Same fade; different layout.
+   */
+  inline?: boolean;
+}) {
   const titleOpacity = scrollY.interpolate({
     inputRange: [...COMPACT_TITLE_RANGE],
     outputRange: [0, 1],
@@ -200,7 +224,7 @@ export function HomeGreetingCompact({
       accessibilityElementsHidden
       importantForAccessibility="no"
       pointerEvents="none"
-      style={styles.layer}
+      style={inline ? styles.inline : styles.layer}
     >
       <Animated.Text
         numberOfLines={1}
@@ -214,7 +238,7 @@ export function HomeGreetingCompact({
           transform: [{ translateY: titleTranslate }],
         }}
       >
-        {`Hey ${name}`}
+        Today
       </Animated.Text>
       <Animated.Text
         numberOfLines={1}
@@ -238,5 +262,14 @@ const styles = StyleSheet.create({
   layer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
+  },
+  /** Header-row seat: fills the gap between Emergency and the trailing actions. */
+  inline: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    // Extra air after Emergency — the row gap alone sat the title too close.
+    marginLeft: 10,
   },
 });

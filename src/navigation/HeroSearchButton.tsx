@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { GlassView } from 'expo-glass-effect';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
-import { MaterialSymbol, msSearch } from '@/components/icons';
+import { MaterialSymbol, msSearchSemibold } from '@/components/icons';
 import { HEADER_BAR_BUTTON_SIZE, HEADER_ICON_SIZE } from './HeaderIconButton';
 
 /**
@@ -34,7 +34,7 @@ export function HeroSearchButton({ onPress, accessibilityLabel = 'Search' }: Pro
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [styles.hit, { opacity: pressed ? 0.55 : 1 }]}
     >
-      <MaterialSymbol icon={msSearch} size={HEADER_ICON_SIZE} color="#FFFFFF" />
+      <MaterialSymbol icon={msSearchSemibold} size={HEADER_ICON_SIZE} color="#FFFFFF" />
     </Pressable>
   );
 

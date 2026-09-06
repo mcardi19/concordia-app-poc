@@ -36,7 +36,6 @@ import {
   meAccountTiles,
   meCommunities,
   meFavouriteServices,
-  meNotificationCount,
   meProfileStats,
   meStatusCards,
   profileFromAuthUser,
@@ -249,10 +248,7 @@ export function MeHomeScreen({ navigation }: Props) {
       </Animated.ScrollView>
 
       <MeHeaderChrome
-        notificationCount={meNotificationCount}
-        onNotificationsPress={() => navigation.navigate('Notifications')}
         onSettingsPress={() => navigation.navigate('Settings')}
-        onSearchPress={() => navigation.navigate('Search')}
         onBackPress={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
 

@@ -1,12 +1,18 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { CompositeScreenProps } from '@react-navigation/native';
+import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import type { CampusMapFilter } from '@/services/campus/buildingPresentation';
 
 export type RootStackParamList = {
   Main: undefined;
   SessionDetail: undefined;
   Login: undefined;
+  /**
+   * Account / profile experience. Formerly the "Me" bottom tab; now opened
+   * from the Home header (the profile action left of Search) and presented as
+   * a modal above the tabs. Optionally deep-links to a nested Me screen.
+   */
+  Account: NavigatorScreenParams<MeStackParamList> | undefined;
 };
 
 /**
@@ -100,7 +106,6 @@ export type MainTabParamList = {
   Schedule: undefined;
   Campus: undefined;
   Library: undefined;
-  Me: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<
@@ -141,7 +146,7 @@ export type SearchScreenProps<T extends keyof SearchRoutes> = CompositeScreenPro
 
 export type MeStackScreenProps<T extends keyof MeStackParamList> = CompositeScreenProps<
   NativeStackScreenProps<MeStackParamList, T>,
-  MainTabScreenProps<'Me'>
+  RootStackScreenProps<'Account'>
 >;
 
 export type MainTabScreenProps<T extends keyof MainTabParamList> = CompositeScreenProps<

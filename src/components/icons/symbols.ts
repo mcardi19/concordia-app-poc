@@ -9,6 +9,7 @@ import { msLocalLibrary } from '@material-symbols-react-native/rounded-400/msLoc
 import { msNorthEast } from '@material-symbols-react-native/rounded-400/msNorthEast';
 import { msArrowForward } from '@material-symbols-react-native/rounded-400/msArrowForward';
 import { msArrowBack } from '@material-symbols-react-native/rounded-400/msArrowBack';
+import { msArrowBack as msArrowBackSemibold } from '@material-symbols-react-native/rounded-600/msArrowBack';
 import { msCall } from '@material-symbols-react-native/rounded-400/msCall';
 /* Settings rows, the notifications inbox, and the edit-profile drawer. */
 import { msLanguage } from '@material-symbols-react-native/rounded-400/msLanguage';
@@ -28,8 +29,6 @@ import { msPedalBikeFill } from '@material-symbols-react-native/rounded-400/msPe
 import { msLocalActivityFill } from '@material-symbols-react-native/rounded-400/msLocalActivityFill';
 import { msSearchOff } from '@material-symbols-react-native/rounded-400/msSearchOff';
 import { msHistory } from '@material-symbols-react-native/rounded-400/msHistory';
-import { msHome } from '@material-symbols-react-native/rounded-400/msHome';
-import { msHomeFill } from '@material-symbols-react-native/rounded-400/msHomeFill';
 import { msCalendarMonth } from '@material-symbols-react-native/rounded-400/msCalendarMonth';
 import { msCalendarMonthFill } from '@material-symbols-react-native/rounded-400/msCalendarMonthFill';
 import { msCalendarToday } from '@material-symbols-react-native/rounded-400/msCalendarToday';
@@ -52,6 +51,7 @@ import { msAccountBalanceWallet } from '@material-symbols-react-native/rounded-4
 import { msDirectionsBus } from '@material-symbols-react-native/rounded-400/msDirectionsBus';
 import { msEvent } from '@material-symbols-react-native/rounded-400/msEvent';
 import { msSearch } from '@material-symbols-react-native/rounded-400/msSearch';
+import { msSearch as msSearchSemibold } from '@material-symbols-react-native/rounded-600/msSearch';
 import { msChevronLeft } from '@material-symbols-react-native/rounded-400/msChevronLeft';
 import { msChevronRight } from '@material-symbols-react-native/rounded-400/msChevronRight';
 import { msChevronRight as msChevronRightSemibold } from '@material-symbols-react-native/rounded-600/msChevronRight';
@@ -64,22 +64,30 @@ import {
   msCalendarAddOnFill as msCalendarAddOnFillSemibold,
 } from '@material-symbols-react-native/rounded-600/msCalendarAddOnFill';
 import { msWbSunny } from '@material-symbols-react-native/rounded-400/msWbSunny';
+import { msWbSunnyFill } from '@material-symbols-react-native/rounded-400/msWbSunnyFill';
 import { msDocumentScanner } from '@material-symbols-react-native/rounded-400/msDocumentScanner';
 import { msMeetingRoom } from '@material-symbols-react-native/rounded-400/msMeetingRoom';
 import { msBookmarks } from '@material-symbols-react-native/rounded-400/msBookmarks';
 import { msSecurity } from '@material-symbols-react-native/rounded-400/msSecurity';
+import { msSecurity as msSecuritySemibold } from '@material-symbols-react-native/rounded-600/msSecurity';
 import { msLocationOn } from '@material-symbols-react-native/rounded-400/msLocationOn';
 import { msMyLocation } from '@material-symbols-react-native/rounded-400/msMyLocation';
+import { msMyLocation as msMyLocationSemibold } from '@material-symbols-react-native/rounded-600/msMyLocation';
 import { msClose } from '@material-symbols-react-native/rounded-400/msClose';
+import { msClose as msCloseSemibold } from '@material-symbols-react-native/rounded-600/msClose';
 import { msNotifications } from '@material-symbols-react-native/rounded-400/msNotifications';
+import { msNotifications as msNotificationsSemibold } from '@material-symbols-react-native/rounded-600/msNotifications';
 import { msSettings } from '@material-symbols-react-native/rounded-400/msSettings';
+import { msSettings as msSettingsSemibold } from '@material-symbols-react-native/rounded-600/msSettings';
 import { msBadge } from '@material-symbols-react-native/rounded-400/msBadge';
 import { msRestaurant } from '@material-symbols-react-native/rounded-400/msRestaurant';
 import { msPrint } from '@material-symbols-react-native/rounded-400/msPrint';
 import { msLocalParking } from '@material-symbols-react-native/rounded-400/msLocalParking';
 import { msLock } from '@material-symbols-react-native/rounded-400/msLock';
 import { msBookmark } from '@material-symbols-react-native/rounded-400/msBookmark';
+import { msBookmark as msBookmarkSemibold } from '@material-symbols-react-native/rounded-600/msBookmark';
 import { msBookmarkFill } from '@material-symbols-react-native/rounded-400/msBookmarkFill';
+import { msBookmarkFill as msBookmarkFillSemibold } from '@material-symbols-react-native/rounded-600/msBookmarkFill';
 import { msExpandMore } from '@material-symbols-react-native/rounded-400/msExpandMore';
 import { msCheck } from '@material-symbols-react-native/rounded-400/msCheck';
 import { msAdd } from '@material-symbols-react-native/rounded-400/msAdd';
@@ -100,7 +108,7 @@ export type TabSymbolPair = {
 };
 
 export const tabSymbols = {
-  today: { outline: msHome, filled: msHomeFill },
+  today: { outline: msWbSunny, filled: msWbSunnyFill },
   /** Figma Tab Navigation uses calendar_month for Schedule. */
   schedule: { outline: msCalendarMonth, filled: msCalendarMonthFill },
   campus: { outline: msMap, filled: msMapFill },
@@ -141,27 +149,37 @@ export {
   msMenuBook,
   msBarChart,
   msChevronLeft,
+  msArrowBackSemibold,
   msChevronRight,
   msChevronRightSemibold,
   msWbSunny,
   msPerson,
+  msAccountCircle,
   msDocumentScanner,
   msMeetingRoom,
   msBookmarks,
   msSecurity,
+  msSecuritySemibold,
   msSearch,
+  msSearchSemibold,
   msLocationOn,
   msMyLocation,
+  msMyLocationSemibold,
   msClose,
+  msCloseSemibold,
   msNotifications,
+  msNotificationsSemibold,
   msSettings,
+  msSettingsSemibold,
   msBadge,
   msRestaurant,
   msPrint,
   msLocalParking,
   msLock,
   msBookmark,
+  msBookmarkSemibold,
   msBookmarkFill,
+  msBookmarkFillSemibold,
   msExpandMore,
   msCheck,
   msCheckSemibold,

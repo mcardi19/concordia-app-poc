@@ -10,10 +10,10 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
-  msArrowBack,
-  msNotifications,
-  msSearch,
-  msSettings,
+  msArrowBackSemibold,
+  msNotificationsSemibold,
+  msSearchSemibold,
+  msSettingsSemibold,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import {
@@ -49,9 +49,9 @@ type HeaderChromeProps = {
   onSettingsPress?: () => void;
   onSearchPress?: () => void;
   /**
-   * Me is a tab root again, so this is normally absent. Kept for any host that
-   * pushes Me instead: the screen renders with `headerShown: false`, and
-   * without this the edge-swipe would be the only way out.
+   * Account is a modal now, so Me home usually gets a back control. The screen
+   * renders with `headerShown: false`; without this the edge-swipe would be
+   * the only way out.
    */
   onBackPress?: () => void;
 };
@@ -256,8 +256,9 @@ function Avatar({ name }: { name: string }) {
 }
 
 /**
- * Notifications + settings. Rendered as a fixed overlay on Me home so
- * the actions stay pinned while the masthead scrolls underneath.
+ * Account chrome overlay. Search and notifications live on Home now; Me home
+ * only passes settings (and back when the modal can dismiss). Other hosts,
+ * such as Academic, can still pass search.
  */
 export function MeHeaderChrome({
   notificationCount = 0,
@@ -267,6 +268,21 @@ export function MeHeaderChrome({
   onBackPress,
 }: HeaderChromeProps) {
   const insets = useSafeAreaInsets();
+  const notificationsAction: ChromeAction | undefined = onNotificationsPress
+    ? {
+        icon: msNotificationsSemibold,
+        label: 'Notifications',
+        badge: notificationCount,
+        onPress: onNotificationsPress,
+      }
+    : undefined;
+  const settingsAction: ChromeAction | undefined = onSettingsPress
+    ? {
+        icon: msSettingsSemibold,
+        label: 'Settings',
+        onPress: onSettingsPress,
+      }
+    : undefined;
 
   return (
     <View
@@ -281,37 +297,28 @@ export function MeHeaderChrome({
     >
       {onBackPress ? (
         <ChromeGlass style={styles.chromeRound}>
-          <ChromeHit icon={msArrowBack} label="Back" onPress={onBackPress} />
+          <ChromeHit icon={msArrowBackSemibold} label="Back" onPress={onBackPress} />
         </ChromeGlass>
       ) : null}
 
       {/* Pushes the trailing actions right when there is no back control. */}
       <View style={styles.chromeSpring} />
 
-      {/* Notifications + settings share one dark pill. */}
-      <ChromePair
-        left={{
-          icon: msNotifications,
-          label: 'Notifications',
-          badge: notificationCount,
-          onPress: onNotificationsPress,
-        }}
-        right={{
-          icon: msSettings,
-          label: 'Settings',
-          onPress: onSettingsPress,
-        }}
-      />
+      {notificationsAction && settingsAction ? (
+        <ChromePair left={notificationsAction} right={settingsAction} />
+      ) : notificationsAction ? (
+        <ChromeGlass style={styles.chromeRound}>
+          <ChromeHit {...notificationsAction} />
+        </ChromeGlass>
+      ) : settingsAction ? (
+        <ChromeGlass style={styles.chromeRound}>
+          <ChromeHit {...settingsAction} />
+        </ChromeGlass>
+      ) : null}
 
-      {/*
-        Trailing-most, matching Home, where search is the last bar-button item.
-        Its own capsule rather than a third seat in the pill: that pill groups
-        the account's own chrome, and search leaves Me entirely — same
-        reasoning as Home's `sharesBackground: false` items.
-      */}
       {onSearchPress ? (
         <ChromeGlass style={styles.chromeRound}>
-          <ChromeHit icon={msSearch} label="Search" onPress={onSearchPress} />
+          <ChromeHit icon={msSearchSemibold} label="Search" onPress={onSearchPress} />
         </ChromeGlass>
       ) : null}
     </View>

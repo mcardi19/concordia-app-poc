@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
 import { useNow } from '@/hooks';
 import { academicTermStatus } from '@/services/academic';
-import { MeGlassCard, MeHeaderChrome, MeSectionLabel } from '@/components/feature/me';
+import { MeGlassCard, MeSectionLabel } from '@/components/feature/me';
 import { horizontalCarouselProps } from '@/components/feature/today';
 import {
   MaterialSymbol,
@@ -19,7 +19,6 @@ import {
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import {
-  HEADER_BAR_BUTTON_SIZE,
   HEADER_CHROME_HORIZONTAL_INSET,
   HEADER_CHROME_TOP_GAP,
 } from '@/navigation/HeaderIconButton';
@@ -135,14 +134,12 @@ export function AcademicsHomeScreen({ navigation }: Props) {
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
       >
-        {/* Masthead — flat brand wash and chrome spacing, matching the Me hero. */}
+        {/* Masthead — flat brand wash, matching the Me hero. */}
         <View style={[styles.hero, { paddingTop: insets.top + HEADER_CHROME_TOP_GAP }]}>
           <View
             pointerEvents="none"
             style={[styles.heroWash, { backgroundColor: theme.color.primary }]}
           />
-
-          <View style={styles.chromeSpacer} />
 
           <Text
             variant="heading2"
@@ -430,8 +427,6 @@ export function AcademicsHomeScreen({ navigation }: Props) {
           </View>
         </View>
       </ScrollView>
-
-      <MeHeaderChrome onSearchPress={() => navigation.navigate('Search')} />
     </View>
   );
 }
@@ -456,9 +451,6 @@ const styles = StyleSheet.create({
     right: 0,
     top: -400,
     bottom: -1,
-  },
-  chromeSpacer: {
-    height: HEADER_BAR_BUTTON_SIZE,
   },
   statsRow: {
     flexDirection: 'row',

@@ -31,7 +31,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MaterialSymbol, msClose } from '@/components/icons';
+import { MaterialSymbol, msCloseSemibold } from '@/components/icons';
 import {
   SESSION_HERO_MIN_HEIGHT,
   SessionHero,
@@ -46,6 +46,7 @@ import { useTheme } from '@/design-system/theme';
 import {
   HEADER_BAR_BUTTON_SIZE,
   HEADER_CHROME_TOP_GAP,
+  HEADER_ICON_SIZE,
 } from '@/navigation/HeaderIconButton';
 import { useTabBarScrollInset } from '@/navigation/tabBarInset';
 import type { RootStackScreenProps } from '@/navigation/types';
@@ -707,7 +708,7 @@ export function SessionDetailScreen({ navigation }: Props) {
               ]}
             />
             <Animated.View style={closeGlyphStyle}>
-              <MaterialSymbol icon={msClose} size={22} color={theme.color.text.inverse} />
+              <MaterialSymbol icon={msCloseSemibold} size={HEADER_ICON_SIZE} color={theme.color.text.inverse} />
             </Animated.View>
           </Pressable>
         </Animated.View>

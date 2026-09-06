@@ -1,8 +1,7 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
-  Platform,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -32,20 +31,13 @@ import {
   type PinnedChip,
 } from '@/components/feature/today';
 import { useTheme } from '@/design-system/theme';
-import {
-  GREETING_BLOCK_HEIGHT,
-  GREETING_BUTTON_OFFSET,
-  HomeGreetingCompact,
-  HomeGreetingLarge,
-} from '@/navigation/HomeHeaderTitle';
-import { useAuthStore } from '@/state/authStore';
+import { GREETING_BLOCK_HEIGHT, HomeGreetingLarge } from '@/navigation/HomeHeaderTitle';
 import { useNow } from '@/hooks';
-import { profileFromAuthUser } from '@/screens/me/accountData';
 import {
   nextTopBaseline,
   scrollDistanceFromTop,
 } from '@/navigation/homeScrollTitle';
-import { HEADER_CHROME_TOP_GAP } from '@/navigation/HeaderIconButton';
+import { HomeHeaderBar, HOME_HEADER_BAND } from '@/navigation/HomeHeaderBar';
 import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
 import { useTabBarScrollInset } from '@/navigation/tabBarInset';
 import type { TodayStackScreenProps } from '@/navigation/types';
@@ -53,6 +45,57 @@ import { useTodayTheme } from './todayTheme';
 
 type Props = TodayStackScreenProps<'Today'>;
 
+/** Space between the in-flow greeting and the session card. */
+const GREETING_TO_CARD_GAP = 8;
+
+const WEEKDAYS_LONG = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const;
+const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+const MONTHS_LONG = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+const MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
+
+/** e.g. Sunday, September 6 */
+function formatHomeDateLong(date: Date): string {
+  return `${WEEKDAYS_LONG[date.getDay()]}, ${MONTHS_LONG[date.getMonth()]} ${date.getDate()}`;
+}
+
+/** e.g. Sun, Sep 6 */
+function formatHomeDateShort(date: Date): string {
+  return `${WEEKDAYS_SHORT[date.getDay()]}, ${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}`;
+}
 
 export function TodayScreen({ navigation }: Props) {
   const theme = useTheme();
@@ -93,64 +136,21 @@ export function TodayScreen({ navigation }: Props) {
     [scrollY],
   );
 
-  /*
-    Greet with the signed-in student's first name. `displayName` is uppercased
-    for the ID card, so it is title-cased back here — "MAYA R. OKONKWO" would
-    otherwise shout from the masthead.
-  */
-  const user = useAuthStore((state) => state.user);
-  const greetingName = useMemo(() => {
-    const first = profileFromAuthUser(user).displayName.trim().split(/\s+/)[0] ?? '';
-    return first.charAt(0) + first.slice(1).toLowerCase();
-  }, [user]);
-
   /* Live clock so the date rolls over at midnight rather than at next launch. */
   const now = useNow();
-  const dateLabel = useMemo(
-    () =>
-      now.toLocaleDateString('en-CA', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-      }),
-    [now],
-  );
+  const dateLabelLong = useMemo(() => formatHomeDateLong(now), [now]);
+  const dateLabelShort = useMemo(() => formatHomeDateShort(now), [now]);
 
   /*
-    Sized like Search's: the band the chrome occupies, plus the curtain's own
-    depths past it. The blur stops well short of the colour fade on purpose —
-    a BlurView has a hard bottom edge, so it has to end while the wash above
-    still has enough body to hide the seam.
+    Sized to the action-chrome band the screen draws over itself (Home
+    sets `headerShown: false`), plus the curtain's own depths past it. The blur
+    stops well short of the colour fade on purpose — a BlurView has a hard
+    bottom edge, so it has to end while the wash above still has enough body to
+    hide the seam.
   */
-  const chromeBandHeight = insets.top + HEADER_CHROME_TOP_GAP + GREETING_BLOCK_HEIGHT;
+  const chromeBandHeight = insets.top + HOME_HEADER_BAND;
   const gradientHeight = chromeBandHeight + CURTAIN_FADE_DEPTH;
   const curtainBlurHeight = chromeBandHeight + CURTAIN_BLUR_DEPTH;
-
-  useLayoutEffect(() => {
-    if (Platform.OS !== 'ios') return;
-
-    navigation.setOptions({
-      title: '',
-      headerTransparent: true,
-      headerShadowVisible: false,
-      headerStyle: undefined,
-      /*
-        iOS 26 blurs content passing under the header itself. `headerBlurEffect`
-        is the alternative and gives the bar a real material — better for the
-        compact title, but it draws over this screen's own large-title overlay,
-        which lives beneath the native header. Documented as conflicting, so
-        only one; this is the one that keeps both states working.
-      */
-      scrollEdgeEffects: { top: 'soft' },
-      /*
-        No native title. The greeting is one left-aligned overlay that scales
-        with scroll, and `headerTitle` can only ever be centred — a compact
-        copy there would sit in a different place from the resting one.
-      */
-      headerTitle: '',
-      unstable_headerLeftItems: () => [],
-    });
-  }, [navigation, theme.color.text.primary]);
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -191,17 +191,17 @@ export function TodayScreen({ navigation }: Props) {
 
   const handleChipPress = useCallback(
     (chip: PinnedChip) => {
-      if (!chip.tab) return;
-
-      if (chip.meRoute) {
+      if (chip.account) {
         navigation.dispatch(
           CommonActions.navigate({
-            name: 'Me',
-            params: { screen: chip.meRoute },
+            name: 'Account',
+            ...(chip.accountRoute ? { params: { screen: chip.accountRoute } } : {}),
           }),
         );
         return;
       }
+      if (!chip.tab) return;
+
       if (chip.campusRoute) {
         navigation.dispatch(
           CommonActions.navigate({
@@ -251,7 +251,9 @@ export function TodayScreen({ navigation }: Props) {
       <View style={{ flex: 1 }} collapsable={false}>
         <Animated.ScrollView
           contentContainerStyle={{
-            paddingTop: theme.spacing.sm,
+            // Clear the self-drawn action chrome (the native header is
+            // hidden). Safe-area top is still handled by the automatic inset.
+            paddingTop: HOME_HEADER_BAND + theme.spacing.sm,
             paddingBottom: tabBarInset,
             gap: 40,
           }}
@@ -261,6 +263,19 @@ export function TodayScreen({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ paddingHorizontal: inset }}>
+            <View
+              style={{
+                height: GREETING_BLOCK_HEIGHT,
+                marginBottom: GREETING_TO_CARD_GAP,
+              }}
+            >
+              <HomeGreetingLarge
+                dateLabel={dateLabelLong}
+                color={theme.color.text.primary}
+                subtitleColor={theme.color.text.subtler}
+                scrollY={scrollY}
+              />
+            </View>
             <TodaySessionCard session={todaySession} />
           </View>
 
@@ -311,41 +326,18 @@ export function TodayScreen({ navigation }: Props) {
           opacity={gradientOpacity}
         />
 
-        {/*
-          Mounted for the life of the screen, not while it happens to be
-          visible. Gating on opacity unmounted and remounted it mid-scroll,
-          rebuilding its animated nodes at the moment they were being driven.
-        */}
-        {Platform.OS === 'ios' ? (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: insets.top + HEADER_CHROME_TOP_GAP - GREETING_BUTTON_OFFSET,
-              left: inset,
-              right: inset,
-              zIndex: 12,
-              height: GREETING_BLOCK_HEIGHT,
-              justifyContent: 'center',
-            }}
-          >
-            <HomeGreetingLarge
-              name={greetingName}
-              dateLabel={dateLabel}
-              color={theme.color.text.primary}
-              subtitleColor={theme.color.text.subtler}
-              scrollY={scrollY}
-            />
-            <HomeGreetingCompact
-              name={greetingName}
-              dateLabel={dateLabel}
-              color={theme.color.text.primary}
-              subtitleColor={theme.color.text.subtler}
-              scrollY={scrollY}
-            />
-          </View>
-        ) : null}
-
+        <HomeHeaderBar
+          onEmergency={() => navigation.navigate('Emergency')}
+          onSearch={() => navigation.navigate('Search')}
+          onNotifications={() =>
+            navigation.dispatch(
+              CommonActions.navigate('Account', { screen: 'Notifications' }),
+            )
+          }
+          onProfile={() => navigation.dispatch(CommonActions.navigate('Account'))}
+          dateLabel={dateLabelShort}
+          scrollY={scrollY}
+        />
       </View>
 
       <TodayPinnedAddDrawer

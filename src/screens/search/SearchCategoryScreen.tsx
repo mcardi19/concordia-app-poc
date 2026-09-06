@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
-import { MaterialSymbol, msArrowBack } from '@/components/icons';
+import { MaterialSymbol, msArrowBackSemibold } from '@/components/icons';
+import { HEADER_ICON_SIZE } from '@/navigation/HeaderIconButton';
 import {
   SERVICE_CATEGORIES,
   SearchResultRow,
@@ -74,7 +75,7 @@ export function SearchCategoryScreen({ route, navigation }: Props) {
           hitSlop={8}
         >
           <SearchSurface style={styles.backButton} radius={18}>
-            <MaterialSymbol icon={msArrowBack} size={20} color={theme.color.primary} />
+            <MaterialSymbol icon={msArrowBackSemibold} size={HEADER_ICON_SIZE} color={theme.color.primary} />
           </SearchSurface>
         </Pressable>
       </View>

@@ -26,7 +26,7 @@ import {
 } from '@/components/design-system/ScrollCurtain';
 import {
   MaterialSymbol,
-  msArrowBack,
+  msArrowBackSemibold,
   msDirectionsBus,
   msHistory,
   msLocalLibrary,
@@ -64,6 +64,7 @@ import {
   CURATED_BOOKS,
   LIBRARY_LOANS,
 } from '@/components/feature/library/libraryData';
+import { HEADER_ICON_SIZE } from '@/navigation/HeaderIconButton';
 import type { SearchScreenProps } from '@/navigation/types';
 import {
   CATEGORY_LABEL,
@@ -363,8 +364,8 @@ export function GlobalSearchScreen({ navigation }: Props) {
             >
               <SearchSurface style={styles.backButton} radius={22}>
                 <MaterialSymbol
-                  icon={msArrowBack}
-                  size={20}
+                  icon={msArrowBackSemibold}
+                  size={HEADER_ICON_SIZE}
                   color={theme.color.primary}
                 />
               </SearchSurface>

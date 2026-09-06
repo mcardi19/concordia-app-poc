@@ -6,7 +6,7 @@ import { useTheme } from '@/design-system/theme';
 
 /** Matches UIKit bar-button hit area so liquid-glass capsules center the glyph. */
 export const HEADER_BAR_BUTTON_SIZE = 44;
-export const HEADER_ICON_SIZE = 22;
+export const HEADER_ICON_SIZE = 24;
 /**
  * Distance from the safe-area top to the top of header action chrome.
  * Matches native UINavigationBar bar-button placement on the Home tab —

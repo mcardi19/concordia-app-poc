@@ -10,7 +10,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
-import { MaterialSymbol, msClose } from '@/components/icons';
+import { MaterialSymbol, msCloseSemibold } from '@/components/icons';
+import { HEADER_ICON_SIZE } from '@/navigation/HeaderIconButton';
 import { getCardSurfaceStyle, radiusStyle, useTheme } from '@/design-system/theme';
 import type { PinnedChip } from './todayData';
 
@@ -166,8 +167,8 @@ export function TodayPinnedAddDrawer({ visible, options, onSelect, onClose }: Pr
                 ]}
               >
                 <MaterialSymbol
-                  icon={msClose}
-                  size={20}
+                  icon={msCloseSemibold}
+                  size={HEADER_ICON_SIZE}
                   color={theme.color.text.secondary}
                 />
               </Pressable>

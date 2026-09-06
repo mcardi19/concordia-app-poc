@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
-import { msClose } from '@/components/icons';
+import { msCloseSemibold } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { walkMinutesFromCoords } from '@/services/campus/buildingPresentation';
 import type { BuildingSummary } from '@/types/campus';
@@ -181,7 +181,7 @@ export function CampusResultsDrawer({
                   </Text>
                 </View>
                 <GlassIconButton
-                  icon={msClose}
+                  icon={msCloseSemibold}
                   label={`Close ${displayed} results`}
                   onPress={onClose}
                 />

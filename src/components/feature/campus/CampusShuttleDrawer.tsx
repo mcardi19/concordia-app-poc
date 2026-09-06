@@ -11,7 +11,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
 import { PulsingStatusDot } from '@/components/design-system/PulsingStatusDot';
-import { MaterialSymbol, msClose, msDirectionsBus } from '@/components/icons';
+import { MaterialSymbol, msCloseSemibold, msDirectionsBus } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { useNow } from '@/hooks';
 import { SHUTTLE_CAMPUS_NAME } from '@/screens/shuttle/shuttleSchedule';
@@ -181,7 +181,7 @@ export function CampusShuttleDrawer({
                 </View>
 
                 <GlassIconButton
-                  icon={msClose}
+                  icon={msCloseSemibold}
                   label="Close shuttle"
                   onPress={onClose}
                 />
