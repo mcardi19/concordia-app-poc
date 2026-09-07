@@ -10,7 +10,6 @@ import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
   MaterialSymbol,
-  msArrowBackSemibold,
   msNotificationsSemibold,
   msSearchSemibold,
   msSettingsSemibold,
@@ -22,7 +21,9 @@ import {
   HEADER_CHROME_TOP_GAP,
   HEADER_ICON_SIZE,
 } from '@/navigation/HeaderIconButton';
+import { HeaderBackButton } from '@/navigation/HeaderBackButton';
 import { meTheme } from '@/screens/me/meTheme';
+import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 import type { MeProfileStat, StudentProfile } from '@/types/profile';
 
 type Props = {
@@ -296,30 +297,36 @@ export function MeHeaderChrome({
       ]}
     >
       {onBackPress ? (
-        <ChromeGlass style={styles.chromeRound}>
-          <ChromeHit icon={msArrowBackSemibold} label="Back" onPress={onBackPress} />
-        </ChromeGlass>
+        <HeaderBackButton onPress={onBackPress} tone="onDark" />
       ) : null}
 
       {/* Pushes the trailing actions right when there is no back control. */}
       <View style={styles.chromeSpring} />
 
       {notificationsAction && settingsAction ? (
-        <ChromePair left={notificationsAction} right={settingsAction} />
+        <View style={[todayShadowSoft, styles.chromePairLift]}>
+          <ChromePair left={notificationsAction} right={settingsAction} />
+        </View>
       ) : notificationsAction ? (
-        <ChromeGlass style={styles.chromeRound}>
-          <ChromeHit {...notificationsAction} />
-        </ChromeGlass>
+        <View style={[todayShadowSoft, styles.chromeLift]}>
+          <ChromeGlass style={styles.chromeRound}>
+            <ChromeHit {...notificationsAction} />
+          </ChromeGlass>
+        </View>
       ) : settingsAction ? (
-        <ChromeGlass style={styles.chromeRound}>
-          <ChromeHit {...settingsAction} />
-        </ChromeGlass>
+        <View style={[todayShadowSoft, styles.chromeLift]}>
+          <ChromeGlass style={styles.chromeRound}>
+            <ChromeHit {...settingsAction} />
+          </ChromeGlass>
+        </View>
       ) : null}
 
       {onSearchPress ? (
-        <ChromeGlass style={styles.chromeRound}>
-          <ChromeHit icon={msSearchSemibold} label="Search" onPress={onSearchPress} />
-        </ChromeGlass>
+        <View style={[todayShadowSoft, styles.chromeLift]}>
+          <ChromeGlass style={styles.chromeRound}>
+            <ChromeHit icon={msSearchSemibold} label="Search" onPress={onSearchPress} />
+          </ChromeGlass>
+        </View>
       ) : null}
     </View>
   );
@@ -501,6 +508,14 @@ const styles = StyleSheet.create({
     borderRadius: CHROME_SIZE / 2,
     borderCurve: 'continuous',
     overflow: 'hidden',
+  },
+  chromeLift: {
+    borderRadius: CHROME_SIZE / 2,
+    borderCurve: 'continuous',
+  },
+  chromePairLift: {
+    borderRadius: CHROME_SIZE / 2,
+    borderCurve: 'continuous',
   },
   chromeSpring: {
     flex: 1,

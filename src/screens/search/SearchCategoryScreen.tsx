@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
-import { MaterialSymbol, msArrowBackSemibold } from '@/components/icons';
-import { HEADER_ICON_SIZE } from '@/navigation/HeaderIconButton';
+import { MaterialSymbol } from '@/components/icons';
+import { HeaderBackButton } from '@/navigation/HeaderBackButton';
 import {
   SERVICE_CATEGORIES,
   SearchResultRow,
@@ -68,16 +68,7 @@ export function SearchCategoryScreen({ route, navigation }: Props) {
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8 }]}>
       <View style={styles.chromeRow}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          hitSlop={8}
-        >
-          <SearchSurface style={styles.backButton} radius={18}>
-            <MaterialSymbol icon={msArrowBackSemibold} size={HEADER_ICON_SIZE} color={theme.color.primary} />
-          </SearchSurface>
-        </Pressable>
+        <HeaderBackButton onPress={() => navigation.goBack()} />
       </View>
 
       <ScrollView
@@ -148,12 +139,7 @@ const styles = StyleSheet.create({
   chromeRow: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingBottom: 4,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingTop: 4,
   },
   masthead: {
     flexDirection: 'row',

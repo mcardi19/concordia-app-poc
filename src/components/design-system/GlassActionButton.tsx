@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import {
+  Platform,
   Pressable,
+  StyleSheet,
   View,
   type PressableProps,
   type StyleProp,
@@ -8,6 +10,18 @@ import {
 } from 'react-native';
 import { GlassView, type GlassColorScheme } from 'expo-glass-effect';
 import { canUseLiquidGlass } from './liquidGlass';
+
+/** Same lift as `todayShadowSoft` — chips and header action capsules. */
+const ACTION_BUTTON_SHADOW: ViewStyle = Platform.select({
+  ios: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 7,
+  },
+  android: { elevation: 3 },
+  default: {},
+}) as ViewStyle;
 
 export type GlassActionButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   children: React.ReactNode;
@@ -41,6 +55,7 @@ export function GlassActionButton({
   ...pressableProps
 }: GlassActionButtonProps) {
   const useGlass = useMemo(() => canUseLiquidGlass(), []);
+  const radius = StyleSheet.flatten(style)?.borderRadius;
 
   const surfaceStyle: ViewStyle = {
     alignItems: 'center',
@@ -55,6 +70,8 @@ export function GlassActionButton({
       disabled={disabled}
       hitSlop={8}
       style={({ pressed }) => [
+        ACTION_BUTTON_SHADOW,
+        radius != null ? { borderRadius: radius } : null,
         {
           transform: [
             {

@@ -21,6 +21,7 @@ import {
   HEADER_ICON_SIZE,
 } from './HeaderIconButton';
 import { HomeGreetingCompact } from './HomeHeaderTitle';
+import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 
 /** Gap below the safe-area top before the chrome row. */
 export const HOME_HEADER_TOP_GAP = 6;
@@ -162,7 +163,8 @@ function ProfileInitialsButton({
       accessibilityLabel="Profile"
       hitSlop={4}
     >
-      <GlassSurface glass={glass} style={styles.capsule}>
+      <ActionLift>
+        <GlassSurface glass={glass} style={styles.capsule}>
         <View
           style={[
             styles.initialsBadge,
@@ -177,7 +179,8 @@ function ProfileInitialsButton({
             {initials}
           </Text>
         </View>
-      </GlassSurface>
+        </GlassSurface>
+      </ActionLift>
     </Pressable>
   );
 }
@@ -191,9 +194,11 @@ function GlassActionButton({ icon, accessibilityLabel, onPress, glass, tint }: A
       accessibilityLabel={accessibilityLabel}
       hitSlop={4}
     >
-      <GlassSurface glass={glass} style={styles.capsule}>
+      <ActionLift>
+        <GlassSurface glass={glass} style={styles.capsule}>
         <MaterialSymbol icon={icon} size={HEADER_ICON_SIZE} color={tint} />
-      </GlassSurface>
+        </GlassSurface>
+      </ActionLift>
     </Pressable>
   );
 }
@@ -207,9 +212,11 @@ function GlassActionPair({
   children: ReactNode;
 }) {
   return (
-    <GlassSurface glass={glass} style={styles.pair}>
+    <ActionLift>
+      <GlassSurface glass={glass} style={styles.pair}>
       <View style={styles.pairRow}>{children}</View>
-    </GlassSurface>
+      </GlassSurface>
+    </ActionLift>
   );
 }
 
@@ -224,6 +231,12 @@ function ActionHit({ icon, accessibilityLabel, onPress, tint }: ActionHitProps) 
     >
       <MaterialSymbol icon={icon} size={HEADER_ICON_SIZE} color={tint} />
     </Pressable>
+  );
+}
+
+function ActionLift({ children }: { children: ReactNode }) {
+  return (
+    <View style={[todayShadowSoft, styles.actionLift]}>{children}</View>
   );
 }
 
@@ -275,6 +288,10 @@ const styles = StyleSheet.create({
     borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
     borderCurve: 'continuous',
     overflow: 'hidden',
+  },
+  actionLift: {
+    borderRadius: HEADER_BAR_BUTTON_SIZE / 2,
+    borderCurve: 'continuous',
   },
   /** Lets the badge sit on the pill corner without being clipped by the glass. */
   pairWrap: {

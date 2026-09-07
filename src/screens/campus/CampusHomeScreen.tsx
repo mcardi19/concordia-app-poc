@@ -24,7 +24,6 @@ import {
   CAMPUS_SEARCH_FIELD_HEIGHT,
   CampusSearchBar,
 } from '@/components/feature/campus/CampusSearchBar';
-import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 import { MaterialSymbol, msDirectionsBus, msMyLocationSemibold } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import { useBuildings } from '@/hooks/useBuildings';
@@ -712,13 +711,7 @@ export function CampusHomeScreen({ navigation, route }: Props) {
               pointerEvents="box-none"
               style={[styles.locateRow, { marginBottom: theme.spacing.sm }]}
             >
-              <View
-                style={[
-                  todayShadowSoft,
-                  radiusStyle(HEADER_BAR_BUTTON_SIZE / 2),
-                ]}
-              >
-                <GlassActionButton
+              <GlassActionButton
                   accessibilityLabel="Go to current location"
                   accessibilityState={{ busy: isLocating }}
                   colorScheme="light"
@@ -743,7 +736,6 @@ export function CampusHomeScreen({ navigation, route }: Props) {
                     />
                   )}
                 </GlassActionButton>
-              </View>
             </View>
 
           {/*

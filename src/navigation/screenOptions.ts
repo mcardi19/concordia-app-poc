@@ -25,14 +25,10 @@ export function useStackContentStyle() {
 }
 
 /**
- * Back arrow for the native header, replacing the system chevron.
- *
- * A template PNG rather than a `MaterialSymbol`: the back button is a real
- * UIBarButtonItem, so it takes an image source, not a React view — and going
- * through `headerLeft` instead would put a control on every stack root, which
- * has nothing to go back to. Rendered from the same Material Symbols rounded
- * `arrow_back` glyph the in-screen back controls use, at the 22/44/66 sizes
- * the other header assets use.
+ * Native-bar back glyph. Must stay an image source: the control is a real
+ * UIBarButtonItem, and a React `headerLeft` (the 44pt glass `HeaderBackButton`)
+ * draws a second capsule on top of the system one — the overlap on Campus
+ * events. In-screen chrome (Search, Account) still uses `HeaderBackButton`.
  */
 const HEADER_BACK_IMAGE = require('../../assets/header/back.png');
 

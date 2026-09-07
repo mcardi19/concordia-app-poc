@@ -26,7 +26,6 @@ import {
 } from '@/components/design-system/ScrollCurtain';
 import {
   MaterialSymbol,
-  msArrowBackSemibold,
   msDirectionsBus,
   msHistory,
   msLocalLibrary,
@@ -65,7 +64,7 @@ import {
   CURATED_BOOKS,
   LIBRARY_LOANS,
 } from '@/components/feature/library/libraryData';
-import { HEADER_ICON_SIZE } from '@/navigation/HeaderIconButton';
+import { HeaderBackButton } from '@/navigation/HeaderBackButton';
 import type { SearchScreenProps } from '@/navigation/types';
 import {
   CATEGORY_LABEL,
@@ -360,20 +359,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
         */}
         <View style={styles.fieldRowInset}>
           <View style={styles.fieldRow}>
-            <Pressable
-              onPress={() => navigation.goBack()}
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              hitSlop={8}
-            >
-              <SearchSurface style={styles.backButton} radius={22}>
-                <MaterialSymbol
-                  icon={msArrowBackSemibold}
-                  size={HEADER_ICON_SIZE}
-                  color={theme.color.primary}
-                />
-              </SearchSurface>
-            </Pressable>
+            <HeaderBackButton onPress={() => navigation.goBack()} />
 
             {glass ? (
               <View style={[styles.fieldLift, todayShadowSoft]}>
@@ -843,13 +829,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: '600',
     color: '#912238',
-  },
-  /** Grown with the field so the row still reads as one control group. */
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   /** Hosts the capsule shadow — overflow on the field itself would clip it. */
   fieldLift: {

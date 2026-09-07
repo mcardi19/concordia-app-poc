@@ -5,7 +5,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/design-system';
 import {
   MaterialSymbol,
-  msArrowBackSemibold,
   msChevronRight,
   msNorthEast,
 } from '@/components/icons';
@@ -19,7 +18,7 @@ import {
   formatServiceTime,
   serviceStatus,
 } from '@/services/campus/serviceStatus';
-import { HEADER_ICON_SIZE } from '@/navigation/HeaderIconButton';
+import { HeaderBackButton } from '@/navigation/HeaderBackButton';
 import type { SearchScreenProps } from '@/navigation/types';
 import type { CampusService, ServiceAction } from '@/types/services';
 import { searchTheme } from './searchTheme';
@@ -113,17 +112,9 @@ export function ServiceDetailScreen({ route, navigation }: Props) {
           </View>
         </View>
 
-        <Pressable
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          hitSlop={8}
-          style={[styles.back, { top: insets.top + 8 }]}
-        >
-          <SearchSurface style={styles.backSurface} radius={20}>
-            <MaterialSymbol icon={msArrowBackSemibold} size={HEADER_ICON_SIZE} color={theme.color.primary} />
-          </SearchSurface>
-        </Pressable>
+        <View style={[styles.back, { top: insets.top + 8 }]}>
+          <HeaderBackButton onPress={() => navigation.goBack()} />
+        </View>
 
         <View style={styles.body}>
           {service.description ? (
@@ -345,12 +336,6 @@ const styles = StyleSheet.create({
   back: {
     position: 'absolute',
     left: semanticSpacing.screenHorizontal,
-  },
-  backSurface: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   body: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
