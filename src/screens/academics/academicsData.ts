@@ -1,11 +1,13 @@
 /**
  * Academics flow content.
  *
- * Course, GPA and resource content is still design mock data. The dates are
- * not: they come from `@/services/academic`, the same registrar dataset the
- * Schedule's all-day section reads, so the two screens can never disagree
- * about what today is or what falls on it.
+ * Courses come from the Schedule timetable (`MOCK_WEEK_EVENTS`), so this
+ * screen cannot list a different enrolment than the week view. Grades and
+ * GPA stay design mock data. Dates come from `@/services/academic`, the same
+ * registrar dataset the Schedule's all-day section reads.
  */
+import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
+import type { ScheduleEvent } from '@/components/feature/schedule/scheduleTypes';
 import {
   ACADEMIC_DATES,
   academicDayKey,
@@ -50,6 +52,10 @@ export type Course = {
   code: string;
   title: string;
   prof: string;
+  /** Faculty profile slug, for the headshot. Absent when SIS has no match. */
+  professorFpid?: string;
+  /** First timetable meeting — Course detail resolves the event from this. */
+  eventId: string;
   grade: string;
   /** Null while the course has no posted average yet. */
   pct: number | null;
@@ -77,13 +83,55 @@ export const TERM_STATS: TermStat[] = [
   { value: 'A−', label: 'Avg grade' },
 ];
 
-/** Course accent colours are literal design values, not semantic roles. */
-export const COURSES: Course[] = [
-  { code: 'ENGL 369', title: 'African-American Literature', prof: 'I. Ashwell', grade: 'A−', pct: 87, color: '#912238' },
-  { code: 'PHIL 232', title: 'Introduction to Ethics', prof: 'O. Fenn', grade: 'B+', pct: 82, color: '#7a7a7c' },
-  { code: 'HIST 210', title: 'Quebec since Confederation', prof: 'A. Moreau', grade: 'A', pct: 91, color: '#5a7a6a' },
-  { code: 'FRAN 219', title: 'Initiation au français écrit', prof: 'J. Tremblay', grade: '—', pct: null, color: '#8a6a5a' },
-];
+/**
+ * Posted averages, keyed by timetable course code. Mock until SIS grades
+ * land — the course identity itself is not mocked.
+ */
+const COURSE_GRADES: Record<string, { grade: string; pct: number | null; color: string }> = {
+  'PHIL 232': { grade: 'B+', pct: 82, color: '#8A6E5E' },
+  'HIST 210': { grade: 'A', pct: 91, color: '#8A6A52' },
+  'ENGL 369': { grade: 'A−', pct: 87, color: '#912238' },
+  'FRAN 219': { grade: '—', pct: null, color: '#7A7A7C' },
+};
+
+/** Drop the honorific so the row can say "Prof. Ulf Hlobil", not "Prof. Dr.". */
+function professorDisplayName(professor?: string): string {
+  if (!professor) return 'TBA';
+  return professor.replace(/^Dr\.\s+/, '');
+}
+
+function isEnrolledClass(event: ScheduleEvent): boolean {
+  return event.kind !== 'study';
+}
+
+/**
+ * One row per enrolled course, in the order the week first shows them.
+ * Study blocks (group session, TA hours, clubs) are not courses.
+ */
+export const COURSES: Course[] = MOCK_WEEK_EVENTS.filter(isEnrolledClass).reduce<Course[]>(
+  (courses, event) => {
+    if (courses.some((course) => course.code === event.courseCode)) {
+      return courses;
+    }
+    const mock = COURSE_GRADES[event.courseCode] ?? {
+      grade: '—',
+      pct: null,
+      color: event.tint ?? '#912338',
+    };
+    courses.push({
+      code: event.courseCode,
+      title: event.title,
+      prof: professorDisplayName(event.professor),
+      professorFpid: event.professorFpid,
+      eventId: event.id,
+      grade: mock.grade,
+      pct: mock.pct,
+      color: mock.color,
+    });
+    return courses;
+  },
+  [],
+);
 
 export const ACADEMIC_RESOURCES: AcademicResource[] = [
   { id: 'moodle', label: 'My Moodle', subtitle: 'Courseware & submissions', icon: 'moodle' },

@@ -39,6 +39,16 @@ const SESSION_HERO_SCRIM_COLORS = [
 const ON_SCRIM_TEXT_COLOR = '#FFFFFF';
 
 /**
+ * `text-wrap: pretty` — keep the last two words together so a display title
+ * cannot orphan a single word on its own line.
+ */
+function prettyTitle(title: string): string {
+  const words = title.trim().split(/\s+/);
+  if (words.length < 2) return title;
+  return `${words.slice(0, -1).join(' ')}\u00A0${words[words.length - 1]}`;
+}
+
+/**
  * The session card is the only surface opted into Gill Sans Nova for now.
  * Roman family (CDS `gill-sans-nova`) at SemiBold.
  *
@@ -346,15 +356,13 @@ function SessionHeroOverlay({
           <Text
             variant="heading2"
             brandFace={SESSION_CARD_BRAND_FACE}
+            textBreakStrategy="highQuality"
             style={{
               color: ON_SCRIM_TEXT_COLOR,
               fontSize: 40,
-              /*
-                Tight display leading. Kept above 1.0 deliberately: the
-                condensed heavy face has real descenders ("y" in History) and
-                a line box smaller than the point size clips them.
-              */
-              lineHeight: 40 * 1.05,
+              lineHeight: 40,
+              /** −1% tracking, relative to the 40pt face. */
+              letterSpacing: 40 * -0.01,
               /*
                 Tabular figures: the condensed face's proportional digits set
                 a year like "1867" unevenly, the 1 sitting in a narrower slot
@@ -364,7 +372,7 @@ function SessionHeroOverlay({
               fontVariant: ['tabular-nums'],
             }}
           >
-            {session.title}
+            {prettyTitle(session.title)}
           </Text>
         </View>
 

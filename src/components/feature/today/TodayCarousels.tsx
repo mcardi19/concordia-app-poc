@@ -3,13 +3,17 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-nat
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
 import { CampusEventCard } from './CampusEventCard';
-import type { CampusTodayItem, UpdateItem } from './todayData';
+import {
+  CAMPUS_EVENT_FORMAT_LABEL,
+  campusEventCostLabel,
+  type CampusTodayItem,
+  type UpdateItem,
+} from './todayData';
 import { TodaySurfaceFill } from './TodaySurface';
 
 const UPDATE_CARD_WIDTH = 294;
 const UPDATE_IMAGE_HEIGHT = 152;
 const CAMPUS_CARD_WIDTH = 260;
-const CAMPUS_CARD_HEIGHT = 220;
 const CAROUSEL_GAP = 14;
 
 /**
@@ -161,7 +165,7 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
             key={item.id}
             onPress={() => onPress?.(item)}
             accessibilityRole="button"
-            accessibilityLabel={`${item.title}, ${item.location}, ${item.time}`}
+            accessibilityLabel={`${item.title}, ${item.location}, ${item.time}, ${campusEventCostLabel(item.cost)}, ${CAMPUS_EVENT_FORMAT_LABEL[item.format]}`}
           >
             <CampusEventCard
               item={item}
@@ -191,7 +195,7 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
                   ],
                 );
               }}
-              style={{ width: CAMPUS_CARD_WIDTH, height: CAMPUS_CARD_HEIGHT }}
+              style={{ width: CAMPUS_CARD_WIDTH }}
             />
           </Pressable>
         );

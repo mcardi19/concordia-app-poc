@@ -5,6 +5,7 @@ import { AcademicCalendarScreen } from '@/screens/academics/AcademicCalendarScre
 import { GradesScreen } from '@/screens/grades/GradesScreen';
 import { LibraryScreen } from '@/screens/library/LibraryScreen';
 import { academicDateScreens } from './academicDateRoutes';
+import { courseDetailScreens } from './courseDetailRoutes';
 import { searchScreens } from './searchRoutes';
 import { useStackScreenOptions } from './screenOptions';
 import type { AcademicsStackParamList } from './types';
@@ -36,6 +37,7 @@ export function LibraryStack() {
       <Stack.Screen name="Library" component={LibraryScreen} options={{ title: 'Library' }} />
       {searchScreens(Stack)}
       {academicDateScreens(Stack)}
+      {courseDetailScreens(Stack)}
     </Stack.Navigator>
   );
 }

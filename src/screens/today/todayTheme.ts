@@ -3,6 +3,8 @@ import { useAppearance } from '@/design-system/theme';
 /** Today tab accents and page surface. */
 const todayThemeLight = {
   pageBackground: '#F7F7F8',
+  /** Brand mix on the page grey — the top of the Today wash. */
+  pageWash: '#D6B3BA',
   cardBackground: '#FFFFFF',
   accentMuted: 'rgba(0, 0, 0, 0.05)',
   labelCaps: '#912338',
@@ -17,6 +19,7 @@ const todayThemeLight = {
 
 const todayThemeDark = {
   pageBackground: '#121214',
+  pageWash: '#4A2D36',
   cardBackground: '#1C1C1E',
   accentMuted: 'rgba(255, 255, 255, 0.06)',
   labelCaps: '#D9748C',

@@ -40,6 +40,16 @@ export type AcademicDateRoutes = {
   AcademicDate: { id: string };
 };
 
+/**
+ * Course detail. Reached from the timetable and from Academics "My courses",
+ * so like `AcademicDateRoutes` it is declared once and registered into
+ * whichever stack pushed it.
+ */
+export type CourseDetailRoutes = {
+  /** Timetable row id — the screen resolves the event from it. */
+  CourseDetail: { eventId: string };
+};
+
 /** The Me tab's own screens, kept separate so `MeStackParamList` reads as a sum. */
 export type MeRoutes = {
   MeHome: undefined;
@@ -62,10 +72,8 @@ export type TodayStackParamList = SearchRoutes & {
   CampusToday: undefined;
 };
 
-export type ScheduleStackParamList = AcademicDateRoutes & {
+export type ScheduleStackParamList = AcademicDateRoutes & CourseDetailRoutes & {
   Schedule: undefined;
-  /** Timetable row id — the screen resolves the event from it. */
-  CourseDetail: { eventId: string };
 };
 
 export type CampusStackParamList = {
@@ -91,13 +99,15 @@ export type CampusStackParamList = {
   ServicesSearch: undefined;
 };
 
-export type AcademicsStackParamList = SearchRoutes & AcademicDateRoutes & {
-  AcademicsHome: undefined;
-  AcademicCalendar: undefined;
-  Grades: undefined;
-  /** The former Academic-tab root. No longer linked from the new home. */
-  Library: undefined;
-};
+export type AcademicsStackParamList = SearchRoutes &
+  AcademicDateRoutes &
+  CourseDetailRoutes & {
+    AcademicsHome: undefined;
+    AcademicCalendar: undefined;
+    Grades: undefined;
+    /** The former Academic-tab root. No longer linked from the new home. */
+    Library: undefined;
+  };
 
 export type MeStackParamList = MeRoutes & SearchRoutes;
 

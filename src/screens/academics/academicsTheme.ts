@@ -9,12 +9,13 @@ export const academicsTheme = {
   cardBackground: '#FFFFFF',
   cardBorder: 'rgba(0, 0, 0, 0.05)',
 
-  /** Masthead gradient runs brand → this, matching the Me hero. */
+  /** Calendar still uses a brand wash; the home masthead is ink on white. */
   heroGradientEnd: '#5E1626',
-  heroStatLabel: 'rgba(255, 255, 255, 0.72)',
-  heroSubtitle: 'rgba(255, 255, 255, 0.82)',
-  heroMeta: 'rgba(255, 255, 255, 0.7)',
-  heroDivider: 'rgba(255, 255, 255, 0.18)',
+  heroBackground: '#FFFFFF',
+  heroStatLabel: '#7A7A7C',
+  heroSubtitle: '#3A3A3C',
+  heroMeta: '#7A7A7C',
+  heroDivider: 'rgba(0, 0, 0, 0.1)',
   heroChrome: 'rgba(255, 255, 255, 0.16)',
   heroPill: 'rgba(255, 255, 255, 0.22)',
 

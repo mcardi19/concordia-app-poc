@@ -18,12 +18,13 @@ import { SESSION_COMPONENT_LABEL } from '@/components/feature/schedule/scheduleT
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { scheduleTheme } from '@/components/feature/schedule/scheduleTheme';
-import type { ScheduleStackScreenProps } from '@/navigation/types';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { CourseDetailRoutes } from '@/navigation/types';
 
-type Props = ScheduleStackScreenProps<'CourseDetail'>;
+type Props = NativeStackScreenProps<CourseDetailRoutes, 'CourseDetail'>;
 
 /**
- * A timetable meeting, opened from the Schedule.
+ * A timetable meeting, opened from the Schedule or from Academics.
  *
  * The same body as the Home session sheet, without the hero photo or the
  * status pill: both belong to the Home card, which is answering "what is on

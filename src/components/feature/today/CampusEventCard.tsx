@@ -1,23 +1,28 @@
-import React from 'react';
-import { Image, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback } from 'react';
+import {
+  Image,
+  Pressable,
+  Share,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { Text } from '@/components/design-system';
 import {
   MaterialSymbol,
   msCalendarAddOnFillSemibold,
   msCalendarAddOnSemibold,
+  msIosShareSemibold,
   msLocationOn,
   msScheduleClock,
 } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
-import type { CampusTodayItem } from './todayData';
-
-const SCRIM_COLORS = [
-  'transparent',
-  'rgba(0, 0, 0, 0.7)',
-  'rgba(0, 0, 0, 1)',
-] as const;
-const ON_SCRIM = '#FFFFFF';
+import {
+  CAMPUS_EVENT_FORMAT_LABEL,
+  campusEventCostLabel,
+  type CampusTodayItem,
+} from './todayData';
 
 type Props = {
   item: CampusTodayItem;
@@ -30,9 +35,44 @@ type Props = {
   compact?: boolean;
 };
 
+type PhotoActionProps = {
+  onPress: () => void;
+  accessibilityLabel: string;
+  accessibilityState?: { selected?: boolean };
+  compact: boolean;
+  backgroundColor: string;
+  children: React.ReactNode;
+};
+
+function PhotoActionButton({
+  onPress,
+  accessibilityLabel,
+  accessibilityState,
+  compact,
+  backgroundColor,
+  children,
+}: PhotoActionProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
+      hitSlop={4}
+      style={({ pressed }) => [
+        styles.photoAction,
+        compact ? styles.photoActionCompact : null,
+        { backgroundColor, opacity: pressed ? 0.85 : 1 },
+      ]}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
 /**
- * Full-bleed photo event card: dark bottom scrim, title + meta overlaid,
- * calendar-add control on the trailing edge.
+ * Photo event card: image on top, title and meta below — not overlaid.
+ * Share and calendar-add sit on the trailing edge of the photo.
  */
 export function CampusEventCard({
   item,
@@ -43,88 +83,106 @@ export function CampusEventCard({
   compact = false,
 }: Props) {
   const theme = useTheme();
+  const glyphSize = compact ? 20 : 22;
+
+  const onShare = useCallback(() => {
+    void Share.share({
+      title: item.title,
+      message: `${item.title}\n${item.time} · ${item.location}`,
+    }).catch(() => undefined);
+  }, [item.location, item.time, item.title]);
 
   return (
-    <View style={[styles.card, { borderRadius: radius }, style]}>
-      <Image source={item.image} style={styles.image} resizeMode="cover" />
-      <LinearGradient
-        pointerEvents="none"
-        colors={[...SCRIM_COLORS]}
-        locations={[0.35, 0.68, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.scrim}
-      />
-      <View style={styles.cardBody}>
-        <View style={styles.titleRow}>
-          <View style={styles.copy}>
-            <Text
-              variant="body"
-              numberOfLines={2}
-              style={[
-                styles.title,
-                compact ? styles.titleCompact : null,
-                { color: ON_SCRIM },
-              ]}
-            >
-              {item.title}
-            </Text>
-            <View style={styles.metaRow}>
-              <MaterialSymbol
-                icon={msScheduleClock}
-                size={compact ? 14 : 16}
-                color={ON_SCRIM}
-              />
-              <Text
-                variant="body"
-                numberOfLines={1}
-                style={[styles.metaTime, { color: ON_SCRIM }]}
-              >
-                {item.time}
-              </Text>
-              <View style={styles.metaLocationIcon}>
-                <MaterialSymbol
-                  icon={msLocationOn}
-                  size={compact ? 14 : 16}
-                  color={ON_SCRIM}
-                />
-              </View>
-              <Text
-                variant="body"
-                numberOfLines={1}
-                style={[styles.meta, { color: 'rgba(255, 255, 255, 0.85)' }]}
-              >
-                {item.location}
-              </Text>
-            </View>
-          </View>
+    <View style={[styles.card, style]}>
+      <View
+        style={[
+          styles.imageFrame,
+          compact ? styles.imageFrameCompact : styles.imageFrameList,
+          { borderRadius: radius },
+        ]}
+      >
+        <Image source={item.image} style={styles.image} resizeMode="cover" />
+        <View style={styles.imageActions} pointerEvents="box-none">
+          <PhotoActionButton
+            onPress={onShare}
+            accessibilityLabel={`Share ${item.title}`}
+            compact={compact}
+            backgroundColor="#FFFFFF"
+          >
+            <MaterialSymbol
+              icon={msIosShareSemibold}
+              size={glyphSize}
+              color={theme.color.primary}
+            />
+          </PhotoActionButton>
           {onToggleAdd ? (
-            <Pressable
+            <PhotoActionButton
               onPress={onToggleAdd}
-              accessibilityRole="button"
-              accessibilityState={{ selected: added }}
               accessibilityLabel={
                 added ? 'Remove from schedule' : 'Add to schedule'
               }
-              style={({ pressed }) => [
-                styles.addButton,
-                compact ? styles.addButtonCompact : null,
-                {
-                  backgroundColor: added ? theme.color.primary : ON_SCRIM,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}
+              accessibilityState={{ selected: added }}
+              compact={compact}
+              backgroundColor={added ? theme.color.primary : '#FFFFFF'}
             >
               <MaterialSymbol
                 icon={msCalendarAddOnSemibold}
                 filled={msCalendarAddOnFillSemibold}
                 active={added}
-                size={compact ? 20 : 22}
-                color={added ? ON_SCRIM : theme.color.primary}
+                size={glyphSize}
+                color={added ? '#FFFFFF' : theme.color.primary}
               />
-            </Pressable>
+            </PhotoActionButton>
           ) : null}
         </View>
+      </View>
+      <View style={styles.caption}>
+        <Text
+          variant="body"
+          numberOfLines={2}
+          style={[
+            styles.title,
+            compact ? styles.titleCompact : null,
+            { color: theme.color.text.primary },
+          ]}
+        >
+          {item.title}
+        </Text>
+        <View style={styles.metaRow}>
+          <MaterialSymbol
+            icon={msScheduleClock}
+            size={compact ? 14 : 16}
+            color={theme.color.text.subtle}
+          />
+          <Text
+            variant="body"
+            numberOfLines={1}
+            style={[styles.metaTime, { color: theme.color.text.secondary }]}
+          >
+            {item.time}
+          </Text>
+          <View style={styles.metaLocationIcon}>
+            <MaterialSymbol
+              icon={msLocationOn}
+              size={compact ? 14 : 16}
+              color={theme.color.text.subtle}
+            />
+          </View>
+          <Text
+            variant="body"
+            numberOfLines={1}
+            style={[styles.meta, { color: theme.color.text.secondary }]}
+          >
+            {item.location}
+          </Text>
+        </View>
+        <Text
+          variant="body"
+          numberOfLines={1}
+          style={[styles.details, { color: theme.color.text.secondary }]}
+        >
+          {`Cost ${campusEventCostLabel(item.cost)} · Format ${CAMPUS_EVENT_FORMAT_LABEL[item.format]}`}
+        </Text>
       </View>
     </View>
   );
@@ -132,64 +190,63 @@ export function CampusEventCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderCurve: 'continuous',
+    overflow: 'visible',
+  },
+  imageFrame: {
+    width: '100%',
     overflow: 'hidden',
-    height: 260,
+    borderCurve: 'continuous',
+  },
+  imageFrameCompact: {
+    height: 160,
+  },
+  imageFrameList: {
+    height: 200,
   },
   image: {
-    ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
   },
-  scrim: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  cardBody: {
+  imageActions: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 16,
-    paddingTop: 28,
-    paddingBottom: 16,
-  },
-  titleRow: {
+    top: 8,
+    right: 8,
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 10,
+    alignItems: 'center',
+    gap: 8,
   },
-  copy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  title: {
-    fontWeight: '600',
-    fontSize: 22,
-    lineHeight: 22 * 1.2,
-    letterSpacing: -0.4,
-  },
-  titleCompact: {
-    fontSize: 18,
-    lineHeight: 18 * 1.2,
-  },
-  addButton: {
+  photoAction: {
     width: 44,
     height: 44,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addButtonCompact: {
+  photoActionCompact: {
     width: 40,
     height: 40,
     borderRadius: 20,
+  },
+  caption: {
+    paddingTop: 10,
+    gap: 2,
+  },
+  title: {
+    fontWeight: '600',
+    fontSize: 18,
+    lineHeight: 18 * 1.2,
+    letterSpacing: -0.3,
+  },
+  titleCompact: {
+    fontSize: 16,
+    lineHeight: 16 * 1.2,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     flexWrap: 'nowrap',
+    marginTop: 2,
   },
   metaTime: {
     flexShrink: 0,
@@ -204,5 +261,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
     fontSize: 14,
     lineHeight: 14 * 1.35,
+  },
+  details: {
+    fontSize: 14,
+    lineHeight: 14 * 1.35,
+    marginTop: 2,
   },
 });

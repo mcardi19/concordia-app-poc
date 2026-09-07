@@ -63,6 +63,9 @@ import {
 import {
   msCalendarAddOnFill as msCalendarAddOnFillSemibold,
 } from '@material-symbols-react-native/rounded-600/msCalendarAddOnFill';
+import { msIosShare as msIosShareSemibold } from '@material-symbols-react-native/rounded-600/msIosShare';
+import { msTune as msTuneSemibold } from '@material-symbols-react-native/rounded-600/msTune';
+import { msTuneFill as msTuneFillSemibold } from '@material-symbols-react-native/rounded-600/msTuneFill';
 import { msWbSunny } from '@material-symbols-react-native/rounded-400/msWbSunny';
 import { msWbSunnyFill } from '@material-symbols-react-native/rounded-400/msWbSunnyFill';
 import { msDocumentScanner } from '@material-symbols-react-native/rounded-400/msDocumentScanner';
@@ -187,6 +190,9 @@ export {
   msAddSemibold,
   msCalendarAddOnSemibold,
   msCalendarAddOnFillSemibold,
+  msIosShareSemibold,
+  msTuneSemibold,
+  msTuneFillSemibold,
   msAccessible,
   msDirections,
   msDirectionsWalk,

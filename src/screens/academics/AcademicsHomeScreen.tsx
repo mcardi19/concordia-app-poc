@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/design-system';
-import { useNow } from '@/hooks';
+import { useFacultyProfile, useNow } from '@/hooks';
 import { academicTermStatus } from '@/services/academic';
 import { MeGlassCard, MeSectionLabel } from '@/components/feature/me';
 import { horizontalCarouselProps } from '@/components/feature/today';
@@ -61,6 +61,40 @@ const DATE_CARD_WIDTH = 230;
 const DATE_CARD_GLASS_TINT = 'rgba(255, 255, 255, 0.3)';
 const CAROUSEL_GAP = 10;
 const DATE_TITLE_LINE_HEIGHT = 21;
+const PROF_AVATAR = 22;
+
+/** First + last initial — "Ulf Hlobil" reads UH. */
+function professorInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase();
+  }
+  return (parts[0]?.[0] ?? '').toUpperCase();
+}
+
+/** Headshot from the faculty profile, initials while it loads or if none. */
+function ProfessorAvatar({
+  name,
+  fpid,
+}: {
+  name: string;
+  fpid?: string;
+}) {
+  const { data: profile } = useFacultyProfile(fpid);
+  const photoUrl = profile?.photoUrl;
+
+  if (photoUrl) {
+    return <Image source={{ uri: photoUrl }} style={styles.profAvatar} />;
+  }
+
+  return (
+    <View style={[styles.profAvatar, styles.profAvatarFallback]}>
+      <Text variant="caption" style={styles.profAvatarInitials}>
+        {professorInitials(name)}
+      </Text>
+    </View>
+  );
+}
 
 const RESOURCE_ICON = {
   moodle: msComputer,
@@ -98,9 +132,8 @@ function GradeChip({ course }: { course: Course }) {
 }
 
 /**
- * Academics home (design artboard 04). Burgundy masthead carrying the term
- * stats, then the light body: courses, the upcoming-dates carousel, and the
- * resources grid.
+ * Academics home. White masthead with the term stats, then the light body:
+ * courses, the upcoming-dates carousel, and the resources grid.
  */
 export function AcademicsHomeScreen({ navigation }: Props) {
   const theme = useTheme();
@@ -114,7 +147,7 @@ export function AcademicsHomeScreen({ navigation }: Props) {
 
   useFocusEffect(
     useCallback(() => {
-      setStatusBarStyle('light');
+      setStatusBarStyle('dark');
       return () => setStatusBarStyle('auto');
     }, []),
   );
@@ -134,11 +167,11 @@ export function AcademicsHomeScreen({ navigation }: Props) {
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{ paddingBottom: tabBarPadding + 24 }}
       >
-        {/* Masthead — flat brand wash, matching the Me hero. */}
+        {/* Masthead — white wash, black type. */}
         <View style={[styles.hero, { paddingTop: insets.top + HEADER_CHROME_TOP_GAP }]}>
           <View
             pointerEvents="none"
-            style={[styles.heroWash, { backgroundColor: theme.color.primary }]}
+            style={[styles.heroWash, { backgroundColor: academicsTheme.heroBackground }]}
           />
 
           <Text
@@ -146,7 +179,7 @@ export function AcademicsHomeScreen({ navigation }: Props) {
             style={{
               fontSize: 27,
               lineHeight: 30,
-              color: '#FFFFFF',
+              color: academicsTheme.headingText,
             }}
           >
             {ACADEMIC_TERM.title}
@@ -154,14 +187,17 @@ export function AcademicsHomeScreen({ navigation }: Props) {
           <Text
             variant="bodySmall"
             style={{
-              fontSize: 14,
+              fontSize: 17,
+              lineHeight: 22,
               color: academicsTheme.heroSubtitle,
               marginTop: 3,
             }}
           >
             {termStatus.label}
           </Text>
-          {termStatus.phase !== 'Between terms' ? (
+          {termStatus.week ||
+          (termStatus.phase !== 'Between terms' &&
+            termStatus.phase !== 'Before classes begin') ? (
             <Text variant="caption" style={{ fontSize: 12, color: academicsTheme.heroMeta, marginTop: 6 }}>
               {termStatus.week
                 ? `Week ${termStatus.week.current} of ${termStatus.week.total} · ${termStatus.phase}`
@@ -178,7 +214,7 @@ export function AcademicsHomeScreen({ navigation }: Props) {
                     variant="caption"
                     numberOfLines={1}
                     style={{
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: '600',
                       letterSpacing: 0.2,
                       color: academicsTheme.heroStatLabel,
@@ -191,11 +227,11 @@ export function AcademicsHomeScreen({ navigation }: Props) {
                     variant="heading3"
                     numberOfLines={1}
                     style={{
-                      fontSize: 20,
-                      lineHeight: 21,
+                      fontSize: 24,
+                      lineHeight: 26,
                       fontWeight: '600',
                       letterSpacing: -0.6,
-                      color: '#FFFFFF',
+                      color: academicsTheme.headingText,
                     }}
                   >
                     {stat.value}
@@ -211,19 +247,19 @@ export function AcademicsHomeScreen({ navigation }: Props) {
           <MeSectionLabel>My courses</MeSectionLabel>
           <View style={styles.courseList}>
             {COURSES.map((course) => (
-              <MeGlassCard key={course.code} contentStyle={styles.courseRow}>
+              <MeGlassCard
+                key={course.code}
+                onPress={() => navigation.navigate('CourseDetail', { eventId: course.eventId })}
+                accessibilityLabel={`${course.code}, ${course.title}. Opens course details.`}
+                contentStyle={styles.courseRow}
+              >
                 <View style={styles.courseText}>
-                  <View style={styles.courseMetaRow}>
-                    <Text
-                      variant="caption"
-                      style={{ fontSize: 11.5, fontWeight: '600', letterSpacing: 0.2, color: course.color }}
-                    >
-                      {course.code}
-                    </Text>
-                    <Text variant="caption" style={{ fontSize: 12, color: academicsTheme.metaText }}>
-                      Prof. {course.prof}
-                    </Text>
-                  </View>
+                  <Text
+                    variant="caption"
+                    style={{ fontSize: 11.5, fontWeight: '600', letterSpacing: 0.2, color: academicsTheme.metaText }}
+                  >
+                    {course.code}
+                  </Text>
                   <Text
                     variant="bodySmall"
                     numberOfLines={1}
@@ -238,6 +274,16 @@ export function AcademicsHomeScreen({ navigation }: Props) {
                   >
                     {course.title}
                   </Text>
+                  <View style={styles.profRow}>
+                    <ProfessorAvatar name={course.prof} fpid={course.professorFpid} />
+                    <Text
+                      variant="caption"
+                      numberOfLines={1}
+                      style={{ flexShrink: 1, fontSize: 12, color: academicsTheme.metaText }}
+                    >
+                      Prof. {course.prof}
+                    </Text>
+                  </View>
                   <Text
                     variant="caption"
                     style={{ fontSize: 12, color: academicsTheme.mutedText, marginTop: 3 }}
@@ -481,7 +527,7 @@ const styles = StyleSheet.create({
   },
   courseRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 13,
     paddingHorizontal: 14,
     paddingVertical: 13,
@@ -490,10 +536,28 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  courseMetaRow: {
+  profRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+  },
+  profAvatar: {
+    width: PROF_AVATAR,
+    height: PROF_AVATAR,
+    borderRadius: PROF_AVATAR / 2,
+  },
+  profAvatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EDEDEF',
+  },
+  profAvatarInitials: {
+    fontSize: 8,
+    lineHeight: 10,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+    color: academicsTheme.metaText,
   },
   gradeChip: {
     width: 38,

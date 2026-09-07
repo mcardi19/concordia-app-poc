@@ -3,7 +3,6 @@ import {
   Alert,
   Animated,
   Pressable,
-  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -26,15 +25,22 @@ import {
 import { ScheduleWeekStrip } from '@/components/feature/schedule';
 import { CampusEventCard } from '@/components/feature/today/CampusEventCard';
 import {
-  CAMPUS_EVENT_FILTERS,
   CAMPUS_TODAY,
+  campusEventCostLabel,
   type CampusEventCategory,
 } from '@/components/feature/today/todayData';
 import {
   MaterialSymbol,
   msExpandMore,
   msSearch,
+  msTuneFillSemibold,
+  msTuneSemibold,
 } from '@/components/icons';
+import {
+  CampusEventFilterSheet,
+  type CostFilter,
+  type FormatFilter,
+} from './CampusEventFilterSheet';
 import { useTheme } from '@/design-system/theme';
 import {
   searchFieldFontSize,
@@ -119,7 +125,8 @@ function MonthTitle({ month, color }: { month: string; color: string }) {
 /**
  * Campus Events — the page behind Home’s “Campus events” section.
  *
- * Search narrows by title/place, chips by category, and the week strip by day.
+ * Search narrows by title/place, the filter sheet by category/format/cost,
+ * and the week strip by day.
  * Mock events carry a `dayOffset` until a real calendar feed lands.
  */
 export function CampusTodayScreen({}: Props) {
@@ -142,6 +149,9 @@ export function CampusTodayScreen({}: Props) {
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterId>('all');
+  const [formatFilter, setFormatFilter] = useState<FormatFilter>('all');
+  const [costFilter, setCostFilter] = useState<CostFilter>('all');
+  const [filterOpen, setFilterOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
   /** Month the title shows — the week being looked at, not only the day selected. */
   const [visibleWeek, setVisibleWeek] = useState(() => startOfDay(new Date()));
@@ -157,13 +167,20 @@ export function CampusTodayScreen({}: Props) {
     return CAMPUS_TODAY.filter((item) => {
       if (item.dayOffset !== selectedOffset) return false;
       if (filter !== 'all' && item.category !== filter) return false;
+      if (formatFilter !== 'all' && item.format !== formatFilter) return false;
+      if (costFilter === 'free' && campusEventCostLabel(item.cost) !== 'Free') {
+        return false;
+      }
+      if (costFilter === 'paid' && campusEventCostLabel(item.cost) === 'Free') {
+        return false;
+      }
       if (!q) return true;
       return (
         item.title.toLowerCase().includes(q) ||
         item.location.toLowerCase().includes(q)
       );
     });
-  }, [filter, query, selectedOffset]);
+  }, [costFilter, filter, formatFilter, query, selectedOffset]);
 
   const onSelectDate = useCallback((date: Date) => {
     const day = startOfDay(date);
@@ -172,6 +189,8 @@ export function CampusTodayScreen({}: Props) {
   }, []);
 
   const radius = theme.radius.lg;
+  const filtersActive =
+    filter !== 'all' || formatFilter !== 'all' || costFilter !== 'all';
   const countLabel =
     filtered.length === 1 ? '1 event' : `${filtered.length} events`;
 
@@ -194,74 +213,59 @@ export function CampusTodayScreen({}: Props) {
           { useNativeDriver: true },
         )}
       >
-        {/* Search */}
+        {/* Search + filters */}
         <View style={styles.searchPad}>
-          <View
-            style={[
-              styles.searchField,
-              {
-                backgroundColor: searchTheme.cardBackground,
-                borderColor: searchTheme.cardBorder,
-              },
-            ]}
-          >
-            <MaterialSymbol icon={msSearch} size={22} color={theme.color.primary} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search events"
-              placeholderTextColor={searchTheme.metaText}
-              autoCorrect={false}
-              returnKeyType="search"
-              accessibilityLabel="Search campus events"
-              style={[styles.searchInput, { color: searchTheme.headingText }]}
-            />
+          <View style={styles.searchRow}>
+            <View
+              style={[
+                styles.searchField,
+                {
+                  backgroundColor: searchTheme.cardBackground,
+                  borderColor: searchTheme.cardBorder,
+                },
+              ]}
+            >
+              <MaterialSymbol icon={msSearch} size={22} color={theme.color.primary} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search events"
+                placeholderTextColor={searchTheme.metaText}
+                autoCorrect={false}
+                returnKeyType="search"
+                accessibilityLabel="Search campus events"
+                style={[styles.searchInput, { color: searchTheme.headingText }]}
+              />
+            </View>
+            <Pressable
+              onPress={() => setFilterOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Filters"
+              accessibilityState={{ selected: filtersActive }}
+              style={({ pressed }) => [
+                styles.filterButton,
+                filtersActive
+                  ? {
+                      backgroundColor: theme.color.primary,
+                      borderColor: theme.color.primary,
+                    }
+                  : {
+                      backgroundColor: searchTheme.cardBackground,
+                      borderColor: searchTheme.cardBorder,
+                    },
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+            >
+              <MaterialSymbol
+                icon={msTuneSemibold}
+                filled={msTuneFillSemibold}
+                active={filtersActive}
+                size={24}
+                color={filtersActive ? '#FFFFFF' : theme.color.primary}
+              />
+            </Pressable>
           </View>
         </View>
-
-        {/* Filter chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipRail}
-          contentContainerStyle={styles.chipRow}
-          keyboardShouldPersistTaps="handled"
-        >
-          {CAMPUS_EVENT_FILTERS.map(({ id, label }) => {
-            const on = filter === id;
-            return (
-              <Pressable
-                key={id}
-                onPress={() => setFilter(id)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: on }}
-                accessibilityLabel={label}
-                style={[
-                  styles.chip,
-                  on
-                    ? {
-                        backgroundColor: theme.color.primary,
-                        borderColor: theme.color.primary,
-                      }
-                    : {
-                        backgroundColor: searchTheme.cardBackground,
-                        borderColor: searchTheme.cardBorder,
-                      },
-                ]}
-              >
-                <Text
-                  variant="bodySmall"
-                  style={[
-                    styles.chipLabel,
-                    { color: on ? theme.color.text.inverse : searchTheme.bodyText },
-                  ]}
-                >
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
 
         {/*
           Same month disclosure as Schedule: tap the title to expand the week
@@ -339,6 +343,23 @@ export function CampusTodayScreen({}: Props) {
       </Animated.ScrollView>
 
       {/* Above the content, below the bar — drawn only once content scrolls up. */}
+      <CampusEventFilterSheet
+        visible={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        category={filter}
+        onCategory={setFilter}
+        format={formatFilter}
+        onFormat={setFormatFilter}
+        cost={costFilter}
+        onCost={setCostFilter}
+        canReset={filtersActive}
+        onReset={() => {
+          setFilter('all');
+          setFormatFilter('all');
+          setCostFilter('all');
+        }}
+      />
+
       <ScrollCurtain
         color={todayTheme.pageBackground}
         height={headerHeight + CURTAIN_FADE_DEPTH}
@@ -358,6 +379,11 @@ const styles = StyleSheet.create({
   searchPad: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   searchField: {
     height: searchFieldHeight,
     borderRadius: searchFieldHeight / 2,
@@ -367,42 +393,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flex: 1,
+  },
+  filterButton: {
+    width: searchFieldHeight,
+    height: searchFieldHeight,
+    borderRadius: searchFieldHeight / 2,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchInput: {
     flex: 1,
     fontSize: searchFieldFontSize,
     paddingVertical: 0,
   },
-  chipRail: {
-    flexGrow: 0,
-    flexShrink: 0,
-    marginTop: 4,
-  },
-  chipRow: {
-    gap: 6,
-    alignItems: 'center',
-    paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingTop: 12,
-    paddingBottom: 4,
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  chipLabel: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '600',
-  },
   monthToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingTop: 10,
+    paddingTop: 16,
     paddingBottom: 2,
   },
   chevronFlipped: {
@@ -417,7 +429,7 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 14,
-    gap: 12,
+    gap: 28,
   },
   empty: {
     fontSize: 15,

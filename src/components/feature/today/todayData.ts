@@ -16,7 +16,7 @@ import { msEventFill } from '@material-symbols-react-native/rounded-400/msEventF
 import { msRestaurantFill } from '@material-symbols-react-native/rounded-400/msRestaurantFill';
 
 /* eslint-disable @typescript-eslint/no-require-imports -- Metro static image assets */
-export const sessionHeroImage = require('../../../../assets/today/session-hero.jpg') as ImageSourcePropType;
+export const sessionHeroImage = require('../../../../assets/today/session-hero.png') as ImageSourcePropType;
 export const updateImage1 = require('../../../../assets/today/update-1.png') as ImageSourcePropType;
 export const updateImage2 = require('../../../../assets/today/update-2.png') as ImageSourcePropType;
 export const campusImage1 = require('../../../../assets/today/campus-1.png') as ImageSourcePropType;
@@ -73,13 +73,18 @@ export type UpdateItem = {
   image: ImageSourcePropType;
 };
 
-/** Filter scopes on the Campus Events screen. */
+/** Filter scopes on the Campus Events screen — Concordia's events taxonomy. */
 export type CampusEventCategory =
-  | 'career'
-  | 'food'
-  | 'wellness'
-  | 'arts'
-  | 'academic';
+  | 'arts-culture'
+  | 'business-entrepreneurship'
+  | 'coop-job-fairs'
+  | 'community'
+  | 'conferences-lectures'
+  | 'health-wellness'
+  | 'tours-info'
+  | 'oral-defences'
+  | 'recreation-sports'
+  | 'workshops-seminars';
 
 export type CampusTodayItem = {
   id: string;
@@ -93,15 +98,37 @@ export type CampusTodayItem = {
    * events calendar feeds dates.
    */
   dayOffset: number;
+  /** Admission. Omit or empty → shown as Free. */
+  cost?: string | null;
+  format: CampusEventFormat;
 };
 
+export type CampusEventFormat = 'in-person' | 'hybrid' | 'online';
+
+export const CAMPUS_EVENT_FORMAT_LABEL: Record<CampusEventFormat, string> = {
+  'in-person': 'In person',
+  hybrid: 'Hybrid',
+  online: 'Online',
+};
+
+/** Admission line: a price if there is one, otherwise Free. */
+export function campusEventCostLabel(cost?: string | null): string {
+  const trimmed = cost?.trim();
+  return trimmed ? trimmed : 'Free';
+}
+
 export const CAMPUS_EVENT_FILTERS: { id: CampusEventCategory | 'all'; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'career', label: 'Career' },
-  { id: 'food', label: 'Food' },
-  { id: 'wellness', label: 'Wellness' },
-  { id: 'arts', label: 'Arts' },
-  { id: 'academic', label: 'Academic' },
+  { id: 'all', label: 'All categories' },
+  { id: 'arts-culture', label: 'Arts & culture' },
+  { id: 'business-entrepreneurship', label: 'Business & entrepreneurship' },
+  { id: 'coop-job-fairs', label: 'Co-op, professional skills & job fairs' },
+  { id: 'community', label: 'Community events' },
+  { id: 'conferences-lectures', label: 'Conferences & lectures' },
+  { id: 'health-wellness', label: 'Health & wellness' },
+  { id: 'tours-info', label: 'Tours & info sessions' },
+  { id: 'oral-defences', label: 'Oral defences & examinations' },
+  { id: 'recreation-sports', label: 'Recreation, sports & fitness' },
+  { id: 'workshops-seminars', label: 'Workshops & seminars' },
 ];
 
 type PinnedChipBase = Omit<PinnedChip, 'iconColor'>;
@@ -221,8 +248,9 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'EV Building',
     time: '11 AM–4 PM',
     image: campusImage1,
-    category: 'career',
+    category: 'coop-job-fairs',
     dayOffset: 0,
+    format: 'in-person',
   },
   {
     id: '2',
@@ -230,8 +258,9 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'EV Building',
     time: '11 AM–4 PM',
     image: campusImage2,
-    category: 'food',
+    category: 'community',
     dayOffset: 0,
+    format: 'in-person',
   },
   {
     id: '3',
@@ -239,8 +268,9 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'SGW Hall Building',
     time: '12–2 PM',
     image: campusImage1,
-    category: 'wellness',
+    category: 'health-wellness',
     dayOffset: 0,
+    format: 'hybrid',
   },
   {
     id: '4',
@@ -248,8 +278,9 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'Loyola Campus Centre',
     time: '5–7 PM',
     image: campusImage2,
-    category: 'arts',
+    category: 'arts-culture',
     dayOffset: 1,
+    format: 'in-person',
   },
   {
     id: '5',
@@ -257,8 +288,9 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'LB Building',
     time: '1–3 PM',
     image: campusImage1,
-    category: 'academic',
+    category: 'conferences-lectures',
     dayOffset: 1,
+    format: 'hybrid',
   },
   {
     id: '6',
@@ -266,8 +298,10 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'MB Building',
     time: '5–7 PM',
     image: campusImage2,
-    category: 'career',
+    category: 'business-entrepreneurship',
     dayOffset: 2,
+    cost: '$15',
+    format: 'in-person',
   },
   {
     id: '7',
@@ -275,8 +309,9 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'Loyola Quad',
     time: '8–9 AM',
     image: campusImage1,
-    category: 'wellness',
+    category: 'recreation-sports',
     dayOffset: 3,
+    format: 'in-person',
   },
   {
     id: '8',
@@ -284,7 +319,9 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     location: 'VA Cinema',
     time: '6–8 PM',
     image: campusImage2,
-    category: 'arts',
+    category: 'arts-culture',
     dayOffset: 4,
+    cost: '$8',
+    format: 'online',
   },
 ];

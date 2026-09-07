@@ -2,10 +2,12 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
+  StyleSheet,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '@/components/design-system';
@@ -249,6 +251,12 @@ export function TodayScreen({ navigation }: Props) {
       style={{ backgroundColor: todayTheme.pageBackground }}
     >
       <View style={{ flex: 1 }} collapsable={false}>
+        <LinearGradient
+          pointerEvents="none"
+          colors={[todayTheme.pageWash, todayTheme.pageWash, todayTheme.pageBackground]}
+          locations={[0, 0.18, 0.48]}
+          style={styles.pageWash}
+        />
         <Animated.ScrollView
           contentContainerStyle={{
             // Clear the self-drawn action chrome (the native header is
@@ -349,3 +357,14 @@ export function TodayScreen({ navigation }: Props) {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  /** Pinned to the viewport so the wash stays while the page scrolls. */
+  pageWash: {
+    position: 'absolute',
+    top: -240,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+});
