@@ -241,6 +241,11 @@ export const LATEST_UPDATES: UpdateItem[] = [
   },
 ];
 
+/** Days from today to a weekday (0 = Sunday). 0 when that weekday is today. */
+function offsetToWeekday(weekday: number): number {
+  return (weekday - new Date().getDay() + 7) % 7;
+}
+
 export const CAMPUS_TODAY: CampusTodayItem[] = [
   {
     id: '1',
@@ -323,5 +328,26 @@ export const CAMPUS_TODAY: CampusTodayItem[] = [
     dayOffset: 4,
     cost: '$8',
     format: 'online',
+  },
+  {
+    id: '9',
+    title: 'Saturday farmers’ market',
+    location: 'Loyola Quad',
+    time: '10 AM–2 PM',
+    image: campusImage1,
+    category: 'community',
+    dayOffset: offsetToWeekday(6),
+    format: 'in-person',
+  },
+  {
+    id: '10',
+    title: 'Sunday jazz brunch',
+    location: 'MB Atrium',
+    time: '11 AM–1 PM',
+    image: campusImage2,
+    category: 'arts-culture',
+    dayOffset: offsetToWeekday(0),
+    cost: '$12',
+    format: 'in-person',
   },
 ];

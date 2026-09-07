@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
+  ScrollView,
   StyleSheet,
   View,
   type NativeScrollEvent,
@@ -41,7 +42,7 @@ import {
 } from '@/navigation/homeScrollTitle';
 import { HomeHeaderBar, HOME_HEADER_BAND } from '@/navigation/HomeHeaderBar';
 import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
-import { useTabBarScrollInset } from '@/navigation/tabBarInset';
+import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import type { TodayStackScreenProps } from '@/navigation/types';
 import { useTodayTheme } from './todayTheme';
 
@@ -49,6 +50,10 @@ type Props = TodayStackScreenProps<'Today'>;
 
 /** Space between the in-flow greeting and the session card. */
 const GREETING_TO_CARD_GAP = 8;
+/** Same as the home ScrollView `gap` — used to compute the session-post snap. */
+const SECTION_GAP = 40;
+/** Extra space left above Pinned when the session card snaps away. */
+const SNAP_ABOVE_PINNED = 24;
 
 const WEEKDAYS_LONG = [
   'Sunday',
@@ -104,7 +109,7 @@ export function TodayScreen({ navigation }: Props) {
   const todayTheme = useTodayTheme();
   const PAGE_BG = todayTheme.pageBackground;
   const insets = useSafeAreaInsets();
-  const tabBarInset = useTabBarScrollInset();
+  const tabBarPadding = useTabBarContentPadding();
   const inset = theme.spacing.screenHorizontal;
   const todaySession = useTodaySession();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -127,6 +132,11 @@ export function TodayScreen({ navigation }: Props) {
     [pinnedIds, pinnedChipCatalog],
   );
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const pinAtRef = useRef(0);
+  const snappingRef = useRef(false);
+  const lastYRef = useRef(0);
+  const dragStartYRef = useRef(0);
 
   const gradientOpacity = useMemo(
     () =>
@@ -181,6 +191,7 @@ export function TodayScreen({ navigation }: Props) {
         insetTopRef.current,
         topBaselineRef.current,
       );
+      lastYRef.current = y;
       // The only per-frame write. Both titles interpolate off this value, so
       // scrolling drives the fade without re-rendering the screen.
       scrollY.setValue(y);
@@ -189,6 +200,87 @@ export function TodayScreen({ navigation }: Props) {
       lastTabMinimizeYRef.current = y;
     },
     [scrollY],
+  );
+
+  const offsetFromEvent = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentInset } = event.nativeEvent;
+      const adjusted = (
+        event.nativeEvent as NativeScrollEvent & {
+          adjustedContentInset?: { top?: number };
+        }
+      ).adjustedContentInset;
+      const reportedInset = adjusted?.top ?? contentInset?.top ?? 0;
+      if (reportedInset > 0) {
+        insetTopRef.current = reportedInset;
+      }
+      return scrollDistanceFromTop(
+        contentOffset.y,
+        insetTopRef.current,
+        topBaselineRef.current,
+      );
+    },
+    [],
+  );
+
+  /**
+   * The session card is a discrete “post”. Down from it always lands on
+   * Pinned. Up from Pinned (or anywhere in the hero gap) lands on the card.
+   * Once Pinned is at the top, scrolling down is free.
+   */
+  const snapSessionPost = useCallback((y: number) => {
+    if (snappingRef.current) return;
+    const pinAt = pinAtRef.current;
+    if (pinAt <= 1) return;
+
+    const start = dragStartYRef.current;
+    const delta = y - start;
+    const atPinned = start >= pinAt - 24;
+    const inHero = y < pinAt - 24;
+
+    let target: number | null = null;
+    if (delta > 10) {
+      if (!atPinned) {
+        target = pinAt;
+      }
+    } else if (delta < -10) {
+      if (inHero || start <= pinAt + 8) {
+        target = 0;
+      }
+    } else if (inHero) {
+      target = y > pinAt / 2 ? pinAt : 0;
+    }
+
+    if (target == null) return;
+    if (Math.abs(y - target) < 2) return;
+    snappingRef.current = true;
+    lastYRef.current = target;
+    dragStartYRef.current = target;
+    scrollRef.current?.scrollTo({ y: target, animated: true });
+    setTimeout(() => {
+      snappingRef.current = false;
+    }, 420);
+  }, []);
+
+  const onScrollBeginDrag = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      snappingRef.current = false;
+      const y = offsetFromEvent(event);
+      lastYRef.current = y;
+      dragStartYRef.current = y;
+    },
+    [offsetFromEvent],
+  );
+
+  const onScrollEndDrag = useCallback(() => {
+    snapSessionPost(lastYRef.current);
+  }, [snapSessionPost]);
+
+  const onMomentumScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      snapSessionPost(offsetFromEvent(event));
+    },
+    [offsetFromEvent, snapSessionPost],
   );
 
   const handleChipPress = useCallback(
@@ -258,19 +350,30 @@ export function TodayScreen({ navigation }: Props) {
           style={styles.pageWash}
         />
         <Animated.ScrollView
+          ref={scrollRef}
           contentContainerStyle={{
-            // Clear the self-drawn action chrome (the native header is
-            // hidden). Safe-area top is still handled by the automatic inset.
-            paddingTop: HOME_HEADER_BAND + theme.spacing.sm,
-            paddingBottom: tabBarInset,
-            gap: 40,
+            paddingTop: chromeBandHeight + theme.spacing.sm,
+            paddingBottom: tabBarPadding,
+            gap: SECTION_GAP,
           }}
-          contentInsetAdjustmentBehavior="automatic"
+          contentInsetAdjustmentBehavior="never"
           scrollEventThrottle={1}
           onScroll={onScroll}
+          onScrollBeginDrag={onScrollBeginDrag}
+          onScrollEndDrag={onScrollEndDrag}
+          onMomentumScrollEnd={onMomentumScrollEnd}
           showsVerticalScrollIndicator={false}
         >
-          <View style={{ paddingHorizontal: inset }}>
+          <View
+            collapsable={false}
+            onLayout={(event) => {
+              pinAtRef.current = Math.max(
+                0,
+                event.nativeEvent.layout.height + SECTION_GAP - SNAP_ABOVE_PINNED,
+              );
+            }}
+            style={{ paddingHorizontal: inset }}
+          >
             <View
               style={{
                 height: GREETING_BLOCK_HEIGHT,

@@ -59,6 +59,7 @@ import {
 import { useBuildings } from '@/hooks/useBuildings';
 import { useServicesSearch } from '@/hooks/useServicesSearch';
 import { horizontalCarouselProps } from '@/components/feature/today';
+import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
 import {
   CURATED_BOOKS,
@@ -84,6 +85,8 @@ type Props = SearchScreenProps<'Search'>;
 
 /** Gap between the back control, the field, and Cancel. */
 const FIELD_ROW_GAP = 10;
+/** Vertical inset so the field's drop shadow is not clipped by the row. */
+const FIELD_SHADOW_PAD = 10;
 
 /** Page metrics for the Browse-services rail — `snapToInterval` needs both. */
 const CATEGORY_PAGE_WIDTH = 300;
@@ -330,6 +333,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
     insets.top +
     12 +
     searchFieldHeight +
+    FIELD_SHADOW_PAD * 2 +
     12 +
     (searched ? SEARCH_SCOPE_CHIP_ROW_HEIGHT : 0);
 
@@ -372,16 +376,20 @@ export function GlobalSearchScreen({ navigation }: Props) {
             </Pressable>
 
             {glass ? (
-              <GlassView
-                isInteractive
-                glassEffectStyle="regular"
-                colorScheme="light"
-                style={styles.field}
-              >
-                {field}
-              </GlassView>
+              <View style={[styles.fieldLift, todayShadowSoft]}>
+                <GlassView
+                  isInteractive
+                  glassEffectStyle="regular"
+                  colorScheme="light"
+                  style={styles.field}
+                >
+                  {field}
+                </GlassView>
+              </View>
             ) : (
-              <View style={[styles.field, styles.fieldFallback]}>{field}</View>
+              <View style={[styles.fieldLift, todayShadowSoft]}>
+                <View style={[styles.field, styles.fieldFallback]}>{field}</View>
+              </View>
             )}
 
             <Animated.View style={cancelStyle}>
@@ -598,8 +606,8 @@ const ZeroState = React.memo(function ZeroState({
           keyboardShouldPersistTaps="handled"
         >
           {pages.map((page, index) => (
-            <SearchSurface key={index} style={styles.categoryPage}>
-              {page.map((category, i) => (
+            <View key={index} style={styles.categoryPage}>
+              {page.map((category) => (
                 <Pressable
                   key={category.key}
                   onPress={() => onOpenCategory(category.key)}
@@ -607,19 +615,13 @@ const ZeroState = React.memo(function ZeroState({
                   accessibilityLabel={`${category.label}. ${category.blurb}`}
                   style={({ pressed }) => [
                     styles.categoryRow,
-                    i < page.length - 1 ? styles.recentDivider : null,
                     { opacity: pressed ? 0.6 : 1 },
                   ]}
                 >
-                  <View
-                    style={[
-                      styles.categoryIcon,
-                      { backgroundColor: `${theme.color.primary}0E` },
-                    ]}
-                  >
+                  <View style={[styles.categoryIcon, todayShadowSoft]}>
                     <MaterialSymbol
                       icon={category.icon}
-                      size={22}
+                      size={26}
                       color={theme.color.primary}
                     />
                   </View>
@@ -637,7 +639,7 @@ const ZeroState = React.memo(function ZeroState({
                   </View>
                 </Pressable>
               ))}
-            </SearchSurface>
+            </View>
           ))}
         </ScrollView>
       </View>
@@ -828,8 +830,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: FIELD_ROW_GAP,
-    // Clips Cancel while its negative margin holds it past the right edge.
+    // Room for the field's drop shadow; still clips Cancel off the right edge.
     overflow: 'hidden',
+    paddingVertical: FIELD_SHADOW_PAD,
   },
   cancel: {
     paddingLeft: 2,
@@ -847,6 +850,12 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  /** Hosts the capsule shadow — overflow on the field itself would clip it. */
+  fieldLift: {
+    flex: 1,
+    borderRadius: searchFieldHeight / 2,
+    backgroundColor: searchTheme.cardBackground,
   },
   field: {
     // Takes the row's remaining width beside the back control.
@@ -947,7 +956,7 @@ const styles = StyleSheet.create({
   categoryRail: {
     gap: CATEGORY_RAIL_GAP,
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingVertical: 4,
+    paddingVertical: 10,
     alignItems: 'stretch',
   },
   categoryPage: {
@@ -955,22 +964,26 @@ const styles = StyleSheet.create({
   },
   categoryRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: 13,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingTop: 14,
   },
   categoryIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: searchTheme.cardBackground,
   },
   categoryText: {
     flex: 1,
     minWidth: 0,
+    justifyContent: 'center',
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 0, 0, 0.22)',
   },
   categoryLabel: {
     fontSize: 16,

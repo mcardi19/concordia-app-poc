@@ -3,6 +3,7 @@ import {
   Alert,
   Animated,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -24,10 +25,12 @@ import {
 } from '@/components/design-system/ScrollCurtain';
 import { ScheduleWeekStrip } from '@/components/feature/schedule';
 import { CampusEventCard } from '@/components/feature/today/CampusEventCard';
+import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 import {
   CAMPUS_TODAY,
   campusEventCostLabel,
   type CampusEventCategory,
+  type CampusTodayItem,
 } from '@/components/feature/today/todayData';
 import {
   MaterialSymbol,
@@ -56,6 +59,15 @@ type Props = TodayStackScreenProps<'CampusToday'>;
 
 type FilterId = CampusEventCategory | 'all';
 
+type EventRangeTab = 'upcoming' | 'today' | 'tomorrow' | 'weekend';
+
+const EVENT_RANGE_TABS: { id: EventRangeTab; label: string }[] = [
+  { id: 'upcoming', label: 'Upcoming' },
+  { id: 'today', label: 'Today' },
+  { id: 'tomorrow', label: 'Tomorrow' },
+  { id: 'weekend', label: 'Weekend' },
+];
+
 const MONTH_OUT_MS = 110;
 const MONTH_IN_SPRING = { damping: 18, stiffness: 220, mass: 0.7 } as const;
 const MONTH_RISE = 5;
@@ -78,6 +90,46 @@ function addDays(date: Date, days: number): Date {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
   return d;
+}
+
+/** Remaining Saturday/Sunday of this weekend, or the coming one on weekdays. */
+function weekendOffsets(today = new Date()): number[] {
+  const weekday = today.getDay();
+  if (weekday === 6) return [0, 1];
+  if (weekday === 0) return [0];
+  const saturday = 6 - weekday;
+  return [saturday, saturday + 1];
+}
+
+function rangeTabForOffset(offset: number, weekend: readonly number[]): EventRangeTab {
+  if (offset === 0) return 'today';
+  if (offset === 1) return 'tomorrow';
+  if (weekend.includes(offset)) return 'weekend';
+  return 'upcoming';
+}
+
+function eventDayLabel(offset: number, today = new Date()): string {
+  if (offset === 0) return 'Today';
+  if (offset === 1) return 'Tomorrow';
+  return addDays(today, offset).toLocaleDateString('en-CA', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+function matchesRange(
+  dayOffset: number,
+  rangeTab: EventRangeTab,
+  selectedOffset: number,
+  weekend: readonly number[],
+  pinUpcomingDay: boolean,
+): boolean {
+  if (rangeTab === 'today') return dayOffset === 0;
+  if (rangeTab === 'tomorrow') return dayOffset === 1;
+  if (rangeTab === 'weekend') return weekend.includes(dayOffset);
+  if (pinUpcomingDay) return dayOffset === selectedOffset;
+  return dayOffset >= 0;
 }
 
 /** Midweek day used to title a week that straddles a month boundary. */
@@ -126,7 +178,8 @@ function MonthTitle({ month, color }: { month: string; color: string }) {
  * Campus Events — the page behind Home’s “Campus events” section.
  *
  * Search narrows by title/place, the filter sheet by category/format/cost,
- * and the week strip by day.
+ * range pills by Upcoming / Today / Tomorrow / Weekend, and the week strip
+ * by a specific day.
  * Mock events carry a `dayOffset` until a real calendar feed lands.
  */
 export function CampusTodayScreen({}: Props) {
@@ -152,6 +205,12 @@ export function CampusTodayScreen({}: Props) {
   const [formatFilter, setFormatFilter] = useState<FormatFilter>('all');
   const [costFilter, setCostFilter] = useState<CostFilter>('all');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [rangeTab, setRangeTab] = useState<EventRangeTab>('upcoming');
+  /**
+   * Upcoming shows every future event unless a week-strip day that is not
+   * Today / Tomorrow / Weekend pinned the list to that single day.
+   */
+  const [pinUpcomingDay, setPinUpcomingDay] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
   /** Month the title shows — the week being looked at, not only the day selected. */
   const [visibleWeek, setVisibleWeek] = useState(() => startOfDay(new Date()));
@@ -160,12 +219,15 @@ export function CampusTodayScreen({}: Props) {
   const [addedIds, setAddedIds] = useState<Set<string>>(() => new Set());
 
   const selectedOffset = dayOffsetFromToday(selectedDate);
+  const weekend = useMemo(() => weekendOffsets(), []);
   const monthLabel = visibleWeek.toLocaleDateString('en-CA', { month: 'long' });
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return CAMPUS_TODAY.filter((item) => {
-      if (item.dayOffset !== selectedOffset) return false;
+      if (!matchesRange(item.dayOffset, rangeTab, selectedOffset, weekend, pinUpcomingDay)) {
+        return false;
+      }
       if (filter !== 'all' && item.category !== filter) return false;
       if (formatFilter !== 'all' && item.format !== formatFilter) return false;
       if (costFilter === 'free' && campusEventCostLabel(item.cost) !== 'Free') {
@@ -179,13 +241,54 @@ export function CampusTodayScreen({}: Props) {
         item.title.toLowerCase().includes(q) ||
         item.location.toLowerCase().includes(q)
       );
-    });
-  }, [costFilter, filter, formatFilter, query, selectedOffset]);
+    }).sort((a, b) => a.dayOffset - b.dayOffset);
+  }, [costFilter, filter, formatFilter, pinUpcomingDay, query, rangeTab, selectedOffset, weekend]);
+
+  const grouped = useMemo(() => {
+    const groups: { offset: number; label: string; items: CampusTodayItem[] }[] = [];
+    for (const item of filtered) {
+      const last = groups[groups.length - 1];
+      if (last && last.offset === item.dayOffset) {
+        last.items.push(item);
+      } else {
+        groups.push({
+          offset: item.dayOffset,
+          label: eventDayLabel(item.dayOffset),
+          items: [item],
+        });
+      }
+    }
+    return groups;
+  }, [filtered]);
+
+  const showDayHeaders = grouped.length > 1;
 
   const onSelectDate = useCallback((date: Date) => {
     const day = startOfDay(date);
     setSelectedDate(day);
     setVisibleWeek(day);
+    const tab = rangeTabForOffset(dayOffsetFromToday(day), weekendOffsets());
+    setRangeTab(tab);
+    setPinUpcomingDay(tab === 'upcoming');
+  }, []);
+
+  const onSelectRange = useCallback((tab: EventRangeTab) => {
+    setRangeTab(tab);
+    setPinUpcomingDay(false);
+    const today = startOfDay(new Date());
+    if (tab === 'today') {
+      setSelectedDate(today);
+      setVisibleWeek(today);
+    } else if (tab === 'tomorrow') {
+      const next = addDays(today, 1);
+      setSelectedDate(next);
+      setVisibleWeek(next);
+    } else if (tab === 'weekend') {
+      const [weekendStart] = weekendOffsets();
+      const next = addDays(today, weekendStart ?? 0);
+      setSelectedDate(next);
+      setVisibleWeek(next);
+    }
   }, []);
 
   const radius = theme.radius.lg;
@@ -219,6 +322,7 @@ export function CampusTodayScreen({}: Props) {
             <View
               style={[
                 styles.searchField,
+                todayShadowSoft,
                 {
                   backgroundColor: searchTheme.cardBackground,
                   borderColor: searchTheme.cardBorder,
@@ -244,6 +348,7 @@ export function CampusTodayScreen({}: Props) {
               accessibilityState={{ selected: filtersActive }}
               style={({ pressed }) => [
                 styles.filterButton,
+                todayShadowSoft,
                 filtersActive
                   ? {
                       backgroundColor: theme.color.primary,
@@ -266,6 +371,53 @@ export function CampusTodayScreen({}: Props) {
             </Pressable>
           </View>
         </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          nestedScrollEnabled
+          directionalLockEnabled
+          style={styles.pillsRail}
+          contentContainerStyle={styles.pillsRow}
+          accessibilityRole="tablist"
+          keyboardShouldPersistTaps="handled"
+        >
+          {EVENT_RANGE_TABS.map((tab) => {
+            const on = tab.id === rangeTab;
+            return (
+              <Pressable
+                key={tab.id}
+                onPress={() => onSelectRange(tab.id)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={tab.label}
+                style={({ pressed }) => [
+                  styles.pill,
+                  on
+                    ? {
+                        backgroundColor: theme.color.primary,
+                        borderColor: theme.color.primary,
+                      }
+                    : {
+                        backgroundColor: searchTheme.cardBackground,
+                        borderColor: searchTheme.cardBorder,
+                      },
+                  { opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.pillLabel,
+                    { color: on ? theme.color.text.inverse : searchTheme.bodyText },
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
         {/*
           Same month disclosure as Schedule: tap the title to expand the week
@@ -291,8 +443,12 @@ export function CampusTodayScreen({}: Props) {
           onVisibleMonthChange={setVisibleWeek}
           onSelectDate={onSelectDate}
           onVisibleWeekChange={(weekStart) => {
-            setSelectedDate((prev) => addDays(weekStart, prev.getDay()));
+            const next = addDays(weekStart, selectedDate.getDay());
+            setSelectedDate(next);
             setVisibleWeek(addDays(weekStart, MIDWEEK_OFFSET));
+            const tab = rangeTabForOffset(dayOffsetFromToday(next), weekendOffsets());
+            setRangeTab(tab);
+            setPinUpcomingDay(tab === 'upcoming');
           }}
         />
 
@@ -306,37 +462,51 @@ export function CampusTodayScreen({}: Props) {
               No events match these filters.
             </Text>
           ) : (
-            filtered.map((item) => (
-              <CampusEventCard
-                key={item.id}
-                item={item}
-                radius={radius}
-                added={addedIds.has(item.id)}
-                onToggleAdd={() => {
-                  const added = addedIds.has(item.id);
-                  Alert.alert(
-                    added ? 'On your schedule' : 'Add to schedule?',
-                    added
-                      ? `Remove “${item.title}” from your schedule?`
-                      : `Add “${item.title}” to your schedule?`,
-                    [
-                      { text: added ? 'Keep' : 'Not now', style: 'cancel' },
-                      {
-                        text: added ? 'Remove' : 'Add',
-                        style: added ? 'destructive' : 'default',
-                        onPress: () => {
-                          setAddedIds((prev) => {
-                            const next = new Set(prev);
-                            if (added) next.delete(item.id);
-                            else next.add(item.id);
-                            return next;
-                          });
-                        },
-                      },
-                    ],
-                  );
-                }}
-              />
+            grouped.map((group) => (
+              <View key={group.offset} style={styles.dayGroup}>
+                {showDayHeaders ? (
+                  <Text
+                    variant="bodySmall"
+                    style={[styles.dayHeader, { color: searchTheme.headingText }]}
+                  >
+                    {group.label}
+                  </Text>
+                ) : null}
+                <View style={styles.dayCards}>
+                  {group.items.map((item) => (
+                    <CampusEventCard
+                      key={item.id}
+                      item={item}
+                      radius={radius}
+                      added={addedIds.has(item.id)}
+                      onToggleAdd={() => {
+                        const added = addedIds.has(item.id);
+                        Alert.alert(
+                          added ? 'On your schedule' : 'Add to schedule?',
+                          added
+                            ? `Remove “${item.title}” from your schedule?`
+                            : `Add “${item.title}” to your schedule?`,
+                          [
+                            { text: added ? 'Keep' : 'Not now', style: 'cancel' },
+                            {
+                              text: added ? 'Remove' : 'Add',
+                              style: added ? 'destructive' : 'default',
+                              onPress: () => {
+                                setAddedIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (added) next.delete(item.id);
+                                  else next.add(item.id);
+                                  return next;
+                                });
+                              },
+                            },
+                          ],
+                        );
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
             ))
           )}
         </View>
@@ -378,6 +548,7 @@ const styles = StyleSheet.create({
   content: {},
   searchPad: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
+    paddingBottom: 4,
   },
   searchRow: {
     flexDirection: 'row',
@@ -409,6 +580,29 @@ const styles = StyleSheet.create({
     fontSize: searchFieldFontSize,
     paddingVertical: 0,
   },
+  pillsRail: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  pillsRow: {
+    gap: 7,
+    alignItems: 'center',
+    paddingHorizontal: semanticSpacing.screenHorizontal,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  pill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  pillLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+  },
   monthToggle: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -430,6 +624,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingTop: 14,
     gap: 28,
+  },
+  dayGroup: {
+    gap: 10,
+  },
+  dayCards: {
+    gap: 28,
+  },
+  dayHeader: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
   },
   empty: {
     fontSize: 15,

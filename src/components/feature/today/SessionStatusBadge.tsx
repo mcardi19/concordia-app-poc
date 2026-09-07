@@ -14,11 +14,11 @@ type Props = {
 };
 
 /**
- * Always sits on a photo/gradient surface — white type over a light frost,
+ * Always sits on a photo/gradient surface — white type over a dark frost,
  * same reasoning as `SessionHero`'s on-scrim colors.
  */
 const ON_PHOTO_BADGE_TEXT = '#FFFFFF';
-const ON_PHOTO_BADGE_WASH = 'rgba(255, 255, 255, 0.12)';
+const ON_PHOTO_BADGE_WASH = 'rgba(0, 0, 0, 0.42)';
 
 const androidBlurMethod =
   Platform.OS === 'android' ? ('dimezisBlurView' as const) : undefined;
@@ -41,8 +41,8 @@ export function SessionStatusBadge({ label, tone = DEFAULT_STATUS_TONE, style }:
     <View style={[badgeChrome, style]}>
       <BlurView
         pointerEvents="none"
-        intensity={24}
-        tint="default"
+        intensity={40}
+        tint="dark"
         experimentalBlurMethod={androidBlurMethod}
         style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
       />

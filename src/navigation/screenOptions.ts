@@ -51,7 +51,7 @@ export function useStackScreenOptions(): NativeStackNavigationOptions {
     }),
     headerShadowVisible: false,
     headerTitleStyle: {
-      fontSize: theme.typography.heading3.fontSize,
+      fontSize: 17,
       fontWeight: primitiveFontWeight.bodySemiBold,
       color: theme.color.text.primary,
     },
