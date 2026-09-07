@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, useTheme, useAppearance } from '@/design-system/theme';
 import { useConcordiaFonts } from '@/design-system/fonts';
+import { DevBranchBadge } from '@/components/dev/DevBranchBadge';
 import { RootNavigator } from '@/navigation';
 import { createNavigationTheme } from '@/navigation/navigationTheme';
 
@@ -32,6 +33,7 @@ function AppNavigation() {
       <NavigationContainer theme={navigationTheme}>
         <RootNavigator />
         <StatusBar style="auto" />
+        <DevBranchBadge />
       </NavigationContainer>
     </SafeAreaProvider>
   );

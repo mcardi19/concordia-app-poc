@@ -3,7 +3,37 @@
  * For production, use EAS environment secrets; never commit secrets to the repo.
  * @see docs/CONCORDIA_APP_ARCHITECTURE.md
  */
-export default {
+
+const { execSync } = require('node:child_process');
+
+/**
+ * Bake the serving checkout into `extra` so a phone pointed at Metro can show
+ * which branch/commit it is actually running. Empty when git is unavailable
+ * (e.g. some CI images). Restart Metro after switching branches — config is
+ * read at bundler start, not on Fast Refresh.
+ */
+function gitInfo() {
+  try {
+    const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    const commit = execSync('git rev-parse --short HEAD', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    if (!branch || !commit || branch === 'HEAD') {
+      return { gitBranch: commit ? `detached@${commit}` : undefined, gitCommit: commit || undefined };
+    }
+    return { gitBranch: branch, gitCommit: commit };
+  } catch {
+    return { gitBranch: undefined, gitCommit: undefined };
+  }
+}
+
+const { gitBranch, gitCommit } = gitInfo();
+
+module.exports = {
   expo: {
     name: 'Concordia',
     slug: 'concordia-app',
@@ -75,6 +105,9 @@ export default {
       /** Concordia Open Data (@see docs/CONCORDIA_OPEN_DATA.md) — from root .env, not EXPO_PUBLIC_ */
       concordiaOpenDataUser: process.env.CONCORDIA_OPENDATA_USER,
       concordiaOpenDataApiKey: process.env.CONCORDIA_OPENDATA_API_KEY,
+      /** Dev-only: which checkout Metro was started from (see DevBranchBadge). */
+      gitBranch,
+      gitCommit,
     },
   },
 };
