@@ -1,0 +1,15 @@
+---
+description: Use Material Symbols Rounded for all UI icons
+alwaysApply: true
+---
+
+# Material Symbols only
+
+All user-facing icons are **Material Symbols Rounded** from `@material-symbols-react-native`, rendered with `MaterialSymbol`.
+
+- Add new glyphs in `src/components/icons/symbols.ts` and export them from `src/components/icons/index.ts`.
+- Prefer the rounded 400 outline, and the matching `*Fill` glyph when a selected/active state needs a fill.
+- Do not use SF Symbols, Ionicons, Feather, emoji, or one-off SVGs for UI chrome.
+- Native slots that cannot host a React view (UITabBar, UIBarButtonItem) still use a **Material Symbol** glyph. Export it as a template or colour-baked PNG from that same symbol — do not invent a different icon for the bitmap.
+
+Today’s tab is `wb_sunny` / `wb_sunny` fill, not a house and not a calendar.
