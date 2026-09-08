@@ -1,12 +1,14 @@
 import React from 'react';
 import {
-  Pressable,
+  Image,
+  Platform,
   StyleSheet,
   View,
   type ImageStyle,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle,
@@ -17,7 +19,10 @@ import {
   Text,
   type ProgressiveImageTreatmentProps,
 } from '@/components/design-system';
+import { MaterialSymbol, msChevronRightSemibold } from '@/components/icons';
 import { fonts } from '@/design-system/fonts';
+import { useTheme } from '@/design-system/theme';
+import { useFacultyProfile } from '@/hooks';
 import { HEADER_BAR_BUTTON_SIZE } from '@/navigation/HeaderIconButton';
 import { useTodayTheme } from '@/screens/today/todayTheme';
 import type { TodaySession } from './todayData';
@@ -28,53 +33,50 @@ import {
 } from './sessionSharedTransition';
 
 /**
- * The hero photo always needs a dark scrim and readable white text over it,
- * regardless of app theme — these are fixed, not light/dark pairs.
+ * Near-black derived from brand `#912338` (rgb 145, 35, 56), scaled to ~11%
+ * so the photo overlay reads as ink rather than a burgundy wash.
  */
+const BRAND_INK = '16, 4, 6';
 const SESSION_HERO_SCRIM_COLORS = [
   'transparent',
-  'rgba(0, 0, 0, 0.58)',
-  'rgba(0, 0, 0, 0.94)',
+  `rgba(${BRAND_INK}, 0.62)`,
+  `rgba(${BRAND_INK}, 0.96)`,
 ] as const;
 const ON_SCRIM_TEXT_COLOR = '#FFFFFF';
+const ON_PHOTO_BADGE_WASH = 'rgba(255, 255, 255, 0.2)';
+
+const androidBlurMethod =
+  Platform.OS === 'android' ? ('dimezisBlurView' as const) : undefined;
 
 /**
  * The session card is the only surface opted into Gill Sans Nova for now.
  * Roman family (CDS `gill-sans-nova`) at SemiBold.
- *
- * The weight this title always wanted. It ran at Heavy (800) until the extra
- * width pushed the course name to three lines, then dropped to Book (400)
- * because nothing existed in between — the local set was Book, Heavy,
- * ExtraBold, UltraBold. SemiBold is now licensed and registered, so the title
- * no longer has to choose between too heavy and too light.
  */
 const SESSION_CARD_BRAND_FACE = fonts.brandSemiBold;
 
-export const SESSION_HERO_MIN_HEIGHT = 420;
+export const SESSION_HERO_MIN_HEIGHT = 400;
 export const SESSION_HERO_CONTENT_PAD = 20;
+/** Outer clip for the session card (larger than token `xl` / 12). */
+export const SESSION_CARD_RADIUS = 24;
+/** Photo shift inside the clip: up is negative. Extra height fills the gap. */
+export const SESSION_HERO_IMAGE_OFFSET_Y = -4;
 /** Natural height of the in-session pill (padding + label line). */
 export const SESSION_STATUS_BADGE_HEIGHT = 34;
-/** CTA button height in the meta row. */
+/** @deprecated CTA removed from the homepage card. */
 export const SESSION_ACTIONS_ROW_HEIGHT = 44;
-/** @deprecated Actions sit in the meta row; kept for export stability. */
+/** @deprecated Kept for export stability. */
 export const SESSION_ACTIONS_GAP = 0;
 /** @deprecated No separate actions block under the meta row. */
 export const SESSION_ACTIONS_BLOCK = 0;
+
+const PROF_AVATAR = 28;
+const META_CHEVRON_SIZE = 44;
+const META_CHEVRON_ICON = 24;
 
 type Props = {
   session: TodaySession;
   /** When false, hides the in-session badge. */
   showStatusBadge?: boolean;
-  /** When false, hides View details. Never falls through to professor. */
-  showActions?: boolean;
-  /** Show professor field (used during expand to crossfade with CTA). */
-  showProfessor?: boolean;
-  /** When false, View details is visual-only (expand overlay). */
-  actionsInteractive?: boolean;
-  /** Reanimated style for the card CTA during expand. */
-  cardActionsStyle?: StyleProp<ViewStyle>;
-  /** Reanimated style for the professor meta field during expand. */
-  profStyle?: StyleProp<ViewStyle>;
   /**
    * Reanimated transform for the hero photo. `cover` resolves against this
    * hero's own box, so the detail hero and the list card crop the photo
@@ -92,13 +94,6 @@ type Props = {
    */
   morphProgress?: SharedValue<number>;
   /**
-   * Negative px offset for right-anchored overlay content. The detail hero is
-   * laid out at screen width but the clip window is card width while collapsed,
-   * so right-anchored cells shift left by the window's missing width to land on
-   * the card's right padding.
-   */
-  rightShift?: SharedValue<number>;
-  /**
    * Negative px offset lifting title + meta so they hug the bottom of a clip
    * window that is still shorter than the hero.
    */
@@ -113,9 +108,6 @@ type Props = {
   chromeHorizontal?: number;
   /** Enable Reanimated shared-element morph for the hero image. */
   sharedTransition?: boolean;
-  onViewDetails?: () => void;
-  onViewDetailsPressIn?: () => void;
-  onViewDetailsPressOut?: () => void;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
   /** Explicit height helps shared-element bounds differ between screens. */
@@ -129,22 +121,13 @@ type Props = {
 export function SessionHero({
   session,
   showStatusBadge = true,
-  showActions = true,
-  showProfessor = false,
-  actionsInteractive = true,
-  cardActionsStyle,
-  profStyle,
   imageStyle,
   onImageLoad,
   morphProgress,
-  rightShift,
   contentShift,
   chromeTop,
   chromeHorizontal,
   sharedTransition = false,
-  onViewDetails,
-  onViewDetailsPressIn,
-  onViewDetailsPressOut,
   style,
   contentStyle,
   height = SESSION_HERO_MIN_HEIGHT,
@@ -164,14 +147,17 @@ export function SessionHero({
         fillContainer
           ? {
               position: 'absolute',
-              top: 0,
+              top: SESSION_HERO_IMAGE_OFFSET_Y,
               right: 0,
               bottom: 0,
               left: 0,
               width: '100%',
-              height: '100%',
             }
-          : { width: '100%', height },
+          : {
+              width: '100%',
+              height: height - SESSION_HERO_IMAGE_OFFSET_Y,
+              marginTop: SESSION_HERO_IMAGE_OFFSET_Y,
+            },
         imageStyle,
       ]}
     />
@@ -186,20 +172,11 @@ export function SessionHero({
       session={session}
       todayTheme={todayTheme}
       showStatusBadge={showStatusBadge}
-      showActions={showActions}
-      showProfessor={showProfessor}
-      actionsInteractive={actionsInteractive}
-      cardActionsStyle={cardActionsStyle}
-      profStyle={profStyle}
       morphProgress={morphProgress}
-      rightShift={rightShift}
       contentShift={contentShift}
       chromeTop={chromeTop}
       chromeHorizontal={chromeHorizontal}
       contentStyle={contentStyle}
-      onViewDetails={onViewDetails}
-      onViewDetailsPressIn={onViewDetailsPressIn}
-      onViewDetailsPressOut={onViewDetailsPressOut}
     />
   );
 
@@ -238,41 +215,24 @@ type OverlayProps = {
   session: TodaySession;
   todayTheme: ReturnType<typeof useTodayTheme>;
   showStatusBadge: boolean;
-  showActions: boolean;
-  showProfessor: boolean;
-  actionsInteractive: boolean;
-  cardActionsStyle?: StyleProp<ViewStyle>;
-  profStyle?: StyleProp<ViewStyle>;
   morphProgress?: SharedValue<number>;
-  rightShift?: SharedValue<number>;
   contentShift?: SharedValue<number>;
   chromeTop?: number;
   chromeHorizontal?: number;
   contentStyle?: StyleProp<ViewStyle>;
-  onViewDetails?: () => void;
-  onViewDetailsPressIn?: () => void;
-  onViewDetailsPressOut?: () => void;
 };
 
 function SessionHeroOverlay({
   session,
   todayTheme,
   showStatusBadge,
-  showActions,
-  showProfessor,
-  actionsInteractive,
-  cardActionsStyle,
-  profStyle,
   morphProgress,
-  rightShift,
   contentShift,
   chromeTop,
   chromeHorizontal,
   contentStyle,
-  onViewDetails,
-  onViewDetailsPressIn,
-  onViewDetailsPressOut,
 }: OverlayProps) {
+  const theme = useTheme();
   /**
    * The badge box is fixed; only its position animates. Translating instead of
    * moving top/left/right keeps the morph off the layout thread — a badge that
@@ -298,17 +258,25 @@ function SessionHeroOverlay({
     transform: [{ translateY: contentShift?.value ?? 0 }],
   }));
 
-  // Right-anchored cell tracks the clip window's right edge, not the hero's.
-  const rightCellTransform = useAnimatedStyle(() => ({
-    transform: [{ translateX: rightShift?.value ?? 0 }],
+  // Open affordance — gone the moment the overlay stands in for the card.
+  const expanding = morphProgress != null;
+  const chevronStyle = useAnimatedStyle(() => ({
+    opacity: expanding ? 0 : 1,
   }));
+
+  const hasPlace = Boolean(session.room && session.room !== '—');
+  const hasTime = Boolean(session.timeRange);
+  const hasType = Boolean(session.componentLabel);
+  const hasCode = Boolean(session.courseCode);
+  const hasProfessor = Boolean(session.professor && session.professor !== '—');
+  const hasMeta = hasPlace || hasTime || hasCode || hasType;
 
   return (
     <View pointerEvents="box-none" style={[absoluteFill, contentStyle]}>
       <LinearGradient
         pointerEvents="none"
         colors={SESSION_HERO_SCRIM_COLORS}
-        locations={[0.36, 0.68, 1]}
+        locations={[0.22, 0.54, 1]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.scrim}
@@ -325,24 +293,13 @@ function SessionHeroOverlay({
 
       <Animated.View style={[styles.column, columnTransform]}>
         <View style={styles.title}>
-          <Text
-            variant="body"
-            style={{
-              fontWeight: '600',
-              color: todayTheme.sessionCourseCode,
-              fontSize: 15,
-              lineHeight: 15 * 1.2,
-              letterSpacing: 0,
-            }}
-          >
-            {session.courseCode}
-            {/*
-              The code names the course; this names which of its components
-              you are actually walking to. Same line, because they are one
-              label — "ENGL 369" alone does not say lecture or seminar.
-            */}
-            {session.componentLabel ? ` · ${session.componentLabel}` : ''}
-          </Text>
+          {hasProfessor ? (
+            <SessionProfessorRow
+              name={session.professor}
+              fpid={session.professorFpid}
+            />
+          ) : null}
+
           <Text
             variant="heading2"
             brandFace={SESSION_CARD_BRAND_FACE}
@@ -350,61 +307,115 @@ function SessionHeroOverlay({
               color: ON_SCRIM_TEXT_COLOR,
               fontSize: 40,
               lineHeight: 40,
-              /** −1% tracking, relative to the 40pt face. */
               letterSpacing: 40 * -0.01,
-              /*
-                Tabular figures: the condensed face's proportional digits set
-                a year like "1867" unevenly, the 1 sitting in a narrower slot
-                than its neighbours. Lining figures make every digit the same
-                advance width.
-              */
               fontVariant: ['tabular-nums'],
+              marginBottom: 6,
             }}
           >
             {session.title}
           </Text>
-        </View>
 
-        <View style={[styles.meta, { borderTopColor: todayTheme.sessionMetaRule }]}>
-          <MetaField label="Room" value={session.room} todayTheme={todayTheme} />
-          <MetaField label={session.timeLabel} value={session.timeValue} todayTheme={todayTheme} />
-          <Animated.View style={[styles.rightCell, rightCellTransform]}>
-            {showProfessor ? (
+          {hasMeta ? (
+            <View style={styles.metaWithChevron}>
+              <View style={styles.metaColumn}>
+                {hasCode || hasType ? (
+                  <Text
+                    variant="body"
+                    style={[styles.courseMeta, { color: todayTheme.sessionCourseCode }]}
+                  >
+                    {hasCode ? session.courseCode : null}
+                    {hasCode && hasType ? ' · ' : null}
+                    {hasType ? session.componentLabel : null}
+                  </Text>
+                ) : null}
+
+                {hasPlace || hasTime ? (
+                  <View style={styles.placeTimeRow}>
+                    {hasPlace ? <LocationBadge label={session.room} /> : null}
+                    {hasTime ? (
+                      <Text variant="body" style={styles.time}>
+                        {session.timeRange}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+              </View>
               <Animated.View
                 pointerEvents="none"
-                style={[{ position: 'absolute', right: 0, bottom: 0 }, profStyle]}
+                style={[
+                  styles.metaChevron,
+                  { backgroundColor: ON_SCRIM_TEXT_COLOR },
+                  chevronStyle,
+                ]}
               >
-                <MetaField label="Prof" value={session.professor} todayTheme={todayTheme} />
-              </Animated.View>
-            ) : null}
-            {showActions ? (
-              <Animated.View
-                pointerEvents={actionsInteractive ? 'auto' : 'none'}
-                accessibilityElementsHidden={!actionsInteractive}
-                importantForAccessibility={
-                  actionsInteractive ? 'auto' : 'no-hide-descendants'
-                }
-                style={cardActionsStyle}
-              >
-                <SessionHeroActions
-                  interactive={actionsInteractive}
-                  onViewDetails={onViewDetails}
-                  onViewDetailsPressIn={onViewDetailsPressIn}
-                  onViewDetailsPressOut={onViewDetailsPressOut}
+                <MaterialSymbol
+                  icon={msChevronRightSemibold}
+                  size={META_CHEVRON_ICON}
+                  color={theme.color.primary}
                 />
               </Animated.View>
-            ) : null}
-          </Animated.View>
+            </View>
+          ) : null}
         </View>
       </Animated.View>
     </View>
   );
 }
 
-/**
- * Every box below is fixed. The expand morph only ever writes `transform` and
- * `opacity` on top of these, so no frame of it can dirty layout.
- */
+function LocationBadge({ label }: { label: string }) {
+  return (
+    <View style={styles.locationBadge}>
+      <BlurView
+        pointerEvents="none"
+        intensity={28}
+        tint="light"
+        experimentalBlurMethod={androidBlurMethod}
+        style={StyleSheet.absoluteFill}
+      />
+      <View pointerEvents="none" style={styles.locationWash} />
+      <Text variant="body" style={styles.locationLabel}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function professorInitials(name: string): string {
+  const parts = name.replace(/^Dr\.?\s+/i, '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase();
+  }
+  return (parts[0]?.[0] ?? '').toUpperCase();
+}
+
+function SessionProfessorRow({
+  name,
+  fpid,
+}: {
+  name: string;
+  fpid?: string;
+}) {
+  const { data: profile } = useFacultyProfile(fpid);
+  const photoUrl = profile?.photoUrl;
+
+  return (
+    <View style={styles.professorRow}>
+      {photoUrl ? (
+        <Image source={{ uri: photoUrl }} style={styles.professorAvatar} />
+      ) : (
+        <View style={[styles.professorAvatar, styles.professorAvatarFallback]}>
+          <Text variant="caption" style={styles.professorInitials}>
+            {professorInitials(name)}
+          </Text>
+        </View>
+      )}
+      <Text variant="body" numberOfLines={1} style={styles.professorName}>
+        {name}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   scrim: {
     ...StyleSheet.absoluteFillObject,
@@ -424,133 +435,106 @@ const styles = StyleSheet.create({
   },
   title: {
     gap: 8,
-    marginBottom: 12,
     paddingHorizontal: SESSION_HERO_CONTENT_PAD,
+    paddingBottom: SESSION_HERO_CONTENT_PAD,
   },
-  meta: {
+  metaWithChevron: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 16,
-    padding: SESSION_HERO_CONTENT_PAD,
-    backgroundColor: 'transparent',
-    borderTopWidth: 1,
+    alignItems: 'center',
+    gap: 12,
   },
-  rightCell: {
+  metaColumn: {
     flex: 1,
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  metaChevron: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: META_CHEVRON_SIZE,
+    height: META_CHEVRON_SIZE,
+    borderRadius: META_CHEVRON_SIZE / 2,
+  },
+  placeTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  locationBadge: {
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+  },
+  locationWash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: ON_PHOTO_BADGE_WASH,
+  },
+  locationLabel: {
+    fontWeight: '600',
+    color: ON_SCRIM_TEXT_COLOR,
+    fontSize: 14,
+    lineHeight: 14 * 1.2,
+  },
+  time: {
+    fontWeight: '500',
+    color: ON_SCRIM_TEXT_COLOR,
+    fontSize: 18,
+    lineHeight: 18 * 1.2,
+    fontVariant: ['tabular-nums'],
+  },
+  courseMeta: {
+    fontWeight: '500',
+    fontSize: 15,
+    lineHeight: 15 * 1.2,
+    letterSpacing: 0,
+  },
+  professorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  professorAvatar: {
+    width: PROF_AVATAR,
+    height: PROF_AVATAR,
+    borderRadius: PROF_AVATAR / 2,
+  },
+  professorAvatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+  },
+  professorInitials: {
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+    color: ON_SCRIM_TEXT_COLOR,
+  },
+  professorName: {
+    flex: 1,
+    fontWeight: '600',
+    color: ON_SCRIM_TEXT_COLOR,
+    fontSize: 15,
+    lineHeight: 15 * 1.25,
   },
 });
 
 /**
- * A flat control, deliberately NOT liquid glass.
- *
- * The expand has to hide this button (it scales away as the card opens) and
- * hide the sheet that contains it (parked until the hero photo paints). Every
- * mechanism for that — alpha, offscreen parking, zero scale — leaves a
- * UIVisualEffectView with no backdrop to sample, so it renders flat and only
- * corrects once the overlay is torn down. That read as the CTA flashing a
- * pressed state on close. A flat fill cannot degrade, and the two copies stay
- * identical through the whole morph.
+ * @deprecated CTA removed from the homepage session card. Kept so existing
+ * imports compile; renders nothing.
  */
-export function SessionHeroActions({
-  interactive = true,
-  onViewDetails,
-  onViewDetailsPressIn,
-  onViewDetailsPressOut,
-}: {
-  /** When false the control is decorative (expand overlay) but looks identical. */
+export function SessionHeroActions(_props: {
   interactive?: boolean;
   onViewDetails?: () => void;
   onViewDetailsPressIn?: () => void;
   onViewDetailsPressOut?: () => void;
-  /** @deprecated Location CTA removed from the homepage primary card. */
   onLocationPress?: () => void;
 }) {
-  const todayTheme = useTodayTheme();
-  const label = (
-    <Text
-      variant="body"
-      style={{
-        fontWeight: '600',
-        color: todayTheme.sessionButtonLabel,
-        fontSize: 16,
-        lineHeight: 16 * 1.2,
-      }}
-    >
-      View details
-    </Text>
-  );
-
-  // One style object, shared by both branches — the list card and the expand
-  // overlay must be identical by construction, not by coincidence.
-  const surface = {
-    height: SESSION_ACTIONS_ROW_HEIGHT,
-    paddingHorizontal: 18,
-    borderRadius: 10,
-    borderCurve: 'continuous' as const,
-    overflow: 'hidden' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    backgroundColor: todayTheme.sessionButton,
-  };
-
-  if (!interactive) {
-    return <View style={surface}>{label}</View>;
-  }
-
-  return (
-    <Pressable
-      onPress={onViewDetails}
-      onPressIn={onViewDetailsPressIn}
-      onPressOut={onViewDetailsPressOut}
-      accessibilityRole="button"
-      accessibilityLabel="View details"
-      style={surface}
-    >
-      {label}
-    </Pressable>
-  );
-}
-
-function MetaField({
-  label,
-  value,
-  todayTheme,
-}: {
-  label: string;
-  value: string;
-  todayTheme: ReturnType<typeof useTodayTheme>;
-}) {
-  return (
-    <View style={{ minWidth: 64 }}>
-      <Text
-        variant="body"
-        style={{
-          fontWeight: '500',
-          color: todayTheme.sessionMetaLabel,
-          fontSize: 16,
-          lineHeight: 16 * 1.2,
-          letterSpacing: 0,
-          marginBottom: 4,
-        }}
-      >
-        {label}
-      </Text>
-      <Text
-        variant="body"
-        style={{
-          fontWeight: '600',
-          color: ON_SCRIM_TEXT_COLOR,
-          fontSize: 17,
-          lineHeight: 17 * 1.2,
-          letterSpacing: 0,
-        }}
-      >
-        {value}
-      </Text>
-    </View>
-  );
+  return null;
 }
 
 const absoluteFill = {

@@ -166,8 +166,8 @@ const styles = StyleSheet.create({
     color: searchTheme.headingText,
   },
   subtitle: {
-    fontSize: 13.5,
-    lineHeight: 13.5 * 1.4,
+    fontSize: 15,
+    lineHeight: 15 * 1.4,
     color: searchTheme.metaText,
     marginTop: 3,
   },

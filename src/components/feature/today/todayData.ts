@@ -17,6 +17,7 @@ import { msRestaurantFill } from '@material-symbols-react-native/rounded-400/msR
 
 /* eslint-disable @typescript-eslint/no-require-imports -- Metro static image assets */
 export const sessionHeroImage = require('../../../../assets/today/session-hero.png') as ImageSourcePropType;
+export const phil232HeroImage = require('../../../../assets/today/phil-232.png') as ImageSourcePropType;
 export const updateImage1 = require('../../../../assets/today/update-1.png') as ImageSourcePropType;
 export const updateImage2 = require('../../../../assets/today/update-2.png') as ImageSourcePropType;
 export const campusImage1 = require('../../../../assets/today/campus-1.png') as ImageSourcePropType;
@@ -36,6 +37,8 @@ export type TodaySession = {
   /** "Ends" while a class is running, "Starts" before it. */
   timeLabel: string;
   timeValue: string;
+  /** Scheduled span, e.g. "10:00–11:15 AM". */
+  timeRange: string;
   room: string;
   professor: string;
   /** Faculty profile slug, when the instructor could be matched to one. */

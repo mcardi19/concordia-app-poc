@@ -3,120 +3,123 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { MaterialSymbol } from '@/components/icons';
 import { Text } from '@/components/design-system';
 import { useTheme } from '@/design-system/theme';
+import { useTodayTheme } from '@/screens/today/todayTheme';
 import type { AttentionItem } from './todayData';
-import { TodaySurfaceFill } from './TodaySurface';
-
-const ICON_TILE = 36;
-const ROW_GAP = 12;
-const ROW_PAD_H = 16;
-/** Divider starts after icon tile + gap. */
-const DIVIDER_INSET = ROW_PAD_H + ICON_TILE + ROW_GAP;
+import { todayShadowSoft } from './todayShadows';
 
 type Props = {
   items: AttentionItem[];
   onActionPress?: (item: AttentionItem) => void;
 };
 
+/**
+ * Same row treatment as Search “Browse services”: white icon chip + inset
+ * hairline, no grouped card. Stacked, not paged.
+ */
 export function TodayAttentionList({ items, onActionPress }: Props) {
   const theme = useTheme();
+  const todayTheme = useTodayTheme();
 
   return (
-    <View
-      style={{
-        borderRadius: theme.radius.lg,
-        borderCurve: 'continuous',
-        overflow: 'hidden',
-      }}
-    >
-      <TodaySurfaceFill radius={theme.radius.lg} />
-
-      {items.map((item, index) => (
-        <View key={item.id}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: ROW_GAP,
-              minHeight: 44,
-              paddingHorizontal: ROW_PAD_H,
-              paddingVertical: 14,
-            }}
-          >
+    <View style={styles.list}>
+      {items.map((item) => {
+        return (
+          <View key={item.id} style={styles.row}>
             <View
-              style={{
-                width: ICON_TILE,
-                height: ICON_TILE,
-                borderRadius: 10,
-                borderCurve: 'continuous',
-                backgroundColor: `${theme.color.primary}14`,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              style={[
+                styles.icon,
+                todayShadowSoft,
+                { backgroundColor: todayTheme.cardBackground },
+              ]}
             >
-              <MaterialSymbol icon={item.icon} size={22} color={theme.color.primary} />
+              <MaterialSymbol icon={item.icon} size={26} color={theme.color.primary} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text
-                variant="body"
-                style={{
-                  fontWeight: '600',
-                  fontSize: 18,
-                  lineHeight: 18 * 1.2,
-                  marginBottom: 2,
-                }}
+            <View style={[styles.body, styles.bodyRule]}>
+              <View style={styles.text}>
+                <Text variant="body" style={styles.title}>
+                  {item.title}
+                </Text>
+                <Text variant="body" numberOfLines={1} style={styles.subtitle}>
+                  {item.subtitle}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => onActionPress?.(item)}
+                accessibilityRole="button"
+                accessibilityLabel={item.actionLabel}
+                style={({ pressed }) => [
+                  styles.pill,
+                  { backgroundColor: `${theme.color.primary}1A`, opacity: pressed ? 0.6 : 1 },
+                ]}
               >
-                {item.title}
-              </Text>
-              <Text
-                variant="body"
-                color="subtle"
-                style={{
-                  fontWeight: '400',
-                  fontSize: 15,
-                  lineHeight: 15 * 1.45,
-                }}
-                numberOfLines={1}
-              >
-                {item.subtitle}
-              </Text>
+                <Text variant="body" color="brand" style={styles.pillLabel}>
+                  {item.actionLabel}
+                </Text>
+              </Pressable>
             </View>
-            <Pressable
-              onPress={() => onActionPress?.(item)}
-              accessibilityRole="button"
-              accessibilityLabel={item.actionLabel}
-              style={{
-                backgroundColor: `${theme.color.primary}1A`,
-                borderRadius: 8,
-                borderCurve: 'continuous',
-                paddingHorizontal: 14,
-                paddingVertical: 8,
-              }}
-            >
-              <Text
-                variant="body"
-                color="brand"
-                style={{
-                  fontWeight: '600',
-                  fontSize: 15,
-                  lineHeight: 15 * 1.2,
-                  letterSpacing: -0.2,
-                }}
-              >
-                {item.actionLabel}
-              </Text>
-            </Pressable>
           </View>
-          {index < items.length - 1 ? (
-            <View
-              style={{
-                height: StyleSheet.hairlineWidth,
-                backgroundColor: theme.color.borderSubtle,
-                marginLeft: DIVIDER_INSET,
-              }}
-            />
-          ) : null}
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  list: {
+    paddingBottom: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 13,
+    paddingTop: 14,
+  },
+  icon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
+  },
+  body: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingBottom: 14,
+  },
+  bodyRule: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 0, 0, 0.22)',
+  },
+  title: {
+    fontSize: 16,
+    lineHeight: 16 * 1.25,
+    fontWeight: '600',
+  },
+  subtitle: {
+    fontSize: 15,
+    lineHeight: 15 * 1.4,
+    color: '#7A7A7C',
+    marginTop: 2,
+  },
+  pill: {
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  pillLabel: {
+    fontWeight: '600',
+    fontSize: 15,
+    lineHeight: 15 * 1.2,
+    letterSpacing: -0.2,
+  },
+});

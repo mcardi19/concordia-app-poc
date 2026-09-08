@@ -396,7 +396,7 @@ export function TodayScreen({ navigation }: Props) {
           </View>
 
           <View style={{ paddingHorizontal: inset }}>
-            <TodaySectionHeader title="Needs attention" showChevron />
+            <TodaySectionHeader title="Needs attention" showChevron marginBottom={8} />
             <TodayAttentionList items={ATTENTION_ITEMS} />
           </View>
 

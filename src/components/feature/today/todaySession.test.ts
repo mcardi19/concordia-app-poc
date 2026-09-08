@@ -22,6 +22,7 @@ describe('deriveTodaySession', () => {
     expect(session.timeLabel).toBe('Ends');
     expect(session.timeValue).toBe('10:00 AM');
     expect(session.room).toBe('H-407');
+    expect(session.timeRange).toBe('8:45–10:00 AM');
   });
 
   it('names the teaching component, which is not always a lecture', () => {

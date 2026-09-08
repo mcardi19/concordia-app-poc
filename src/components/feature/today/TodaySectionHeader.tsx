@@ -32,6 +32,8 @@ type Props = {
   onActionPress?: () => void;
   showChevron?: boolean;
   onPress?: () => void;
+  /** Space below the heading. Defaults to 16. */
+  marginBottom?: number;
 };
 
 export function TodaySectionHeader({
@@ -40,6 +42,7 @@ export function TodaySectionHeader({
   onActionPress,
   showChevron = false,
   onPress,
+  marginBottom = 16,
 }: Props) {
   const theme = useTheme();
 
@@ -68,7 +71,7 @@ export function TodaySectionHeader({
         flexDirection: 'row',
         alignItems: 'flex-end',
         justifyContent: 'space-between',
-        marginBottom: 16,
+        marginBottom,
       }}
     >
       {onPress ? (

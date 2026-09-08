@@ -33,6 +33,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialSymbol, msCloseSemibold } from '@/components/icons';
 import {
+  SESSION_CARD_RADIUS,
   SESSION_HERO_MIN_HEIGHT,
   SessionHero,
 } from '@/components/feature/today/SessionHero';
@@ -299,7 +300,7 @@ export function SessionDetailScreen({ navigation }: Props) {
   }, [reset]);
 
   const cardRadius =
-    pressedOrigin?.borderRadius ?? restingOrigin?.borderRadius ?? theme.radius.xl;
+    pressedOrigin?.borderRadius ?? restingOrigin?.borderRadius ?? SESSION_CARD_RADIUS;
   /**
    * Corner radius at full screen. The old build hid the radius by expanding the
    * sheet past the viewport, which forced every child to carry a matching
@@ -583,18 +584,6 @@ export function SessionDetailScreen({ navigation }: Props) {
     opacity: interpolate(progress.value, [0.62, 0.98], [0, 1], Extrapolation.CLAMP),
   }));
 
-  /**
-   * Fade out the card CTA; do not replace it with Prof in the detail hero.
-   */
-  const cardActionsOpacityStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      progress.value,
-      [0, 0.3, 0.5],
-      [1, 0.35, 0],
-      Extrapolation.CLAMP,
-    ),
-  }));
-
   if (!session || !pressedOrigin || !restingOrigin) {
     return <View style={styles.root} />;
   }
@@ -646,13 +635,9 @@ export function SessionDetailScreen({ navigation }: Props) {
             session={session}
             height={DETAIL_HERO_HEIGHT}
             showStatusBadge
-            showActions
-            actionsInteractive={false}
-            cardActionsStyle={cardActionsOpacityStyle}
             imageStyle={heroImageStyle}
             onImageLoad={onHeroPainted}
             morphProgress={progress}
-            rightShift={rightShift}
             contentShift={contentShift}
             chromeTop={topBarOffset}
             chromeHorizontal={horizontalInset}

@@ -2,12 +2,16 @@ import { useMemo } from 'react';
 import { useNow } from '@/hooks';
 import { useAppearance } from '@/design-system/theme';
 import { MOCK_WEEK_EVENTS } from '@/components/feature/schedule/scheduleMockData';
-import { getDayKey, WEEK_ORDER_KEYS } from '@/components/feature/schedule/scheduleUtils';
+import {
+  formatClock as formatClockParts,
+  getDayKey,
+  WEEK_ORDER_KEYS,
+} from '@/components/feature/schedule/scheduleUtils';
 import {
   SESSION_COMPONENT_LABEL,
   type ScheduleEvent,
 } from '@/components/feature/schedule/scheduleTypes';
-import { sessionHeroImage, type TodaySession } from './todayData';
+import { phil232HeroImage, sessionHeroImage, type TodaySession } from './todayData';
 
 /**
  * Where the student is in their teaching day. The design's contextual states
@@ -62,6 +66,16 @@ function formatClock(minutes: number): string {
   const suffix = h24 >= 12 ? 'PM' : 'AM';
   const h = h24 % 12 === 0 ? 12 : h24 % 12;
   return `${h}:${String(m).padStart(2, '0')} ${suffix}`;
+}
+
+/** "10:00–11:15 AM"; both meridiems when the span crosses noon. */
+function formatTimeRange(startMinutes: number, endMinutes: number): string {
+  const startPeriod = startMinutes >= 12 * 60 ? 'PM' : 'AM';
+  const endPeriod = endMinutes >= 12 * 60 ? 'PM' : 'AM';
+  if (startPeriod === endPeriod) {
+    return `${formatClockParts(startMinutes)}–${formatClockParts(endMinutes, true)}`;
+  }
+  return `${formatClockParts(startMinutes, true)}–${formatClockParts(endMinutes, true)}`;
 }
 
 /**
@@ -128,12 +142,13 @@ function fromEvent(
     // number is when to be there.
     timeLabel: inSession ? 'Ends' : 'Starts',
     timeValue: formatClock(inSession ? event.endMinutes : event.startMinutes),
+    timeRange: formatTimeRange(event.startMinutes, event.endMinutes),
     mode: event.mode,
     room: event.room ?? 'Room TBA',
     professor: event.professor ?? '—',
     professorFpid: event.professorFpid,
     eventId: event.id,
-    image: sessionHeroImage,
+    image: event.courseCode === 'PHIL 232' ? phil232HeroImage : sessionHeroImage,
   };
 }
 
@@ -191,6 +206,7 @@ export function deriveTodaySession(now: Date, scheme: 'light' | 'dark' = 'light'
     state: 'done',
     timeLabel: 'Classes',
     timeValue: `${today.length} of ${today.length}`,
+    timeRange: '',
     room: '—',
     professor: '—',
     image: sessionHeroImage,

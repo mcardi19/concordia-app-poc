@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Dimensions, View } from 'react-native';
+import { Dimensions, Pressable, View } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { useTheme } from '@/design-system/theme';
 import type { TodaySession } from './todayData';
-import { SessionHero } from './SessionHero';
+import { SESSION_CARD_RADIUS, SessionHero } from './SessionHero';
 import { useSessionExpansionStore } from './sessionExpansionStore';
 import {
   PRESS_SCALE,
@@ -34,7 +33,6 @@ const OFFSCREEN_PARK = Dimensions.get('window').width * 2;
  * store, then presents the transparent detail host (no stack push animation).
  */
 export function TodaySessionCard({ session }: Props) {
-  const theme = useTheme();
   const navigation = useNavigation();
   const cardRef = useRef<View>(null);
   const openingRef = useRef(false);
@@ -69,7 +67,7 @@ export function TodaySessionCard({ session }: Props) {
 
   // cardRef is untransformed, so this reports the resting frame at any scale.
   useEffect(() => {
-    const radius = theme.radius.xl;
+    const radius = SESSION_CARD_RADIUS;
     setMeasureResting((callback) => {
       cardRef.current?.measureInWindow((x, y, width, height) => {
         if (width <= 0 || height <= 0) {
@@ -83,7 +81,7 @@ export function TodaySessionCard({ session }: Props) {
       });
     });
     return () => setMeasureResting(null);
-  }, [setMeasureResting, theme.radius.xl]);
+  }, [setMeasureResting]);
 
   const onPressIn = useCallback(() => {
     openingRef.current = false;
@@ -107,7 +105,7 @@ export function TodaySessionCard({ session }: Props) {
 
   const onPress = useCallback(() => {
     openingRef.current = true;
-    const radius = theme.radius.xl;
+    const radius = SESSION_CARD_RADIUS;
 
     const present = (frame: { x: number; y: number; width: number; height: number }) => {
       const { x, y, width, height } = frame;
@@ -141,7 +139,7 @@ export function TodaySessionCard({ session }: Props) {
       }
       present({ x, y, width, height });
     });
-  }, [navigation, open, session, theme.radius.xl]);
+  }, [navigation, open, session]);
 
   return (
     <View ref={cardRef} collapsable={false}>
@@ -151,22 +149,26 @@ export function TodaySessionCard({ session }: Props) {
       >
         <View
           style={{
-            borderRadius: theme.radius.xl,
+            borderRadius: SESSION_CARD_RADIUS,
             borderCurve: 'continuous',
             overflow: 'hidden',
           }}
         >
-          <SessionHero
-            session={session}
-            showActions
-            onViewDetails={onPress}
-            onViewDetailsPressIn={onPressIn}
-            onViewDetailsPressOut={onPressOut}
-            style={{
-              borderRadius: theme.radius.xl,
-              borderCurve: 'continuous',
-            }}
-          />
+          <Pressable
+            onPress={onPress}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            accessibilityRole="button"
+            accessibilityLabel={`${session.courseCode}. ${session.title}. Opens class details.`}
+          >
+            <SessionHero
+              session={session}
+              style={{
+                borderRadius: SESSION_CARD_RADIUS,
+                borderCurve: 'continuous',
+              }}
+            />
+          </Pressable>
         </View>
       </Animated.View>
     </View>

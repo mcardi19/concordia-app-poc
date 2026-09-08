@@ -4,7 +4,12 @@ export {
   useSessionExpansionStore,
   type SessionCardOrigin,
 } from './sessionExpansionStore';
-export { SessionHero, SessionHeroActions, SESSION_ACTIONS_BLOCK } from './SessionHero';
+export {
+  SessionHero,
+  SessionHeroActions,
+  SESSION_ACTIONS_BLOCK,
+  SESSION_CARD_RADIUS,
+} from './SessionHero';
 export {
   SESSION_CARD_SHARED_TAG,
   SESSION_HERO_SHARED_TAG,
