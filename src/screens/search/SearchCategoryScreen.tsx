@@ -7,13 +7,12 @@ import { HeaderBackButton } from '@/navigation/HeaderBackButton';
 import {
   SERVICE_CATEGORIES,
   SearchResultRow,
-  SearchSurface,
 } from '@/components/feature/search';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { getCampusServices } from '@/data/buildings';
+import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 import type { SearchScreenProps } from '@/navigation/types';
-import { categoryIcon } from './globalSearch';
 import { searchTheme } from './searchTheme';
 
 type Props = SearchScreenProps<'SearchCategory'>;
@@ -77,8 +76,8 @@ export function SearchCategoryScreen({ route, navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.masthead}>
-          <View style={[styles.mastheadIcon, { backgroundColor: `${theme.color.primary}14` }]}>
-            <MaterialSymbol icon={category.icon} size={24} color={theme.color.primary} />
+          <View style={[styles.mastheadIcon, todayShadowSoft]}>
+            <MaterialSymbol icon={category.icon} size={30} color={theme.color.primary} />
           </View>
           <View style={styles.mastheadText}>
             <Text variant="heading3" style={styles.title}>
@@ -101,29 +100,25 @@ export function SearchCategoryScreen({ route, navigation }: Props) {
 
         {services.length > 0 ? (
           <View style={styles.section}>
-            <SearchSurface style={styles.card}>
-              {services.map((service, i) => (
-                <SearchResultRow
-                  key={service.id}
-                  title={service.label}
-                  subtitle={service.buildingCode
-                    ? `${service.buildingCode} · ${service.buildingName}`
-                    : service.buildingName}
-                  icon={categoryIcon('service')}
-                  last={i === services.length - 1}
-                />
-              ))}
-            </SearchSurface>
+            {services.map((service, i) => (
+              <SearchResultRow
+                key={service.id}
+                title={service.label}
+                subtitle={service.buildingCode
+                  ? `${service.buildingCode} · ${service.buildingName}`
+                  : service.buildingName}
+                last={i === services.length - 1}
+                flush
+              />
+            ))}
           </View>
         ) : (
           <View style={styles.section}>
-            <SearchSurface style={styles.card}>
-              <View style={styles.emptyRow}>
-                <Text variant="body" style={styles.emptyText}>
-                  {`No ${category.label.toLowerCase()} services are listed for SGW right now.`}
-                </Text>
-              </View>
-            </SearchSurface>
+            <View style={styles.emptyRow}>
+              <Text variant="body" style={styles.emptyText}>
+                {`No ${category.label.toLowerCase()} services are listed for SGW right now.`}
+              </Text>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -149,12 +144,13 @@ const styles = StyleSheet.create({
     paddingTop: 14,
   },
   mastheadIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 14,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: searchTheme.cardBackground,
   },
   mastheadText: {
     flex: 1,
@@ -192,11 +188,8 @@ const styles = StyleSheet.create({
   section: {
     paddingTop: 20,
   },
-  card: {
-    marginHorizontal: semanticSpacing.screenHorizontal,
-  },
   emptyRow: {
-    paddingHorizontal: 14,
+    paddingHorizontal: semanticSpacing.screenHorizontal,
     paddingVertical: 16,
   },
   emptyText: {

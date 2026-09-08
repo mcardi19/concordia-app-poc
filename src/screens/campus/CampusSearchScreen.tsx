@@ -16,7 +16,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { GlassView } from 'expo-glass-effect';
-import { MIN_TOUCH_TARGET_SIZE } from '@/accessibility';
 import { Text } from '@/components/design-system';
 import { canUseLiquidGlass } from '@/components/design-system/liquidGlass';
 import {
@@ -84,7 +83,7 @@ const FIELD_ROW_GAP = 10;
 const STATUS_DOT_SIZE = 8;
 
 /** Matched to the Campus map field so the cross-fade lands the bar in place. */
-const FIELD_HEIGHT = Math.max(MIN_TOUCH_TARGET_SIZE, searchFieldHeight);
+const FIELD_HEIGHT = searchFieldHeight;
 
 /**
  * How long the map takes to fade into this screen. Read by `CampusStack` as
@@ -854,7 +853,7 @@ const styles = StyleSheet.create({
     /*
       Fills the field's height. With only `flex: 1` the input collapses to the
       text's own line box inside a centre-aligned row, so barely 20pt of the
-      52pt field was tappable — a band across the middle. The glass around it
+      field was tappable — a band across the middle. The glass around it
       still showed a press state, which made it look like the tap landed.
     */
     alignSelf: 'stretch',

@@ -17,7 +17,6 @@ import { Text } from '@/components/design-system';
 import { MaterialSymbol, msClose, msSearch } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import { searchFieldFontSize, searchFieldHeight } from '@/design-system/tokens';
-import { MIN_TOUCH_TARGET_SIZE } from '@/accessibility';
 
 type Props = {
   onPress: () => void;
@@ -29,7 +28,7 @@ type Props = {
 };
 
 /** The field's laid-out height — the map reads it to place Apple's logo. */
-export const CAMPUS_SEARCH_FIELD_HEIGHT = Math.max(MIN_TOUCH_TARGET_SIZE, searchFieldHeight);
+export const CAMPUS_SEARCH_FIELD_HEIGHT = searchFieldHeight;
 const SEARCH_FIELD_HEIGHT = CAMPUS_SEARCH_FIELD_HEIGHT;
 /** Clear the capsule’s rounded ends (optical inset past the curve). */
 const SEARCH_FIELD_HORIZONTAL_INSET = 22;

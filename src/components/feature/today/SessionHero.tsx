@@ -71,7 +71,7 @@ export const SESSION_ACTIONS_BLOCK = 0;
 
 const PROF_AVATAR = 28;
 const META_CHEVRON_SIZE = 44;
-const META_CHEVRON_ICON = 24;
+const META_CHEVRON_ICON = 28;
 
 type Props = {
   session: TodaySession;
@@ -269,7 +269,7 @@ function SessionHeroOverlay({
   const hasType = Boolean(session.componentLabel);
   const hasCode = Boolean(session.courseCode);
   const hasProfessor = Boolean(session.professor && session.professor !== '—');
-  const hasMeta = hasPlace || hasTime || hasCode || hasType;
+  const hasMeta = hasPlace || hasTime || hasProfessor;
 
   return (
     <View pointerEvents="box-none" style={[absoluteFill, contentStyle]}>
@@ -293,11 +293,15 @@ function SessionHeroOverlay({
 
       <Animated.View style={[styles.column, columnTransform]}>
         <View style={styles.title}>
-          {hasProfessor ? (
-            <SessionProfessorRow
-              name={session.professor}
-              fpid={session.professorFpid}
-            />
+          {hasCode || hasType ? (
+            <Text
+              variant="body"
+              style={[styles.courseMeta, { color: todayTheme.sessionCourseCode }]}
+            >
+              {hasCode ? session.courseCode : null}
+              {hasCode && hasType ? ' · ' : null}
+              {hasType ? session.componentLabel : null}
+            </Text>
           ) : null}
 
           <Text
@@ -318,25 +322,21 @@ function SessionHeroOverlay({
           {hasMeta ? (
             <View style={styles.metaWithChevron}>
               <View style={styles.metaColumn}>
-                {hasCode || hasType ? (
-                  <Text
-                    variant="body"
-                    style={[styles.courseMeta, { color: todayTheme.sessionCourseCode }]}
-                  >
-                    {hasCode ? session.courseCode : null}
-                    {hasCode && hasType ? ' · ' : null}
-                    {hasType ? session.componentLabel : null}
-                  </Text>
+                {hasProfessor ? (
+                  <SessionProfessorRow
+                    name={session.professor}
+                    fpid={session.professorFpid}
+                  />
                 ) : null}
 
                 {hasPlace || hasTime ? (
                   <View style={styles.placeTimeRow}>
-                    {hasPlace ? <LocationBadge label={session.room} /> : null}
                     {hasTime ? (
                       <Text variant="body" style={styles.time}>
                         {session.timeRange}
                       </Text>
                     ) : null}
+                    {hasPlace ? <LocationBadge label={session.room} /> : null}
                   </View>
                 ) : null}
               </View>
@@ -348,11 +348,13 @@ function SessionHeroOverlay({
                   chevronStyle,
                 ]}
               >
-                <MaterialSymbol
-                  icon={msChevronRightSemibold}
-                  size={META_CHEVRON_ICON}
-                  color={theme.color.primary}
-                />
+                <View style={styles.metaChevronIcon}>
+                  <MaterialSymbol
+                    icon={msChevronRightSemibold}
+                    size={META_CHEVRON_ICON}
+                    color={theme.color.primary}
+                  />
+                </View>
               </Animated.View>
             </View>
           ) : null}
@@ -440,7 +442,7 @@ const styles = StyleSheet.create({
   },
   metaWithChevron: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 12,
   },
   metaColumn: {
@@ -453,6 +455,9 @@ const styles = StyleSheet.create({
     width: META_CHEVRON_SIZE,
     height: META_CHEVRON_SIZE,
     borderRadius: META_CHEVRON_SIZE / 2,
+  },
+  metaChevronIcon: {
+    transform: [{ translateX: 2 }],
   },
   placeTimeRow: {
     flexDirection: 'row',

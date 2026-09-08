@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Animated as RNAnimated,
   Keyboard,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -378,30 +379,32 @@ export function GlobalSearchScreen({ navigation }: Props) {
               </View>
             )}
 
-            <Animated.View style={cancelStyle}>
-              <Pressable
-                onPress={cancelSearch}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel search"
-                hitSlop={6}
-                // Into a shared value, not state — this must not cause a render.
-                onLayout={(e) => {
-                  cancelWidth.value = e.nativeEvent.layout.width;
-                }}
-                style={({ pressed }) => [
-                  styles.cancel,
-                  { opacity: pressed ? 0.5 : 1 },
-                ]}
-              >
-                <Text
-                  variant="bodySmall"
-                  numberOfLines={1}
-                  style={styles.cancelLabel}
+            <View style={styles.cancelClip}>
+              <Animated.View style={cancelStyle}>
+                <Pressable
+                  onPress={cancelSearch}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel search"
+                  hitSlop={6}
+                  // Into a shared value, not state — this must not cause a render.
+                  onLayout={(e) => {
+                    cancelWidth.value = e.nativeEvent.layout.width;
+                  }}
+                  style={({ pressed }) => [
+                    styles.cancel,
+                    { opacity: pressed ? 0.5 : 1 },
+                  ]}
                 >
-                  Cancel
-                </Text>
-              </Pressable>
-            </Animated.View>
+                  <Text
+                    variant="bodySmall"
+                    numberOfLines={1}
+                    style={styles.cancelLabel}
+                  >
+                    Cancel
+                  </Text>
+                </Pressable>
+              </Animated.View>
+            </View>
           </View>
         </View>
 
@@ -422,10 +425,12 @@ export function GlobalSearchScreen({ navigation }: Props) {
         scrollEventThrottle={16}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustKeyboardInsets
         // No tab bar to clear on this screen — just the home indicator.
         contentContainerStyle={{
           paddingTop: fieldRowHeight,
-          paddingBottom: insets.bottom + 24,
+          paddingBottom: insets.bottom + 48,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -816,9 +821,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: FIELD_ROW_GAP,
-    // Room for the field's drop shadow; still clips Cancel off the right edge.
-    overflow: 'hidden',
+    // Shadow room only — Cancel clips in `cancelClip`, not here.
     paddingVertical: FIELD_SHADOW_PAD,
+  },
+  /**
+   * Clips Cancel as it slides off. Kept off the field row so the capsule
+   * shadow is not sheared with it.
+   */
+  cancelClip: {
+    overflow: 'hidden',
   },
   cancel: {
     paddingLeft: 2,
@@ -830,11 +841,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#912238',
   },
-  /** Hosts the capsule shadow — overflow on the field itself would clip it. */
+  /**
+   * Hosts the capsule shadow. iOS: no radius or fill — both act as a
+   * mask and clip the shadow. Android elevation needs an opaque rounded
+   * surface on this same view.
+   */
   fieldLift: {
     flex: 1,
-    borderRadius: searchFieldHeight / 2,
-    backgroundColor: searchTheme.cardBackground,
+    ...Platform.select({
+      android: {
+        borderRadius: searchFieldHeight / 2,
+        backgroundColor: searchTheme.cardBackground,
+      },
+      default: {},
+    }),
   },
   field: {
     // Takes the row's remaining width beside the back control.
@@ -962,7 +982,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0, 0, 0, 0.22)',
+    borderBottomColor: searchTheme.categoryDivider,
   },
   categoryLabel: {
     fontSize: 16,

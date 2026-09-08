@@ -3,6 +3,7 @@ import { Pressable } from 'react-native';
 import type { MsIconDefinition } from 'material-symbols-react-native';
 import { MaterialSymbol } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
+import { semanticSpacing } from '@/design-system/tokens';
 
 /** Matches UIKit bar-button hit area so liquid-glass capsules center the glyph. */
 export const HEADER_BAR_BUTTON_SIZE = 44;
@@ -17,7 +18,7 @@ export const HEADER_CHROME_TOP_GAP = 0;
  * Trailing/leading inset for header action chrome.
  * Matches Home's native bar-button margin and `theme.spacing.screenHorizontal`.
  */
-export const HEADER_CHROME_HORIZONTAL_INSET = 16;
+export const HEADER_CHROME_HORIZONTAL_INSET = semanticSpacing.screenHorizontal;
 
 type Props = {
   icon: MsIconDefinition;

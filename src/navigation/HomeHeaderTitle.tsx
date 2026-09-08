@@ -37,8 +37,9 @@ const COMPACT_RISE = 10;
 
 const LARGE_TITLE_SIZE = 34;
 const LARGE_TITLE_LEADING = 40;
-const LARGE_SUBTITLE_SIZE = 14;
-const LARGE_SUBTITLE_LEADING = 18;
+const LARGE_SUBTITLE_SIZE = 17;
+const LARGE_SUBTITLE_LEADING = 22;
+const LARGE_SUBTITLE_WEIGHT = '600';
 
 const COMPACT_TITLE_SIZE = 21;
 const COMPACT_TITLE_LEADING = 25;
@@ -74,11 +75,13 @@ function GreetingText({
   titleLeading,
   subtitleSize,
   subtitleLeading,
+  subtitleWeight,
 }: Omit<GreetingProps, 'scrollY'> & {
   titleSize: number;
   titleLeading: number;
   subtitleSize: number;
   subtitleLeading: number;
+  subtitleWeight: '400' | '500' | '600' | '700';
 }) {
   return (
     <>
@@ -100,7 +103,7 @@ function GreetingText({
         style={{
           fontSize: subtitleSize,
           lineHeight: subtitleLeading,
-          fontWeight: '400',
+          fontWeight: subtitleWeight,
           color: subtitleColor,
         }}
       >
@@ -128,6 +131,7 @@ export function HomeGreeting({
       titleLeading={LARGE_TITLE_LEADING}
       subtitleSize={LARGE_SUBTITLE_SIZE}
       subtitleLeading={LARGE_SUBTITLE_LEADING}
+      subtitleWeight={LARGE_SUBTITLE_WEIGHT}
     />
   );
 }
@@ -170,6 +174,7 @@ export function HomeGreetingLarge({
         titleLeading={LARGE_TITLE_LEADING}
         subtitleSize={LARGE_SUBTITLE_SIZE}
         subtitleLeading={LARGE_SUBTITLE_LEADING}
+        subtitleWeight={LARGE_SUBTITLE_WEIGHT}
       />
     </Animated.View>
   );

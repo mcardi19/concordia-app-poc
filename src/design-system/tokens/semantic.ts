@@ -121,8 +121,8 @@ export const semanticSpacing = {
   md: primitiveSpacing['16'],
   lg: primitiveSpacing['24'],
   xl: primitiveSpacing['32'],
-  /** Horizontal inset for mobile screens (matches Today tab). */
-  screenHorizontal: primitiveSpacing['16'],
+  /** Horizontal inset for mobile screens — matches the tab bar capsule. */
+  screenHorizontal: primitiveSpacing['20'],
   section: primitiveSpacing['40'],
   button: {
     paddingVertical: primitiveButtonPadding.mobileVertical,
@@ -203,10 +203,12 @@ export const touchTargetMinSize = 48;
 
 /**
  * Search field height, shared by the global search screen and the Campus map
- * field so the two read as the same control. Capsule-shaped at this height —
- * a small corner radius reads as a text box rather than a search field.
+ * field so the two read as the same control. Matches `HEADER_BAR_BUTTON_SIZE`
+ * so a field beside a header action (back, filter, locate) sits flush with it.
+ * Capsule-shaped at this height — a small corner radius reads as a text box
+ * rather than a search field.
  */
-export const searchFieldHeight = 52;
+export const searchFieldHeight = 44;
 
 /**
  * Query and placeholder size in that field. Shared for the same reason as the

@@ -2,7 +2,7 @@ import React, { type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import type { MsIconDefinition } from 'material-symbols-react-native';
 import { Text } from '@/components/design-system';
-import { MaterialSymbol, msChevronRight } from '@/components/icons';
+import { MaterialSymbol, msChevronRight, msChevronRightSemibold } from '@/components/icons';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
 import { searchTheme } from '@/screens/search/searchTheme';
@@ -75,7 +75,7 @@ export function SearchResultGroup({
 type RowProps = {
   title: string;
   subtitle?: string;
-  icon: MsIconDefinition;
+  icon?: MsIconDefinition;
   /** Open/closed line under the subtitle, with its own dot colour. */
   status?: string;
   statusTone?: string;
@@ -83,6 +83,8 @@ type RowProps = {
   highlight?: string;
   last?: boolean;
   onPress?: () => void;
+  /** Sit on the page at the screen margin instead of the inner card inset. */
+  flush?: boolean;
 };
 
 /**
@@ -98,6 +100,7 @@ export function SearchResultRow({
   highlight,
   last,
   onPress,
+  flush,
 }: RowProps) {
   const theme = useTheme();
 
@@ -108,13 +111,16 @@ export function SearchResultRow({
       accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
       style={({ pressed }) => [
         styles.row,
-        !last ? styles.rowDivider : null,
+        flush ? styles.rowFlush : null,
+        !last ? (flush ? styles.rowFlushDivider : styles.rowDivider) : null,
         { opacity: pressed ? 0.6 : 1 },
       ]}
     >
-      <View style={[styles.rowIcon, { backgroundColor: `${theme.color.primary}0E` }]}>
-        <MaterialSymbol icon={icon} size={22} color={theme.color.primary} />
-      </View>
+      {icon ? (
+        <View style={[styles.rowIcon, { backgroundColor: `${theme.color.primary}0E` }]}>
+          <MaterialSymbol icon={icon} size={22} color={theme.color.primary} />
+        </View>
+      ) : null}
 
       <View style={styles.rowText}>
         <Text variant="body" style={styles.rowTitle}>
@@ -143,7 +149,11 @@ export function SearchResultRow({
         ) : null}
       </View>
 
-      <MaterialSymbol icon={msChevronRight} size={20} color={searchTheme.chevron} />
+      <MaterialSymbol
+        icon={flush ? msChevronRightSemibold : msChevronRight}
+        size={flush ? 22 : 20}
+        color={flush ? theme.color.primary : searchTheme.chevron}
+      />
     </Pressable>
   );
 }
@@ -210,6 +220,13 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 14,
     paddingVertical: 14,
+  },
+  rowFlush: {
+    paddingHorizontal: semanticSpacing.screenHorizontal,
+  },
+  rowFlushDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: searchTheme.categoryDivider,
   },
   rowDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,

@@ -32,6 +32,7 @@ export function SearchNeedRail({ needs, onSelect }: Props) {
       keyboardShouldPersistTaps="handled"
       snapToInterval={CARD_WIDTH + 10}
       decelerationRate="fast"
+      style={styles.scroller}
     >
       {needs.map((need) => (
         <Pressable
@@ -70,17 +71,24 @@ export function SearchNeedRail({ needs, onSelect }: Props) {
 }
 
 const styles = StyleSheet.create({
+  scroller: {
+    flexGrow: 0,
+  },
   rail: {
     gap: 10,
     paddingHorizontal: semanticSpacing.screenHorizontal,
-    paddingVertical: 4,
-    alignItems: 'stretch',
+    /*
+      Extra vertical pad so the last row is not sheared by the parent
+      vertical scroller — nested horizontal ScrollViews clip overflow.
+    */
+    paddingTop: 8,
+    paddingBottom: 16,
+    alignItems: 'flex-start',
   },
   card: {
     width: CARD_WIDTH,
   },
   surface: {
-    flex: 1,
     paddingHorizontal: 15,
     paddingVertical: 14,
   },

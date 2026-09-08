@@ -18,7 +18,6 @@ import Animated, {
   interpolate,
   interpolateColor,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
   withSequence,
   withSpring,
@@ -165,6 +164,7 @@ function pagerNumberScale(progress: number, dayOffset: number, stepDays: number)
 function DayCell({
   date,
   selected,
+  today = false,
   pulseId,
   stepDays,
   scrollProgress,
@@ -175,6 +175,8 @@ function DayCell({
 }: {
   date: Date;
   selected: boolean;
+  /** Calendar "today" — kept visible in the month grid even when not selected. */
+  today?: boolean;
   /** Bumps when the selected day changes, including from the timetable pager. */
   pulseId: number;
   stepDays: number;
@@ -188,32 +190,63 @@ function DayCell({
 }) {
   const theme = useTheme();
   const primary = theme.color.primary;
+  const idleFill = `${primary}00`;
   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
   const pressScale = useSharedValue(1);
+  /*
+    Reanimated worklets cannot safely optional-chain an absent SharedValue.
+    Campus Today omits `scrollProgress`; a dummy keeps the swipe worklets valid.
+  */
+  const restProgress = useSharedValue(0);
+  const pagerProgress = scrollProgress ?? restProgress;
   const pressedRef = useRef(false);
   const cellStamp = utcDay(date);
 
-  const fill = useDerivedValue(() => {
-    const offset = dayOffsetFromStamp(cellStamp, selectedStamp.value);
-    return daySelectionFill(scrollProgress?.value ?? 0, offset, stepDays);
-  });
-
   /**
-   * Selected and unselected circles share one resting size. Press still
-   * springs down so the tap reads as a response. Timetable swipes drive the
-   * same squash — and the fill — on the outgoing and incoming day numbers.
+   * Resting fill is a React style, not a worklet. Expanding the month remounts
+   * these cells, and a newly mounted `useAnimatedStyle` can sit at its default
+   * (transparent) until some SharedValue ticks — which is why the selected
+   * circle vanished on the grid. Pager interpolation only overrides mid-swipe.
    */
   const circleStyle = useAnimatedStyle(() => {
-    const progress = scrollProgress?.value ?? 0;
+    const progress = pagerProgress.value;
     const offset = dayOffsetFromStamp(cellStamp, selectedStamp.value);
+    const traveling = Math.abs(progress) > 0.05;
+    const scale =
+      pressScale.value * (traveling ? pagerNumberScale(progress, offset, stepDays) : 1);
+    if (!traveling) {
+      return {
+        backgroundColor: selected ? primary : idleFill,
+        transform: [{ scale }],
+      };
+    }
     return {
-      backgroundColor: interpolateColor(fill.value, [0, 1], [`${primary}00`, primary]),
-      transform: [{ scale: pressScale.value * pagerNumberScale(progress, offset, stepDays) }],
+      backgroundColor: interpolateColor(
+        daySelectionFill(progress, offset, stepDays),
+        [0, 1],
+        [idleFill, primary],
+      ),
+      transform: [{ scale }],
     };
   });
 
-  const idleNumberStyle = useAnimatedStyle(() => ({ opacity: 1 - fill.value }));
-  const selectedNumberStyle = useAnimatedStyle(() => ({ opacity: fill.value }));
+  const idleNumberStyle = useAnimatedStyle(() => {
+    const progress = pagerProgress.value;
+    if (Math.abs(progress) < 0.05) {
+      return { opacity: selected ? 0 : 1 };
+    }
+    const offset = dayOffsetFromStamp(cellStamp, selectedStamp.value);
+    return { opacity: 1 - daySelectionFill(progress, offset, stepDays) };
+  });
+
+  const selectedNumberStyle = useAnimatedStyle(() => {
+    const progress = pagerProgress.value;
+    if (Math.abs(progress) < 0.05) {
+      return { opacity: selected ? 1 : 0 };
+    }
+    const offset = dayOffsetFromStamp(cellStamp, selectedStamp.value);
+    return { opacity: daySelectionFill(progress, offset, stepDays) };
+  });
 
   useEffect(() => {
     if (!selected || pulseId === 0) return;
@@ -236,11 +269,11 @@ function DayCell({
       }}
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      accessibilityLabel={date.toLocaleDateString('en-CA', {
+      accessibilityLabel={`${date.toLocaleDateString('en-CA', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
-      })}
+      })}${today ? ', today' : ''}`}
       style={[styles.day, muted ? styles.dayMuted : null]}
     >
       {showLetter ? (
@@ -257,11 +290,39 @@ function DayCell({
         </Text>
       ) : null}
 
-      <Animated.View style={[styles.circle, showLetter ? null : styles.circleFlush, circleStyle]}>
-        <Animated.Text style={[styles.dayNum, styles.dayNumIdle, idleNumberStyle]}>
+      <Animated.View
+        style={[
+          styles.circle,
+          showLetter ? null : styles.circleFlush,
+          { backgroundColor: selected ? primary : 'transparent' },
+          circleStyle,
+        ]}
+      >
+        {today && !selected ? (
+          <View
+            pointerEvents="none"
+            style={[styles.todayRing, { borderColor: primary }]}
+          />
+        ) : null}
+        <Animated.Text
+          style={[
+            styles.dayNum,
+            styles.dayNumIdle,
+            today && !selected ? { color: primary, fontWeight: '700' } : null,
+            { opacity: selected ? 0 : 1 },
+            idleNumberStyle,
+          ]}
+        >
           {date.getDate()}
         </Animated.Text>
-        <Animated.Text style={[styles.dayNum, styles.dayNumSelected, selectedNumberStyle]}>
+        <Animated.Text
+          style={[
+            styles.dayNum,
+            styles.dayNumSelected,
+            { opacity: selected ? 1 : 0 },
+            selectedNumberStyle,
+          ]}
+        >
           {date.getDate()}
         </Animated.Text>
       </Animated.View>
@@ -320,6 +381,7 @@ export function ScheduleWeekStrip({
     Math.round((startOfWeek(selectedDate).getTime() - anchor.getTime()) / WEEK_MS);
 
   const selectedStampSv = useSharedValue(utcDay(selectedDate));
+  const todayStamp = utcDay(new Date());
 
   useEffect(() => {
     if (skipFirstPulse.current) {
@@ -335,7 +397,9 @@ export function ScheduleWeekStrip({
 
   /*
     Commit the new selected day and drop pager progress in the same layout
-    pass so the fill does not snap back to the outgoing day.
+    pass so the fill does not snap back to the outgoing day. Also zero on
+    expand: a leftover offset would keep the swipe worklet in charge and skip
+    the static selected fill on the remounted month cells.
   */
   useLayoutEffect(() => {
     if (scrollProgress && Math.abs(scrollProgress.value) > 0.05) {
@@ -345,7 +409,7 @@ export function ScheduleWeekStrip({
     if (scrollProgress) {
       scrollProgress.value = 0;
     }
-  }, [scrollProgress, selectedDate, selectedStampSv]);
+  }, [scrollProgress, selectedDate, selectedStampSv, expanded]);
 
   const renderWeek = useCallback(
     ({ item }: ListRenderItemInfo<Date>) => (
@@ -357,6 +421,7 @@ export function ScheduleWeekStrip({
               key={date.toISOString()}
               date={date}
               selected={isSameDay(date, selectedDate)}
+              today={utcDay(date) === todayStamp}
               pulseId={pulseId}
               stepDays={stepDays}
               scrollProgress={scrollProgress}
@@ -368,7 +433,7 @@ export function ScheduleWeekStrip({
         })}
       </View>
     ),
-    [width, selectedDate, onSelectDate, pulseId, stepDays, scrollProgress, selectedStampSv],
+    [width, selectedDate, todayStamp, onSelectDate, pulseId, stepDays, scrollProgress, selectedStampSv],
   );
 
   const onMomentumScrollEnd = useCallback(
@@ -472,8 +537,10 @@ export function ScheduleWeekStrip({
                     key={date.toISOString()}
                     date={date}
                     selected={isSameDay(date, selectedDate)}
+                    today={utcDay(date) === todayStamp}
                     pulseId={pulseId}
                     stepDays={stepDays}
+                    scrollProgress={scrollProgress}
                     selectedStamp={selectedStampSv}
                     onPress={() => onSelectDate(date)}
                     showLetter={false}
@@ -485,7 +552,7 @@ export function ScheduleWeekStrip({
         </View>
       );
     },
-    [selectedDate, onSelectDate, pulseId, stepDays, selectedStampSv],
+    [selectedDate, todayStamp, onSelectDate, pulseId, stepDays, scrollProgress, selectedStampSv],
   );
 
   const getMonthLayout = useCallback(
@@ -643,6 +710,7 @@ const styles = StyleSheet.create({
     height: DAY_ROW_HEIGHT,
   },
   monthRow: {
+    overflow: 'visible',
     height: DAY_ROW_HEIGHT,
   },
   weekdayHeader: {
@@ -660,7 +728,14 @@ const styles = StyleSheet.create({
   circleFlush: {
     marginTop: 0,
   },
+  todayRing: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 1.5,
+    borderRadius: CIRCLE / 2,
+    borderCurve: 'continuous',
+  },
   circle: {
+    overflow: 'visible',
     width: CIRCLE,
     height: CIRCLE,
     borderRadius: CIRCLE / 2,

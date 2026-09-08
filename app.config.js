@@ -55,6 +55,7 @@ export default {
     web: { favicon: './assets/favicon.png' },
     plugins: [
       'expo-dev-client',
+      'expo-video',
       [
         'expo-location',
         {

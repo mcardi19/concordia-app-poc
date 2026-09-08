@@ -11,6 +11,8 @@ export const searchTheme = {
   cardBackground: '#FFFFFF',
   cardBorder: 'rgba(0, 0, 0, 0.06)',
   rowDivider: 'rgba(0, 0, 0, 0.07)',
+  /** Hairline under browse-service rows and un-carded category lists. */
+  categoryDivider: 'rgba(0, 0, 0, 0.22)',
 
   headingText: '#0F0F10',
   bodyText: '#2A2428',

@@ -872,11 +872,11 @@ const styles = StyleSheet.create({
   description: {
     /*
       The longest read on the page, and now the first thing under the title —
-      sized for prose, not for a meta row. Leading tracks the size at ~1.5 so
-      the paragraph keeps its rhythm.
+      sized for prose, not for a meta row. Leading tracks the size at ~1.3 so
+      the paragraph stays compact.
     */
-    fontSize: 18,
-    lineHeight: 27,
+    fontSize: 20,
+    lineHeight: 26,
     fontWeight: '500',
   },
   prerequisites: {
