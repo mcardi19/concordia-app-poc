@@ -17,7 +17,7 @@ export const CURTAIN_FADE_IN = [0, 20] as const;
  * ramp, and keeps its contrast as content passes beneath it. At 40 the wash
  * had already thinned out by the time it reached the greeting's baseline.
  */
-export const CURTAIN_FADE_DEPTH = 76;
+export const CURTAIN_FADE_DEPTH = 96;
 
 /**
  * How far the blur runs past it — much shorter than the colour fade, and
@@ -36,7 +36,7 @@ export const CURTAIN_BLUR_DEPTH = 8;
  * visible band where the midpoint crosses text; weighting the falloff toward
  * the top keeps the fade reading as depth instead of a gradient.
  */
-const STOPS = [1, 0.96, 0.82, 0.55, 0.28, 0.1, 0] as const;
+const STOPS = [1, 0.98, 0.9, 0.68, 0.4, 0.16, 0] as const;
 const LOCATIONS = [0, 0.22, 0.4, 0.58, 0.74, 0.88, 1] as const;
 
 /**

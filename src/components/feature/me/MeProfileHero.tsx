@@ -22,6 +22,7 @@ import {
   HEADER_ICON_SIZE,
 } from '@/navigation/HeaderIconButton';
 import { HeaderBackButton } from '@/navigation/HeaderBackButton';
+import { HeaderCloseButton } from '@/navigation/HeaderCloseButton';
 import { meTheme } from '@/screens/me/meTheme';
 import { todayShadowSoft } from '@/components/feature/today/todayShadows';
 import type { MeProfileStat, StudentProfile } from '@/types/profile';
@@ -50,10 +51,10 @@ type HeaderChromeProps = {
   onSettingsPress?: () => void;
   onSearchPress?: () => void;
   /**
-   * Account is a modal now, so Me home usually gets a back control. The screen
-   * renders with `headerShown: false`; without this the edge-swipe would be
-   * the only way out.
+   * Dismisses the Account modal. Me home is the stack root, so `canGoBack()`
+   * is false — without this the edge-swipe would be the only way out.
    */
+  onClosePress?: () => void;
   onBackPress?: () => void;
 };
 
@@ -258,7 +259,7 @@ function Avatar({ name }: { name: string }) {
 
 /**
  * Account chrome overlay. Search and notifications live on Home now; Me home
- * only passes settings (and back when the modal can dismiss). Other hosts,
+ * only passes settings and a close that dismisses the modal. Other hosts,
  * such as Academic, can still pass search.
  */
 export function MeHeaderChrome({
@@ -266,6 +267,7 @@ export function MeHeaderChrome({
   onNotificationsPress,
   onSettingsPress,
   onSearchPress,
+  onClosePress,
   onBackPress,
 }: HeaderChromeProps) {
   const insets = useSafeAreaInsets();
@@ -296,7 +298,9 @@ export function MeHeaderChrome({
         },
       ]}
     >
-      {onBackPress ? (
+      {onClosePress ? (
+        <HeaderCloseButton onPress={onClosePress} tone="onDark" />
+      ) : onBackPress ? (
         <HeaderBackButton onPress={onBackPress} tone="onDark" />
       ) : null}
 

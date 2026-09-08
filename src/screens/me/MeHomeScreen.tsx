@@ -30,6 +30,7 @@ import { useTabBarContentPadding } from '@/navigation/tabBarInset';
 import { useAuthStore } from '@/state/authStore';
 import { useAccountBalance } from '@/hooks/useAccountBalance';
 import { sumAccountBalance } from '@/api/balance';
+import { dismissAccountModal } from '@/navigation/dismissAccount';
 import type { MeStackScreenProps } from '@/navigation/types';
 import type { MeAccountTile, MeDestination, MeStatusCard } from '@/types/profile';
 import {
@@ -249,7 +250,7 @@ export function MeHomeScreen({ navigation }: Props) {
 
       <MeHeaderChrome
         onSettingsPress={() => navigation.navigate('Settings')}
-        onBackPress={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+        onClosePress={() => dismissAccountModal(navigation)}
       />
 
       <MeCollectionSheet

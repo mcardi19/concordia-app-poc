@@ -10,6 +10,9 @@ import { GradesScreen } from '@/screens/grades/GradesScreen';
 import { BalanceScreen } from '@/screens/balance/BalanceScreen';
 import { searchScreens } from './searchRoutes';
 import { CURTAIN_HEADER, useStackScreenOptions } from './screenOptions';
+import { HeaderIconButton } from './HeaderIconButton';
+import { dismissAccountModal } from './dismissAccount';
+import { msCloseSemibold } from '@/components/icons';
 import type { MeStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<MeStackParamList>();
@@ -29,7 +32,18 @@ export function MeStack() {
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ title: 'Notifications', ...CURTAIN_HEADER }}
+        options={({ navigation }) => ({
+          title: 'Notifications',
+          ...CURTAIN_HEADER,
+          headerBackVisible: false,
+          headerLeft: () => (
+            <HeaderIconButton
+              icon={msCloseSemibold}
+              accessibilityLabel="Close"
+              onPress={() => dismissAccountModal(navigation)}
+            />
+          ),
+        })}
       />
       <Stack.Screen
         name="NotificationDetail"
@@ -38,7 +52,21 @@ export function MeStack() {
            carrying it too would say everything twice. */
         options={{ title: '', ...CURTAIN_HEADER }}
       />
-      <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={({ navigation }) => ({
+          title: 'Profile',
+          headerBackVisible: false,
+          headerLeft: () => (
+            <HeaderIconButton
+              icon={msCloseSemibold}
+              accessibilityLabel="Close"
+              onPress={() => dismissAccountModal(navigation)}
+            />
+          ),
+        })}
+      />
       <Stack.Screen name="Grades" component={GradesScreen} options={{ title: 'Course grades' }} />
       <Stack.Screen name="Balance" component={BalanceScreen} options={{ title: 'Account balance' }} />
       {searchScreens(Stack)}

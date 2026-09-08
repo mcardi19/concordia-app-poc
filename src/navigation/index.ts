@@ -2,6 +2,7 @@ export { RootNavigator } from './RootNavigator';
 export { MainTabs } from './MainTabs';
 export { HeaderIconButton } from './HeaderIconButton';
 export { HeaderBackButton } from './HeaderBackButton';
+export { HeaderCloseButton } from './HeaderCloseButton';
 export { HomeHeaderBar, HOME_HEADER_BAND, HOME_HEADER_TOP_GAP } from './HomeHeaderBar';
 export { useTabBarScrollInset, useTabBarOverlayInset, useFloatingTabBarScrollInset } from './tabBarInset';
 export {
