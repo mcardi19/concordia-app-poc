@@ -5,10 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { Text } from '@/components/design-system';
+import { GlassActionButton, Text } from '@/components/design-system';
 import { fonts } from '@/design-system/fonts';
 import { MaterialSymbol, msSecurity } from '@/components/icons';
-import { todayShadowMedium } from '@/components/feature/today/todayShadows';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -138,20 +137,14 @@ export function LoginScreen() {
           place.
         </Text>
 
-        <Pressable
+        <GlassActionButton
           onPress={login}
           disabled={isLoading}
-          accessibilityRole="button"
           accessibilityLabel={isLoading ? 'Signing in' : 'Sign in'}
-          style={({ pressed }) => [
-            styles.signInButton,
-            todayShadowMedium,
-            {
-              backgroundColor:
-                pressed && !isLoading ? theme.color.primaryHover : theme.color.primary,
-              opacity: isLoading ? 0.88 : 1,
-            },
-          ]}
+          colorScheme="dark"
+          tintColor={theme.color.primary}
+          fallbackBackgroundColor={theme.color.primary}
+          style={styles.signInButton}
         >
           {isLoading ? (
             <ActivityIndicator color="#FFFFFF" />
@@ -160,7 +153,7 @@ export function LoginScreen() {
               Sign in
             </Text>
           )}
-        </Pressable>
+        </GlassActionButton>
 
         <Pressable
           onPress={() => Linking.openURL(PASSWORD_RESET_URL)}
@@ -229,6 +222,7 @@ const styles = StyleSheet.create({
     opacity: 0.86,
   },
   signInButton: {
+    width: '100%',
     height: 56,
     borderRadius: 16,
     borderCurve: 'continuous',
