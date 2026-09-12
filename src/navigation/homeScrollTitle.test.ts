@@ -1,5 +1,7 @@
 import {
-  largeHomeOpacityForScroll,
+  HOME_GREETING_COLLAPSE_AT,
+  HOME_GREETING_EXPAND_AT,
+  homeGreetingCollapsedForScroll,
   nextTopBaseline,
   scrollDistanceFromTop,
 } from './homeScrollTitle';
@@ -35,24 +37,33 @@ describe('nextTopBaseline', () => {
   });
 });
 
-describe('largeHomeOpacityForScroll', () => {
-  const fadeEnd = 10;
-
-  it('is fully visible at the top', () => {
-    expect(largeHomeOpacityForScroll(0, fadeEnd)).toBe(1);
+describe('homeGreetingCollapsedForScroll', () => {
+  it('stays expanded until the greeting reaches the header', () => {
+    expect(homeGreetingCollapsedForScroll(0, false)).toBe(false);
+    expect(homeGreetingCollapsedForScroll(HOME_GREETING_COLLAPSE_AT - 1, false)).toBe(
+      false,
+    );
+    expect(homeGreetingCollapsedForScroll(HOME_GREETING_COLLAPSE_AT, false)).toBe(
+      true,
+    );
   });
 
-  it('is gone by fadeEnd — before a session card can overlap', () => {
-    expect(largeHomeOpacityForScroll(10, fadeEnd)).toBe(0);
-    expect(largeHomeOpacityForScroll(40, fadeEnd)).toBe(0);
+  it('expands before the page is fully back at the top', () => {
+    expect(homeGreetingCollapsedForScroll(HOME_GREETING_EXPAND_AT + 20, true)).toBe(
+      true,
+    );
+    expect(homeGreetingCollapsedForScroll(HOME_GREETING_EXPAND_AT + 1, true)).toBe(
+      true,
+    );
+    expect(homeGreetingCollapsedForScroll(HOME_GREETING_EXPAND_AT, true)).toBe(
+      false,
+    );
+    expect(homeGreetingCollapsedForScroll(16, true)).toBe(false);
   });
 
-  it('interpolates through the fade range', () => {
-    expect(largeHomeOpacityForScroll(5, fadeEnd)).toBe(0.5);
-  });
-
-  it('regression: negative raw offset without baseline keeps opacity at 1', () => {
-    expect(largeHomeOpacityForScroll(scrollDistanceFromTop(-60, 0, null), fadeEnd)).toBe(1);
-    expect(largeHomeOpacityForScroll(scrollDistanceFromTop(-60, 0, -100), fadeEnd)).toBe(0);
+  it('does not chatter between the two thresholds', () => {
+    const mid = (HOME_GREETING_EXPAND_AT + HOME_GREETING_COLLAPSE_AT) / 2;
+    expect(homeGreetingCollapsedForScroll(mid, false)).toBe(false);
+    expect(homeGreetingCollapsedForScroll(mid, true)).toBe(true);
   });
 });

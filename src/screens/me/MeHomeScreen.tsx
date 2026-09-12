@@ -194,7 +194,7 @@ export function MeHomeScreen({ navigation }: Props) {
   }, [open]);
 
   return (
-    <View style={styles.root}>
+    <View collapsable={false} style={styles.root}>
       <Animated.ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}

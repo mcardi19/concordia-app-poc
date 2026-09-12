@@ -6,9 +6,32 @@ import { MainTabs } from './MainTabs';
 import { MeStack } from './MeStack';
 import { LoginScreen } from '@/screens/auth';
 import { SessionDetailScreen } from '@/screens/today/SessionDetailScreen';
+import { NotificationsScreen } from '@/screens/me/NotificationsScreen';
+import { NotificationDetailScreen } from '@/screens/me/NotificationDetailScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+/**
+ * Account sheet. No native header — Me home draws its own chrome.
+ */
+const ACCOUNT_SHEET = {
+  headerShown: false,
+  presentation: 'formSheet',
+  sheetGrabberVisible: true,
+  sheetAllowedDetents: [1],
+} as const;
+
+/**
+ * Inbox sheet: same presentation, empty title so iOS does not paint a large
+ * title over the list. Native headers inside a form sheet size the body to
+ * zero on iOS; the inbox draws its own chrome instead.
+ */
+const INBOX_SHEET = {
+  ...ACCOUNT_SHEET,
+  headerLargeTitleEnabled: false,
+  title: '',
+} as const;
 
 /**
  * Account is a form sheet, so iOS draws the system grabber. Android's modal
@@ -17,7 +40,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  */
 function AccountOverlay() {
   return (
-    <View style={styles.accountRoot}>
+    <View style={styles.sheetRoot}>
       <MeStack />
       {Platform.OS === 'android' ? (
         <View pointerEvents="none" style={styles.grabberWrap}>
@@ -57,15 +80,12 @@ export function RootNavigator() {
             native on iOS (`sheetGrabberVisible`); Android paints one.
             MeStack keeps its in-screen headers; swipe-down dismisses.
           */}
+          <Stack.Screen name="Account" component={AccountOverlay} options={ACCOUNT_SHEET} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} options={INBOX_SHEET} />
           <Stack.Screen
-            name="Account"
-            component={AccountOverlay}
-            options={{
-              headerShown: false,
-              presentation: 'formSheet',
-              sheetGrabberVisible: true,
-              sheetAllowedDetents: [1],
-            }}
+            name="NotificationDetail"
+            component={NotificationDetailScreen}
+            options={INBOX_SHEET}
           />
         </>
       ) : (
@@ -76,7 +96,7 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  accountRoot: {
+  sheetRoot: {
     flex: 1,
   },
   grabberWrap: {
@@ -94,4 +114,3 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(60, 60, 67, 0.3)',
   },
 });
-

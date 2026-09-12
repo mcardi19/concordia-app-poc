@@ -131,6 +131,14 @@ function GradeChip({ course }: { course: Course }) {
   );
 }
 
+function resourceRows(resources: readonly AcademicResource[]) {
+  const rows: AcademicResource[][] = [];
+  for (let i = 0; i < resources.length; i += 2) {
+    rows.push(resources.slice(i, i + 2));
+  }
+  return rows;
+}
+
 /**
  * Academics home. White masthead with the term stats, then the light body:
  * courses, the upcoming-dates carousel, and the resources grid.
@@ -436,39 +444,48 @@ export function AcademicsHomeScreen({ navigation }: Props) {
         <View style={styles.section}>
           <MeSectionLabel>Academic resources</MeSectionLabel>
           <View style={styles.resourceGrid}>
-            {ACADEMIC_RESOURCES.map((resource) => (
-              <MeGlassCard
-                key={resource.id}
-                onPress={() => openResource(resource)}
-                accessibilityLabel={`${resource.label}. ${resource.subtitle}`}
-                style={styles.resourceCard}
-                contentStyle={styles.resourceContent}
-              >
-                <MaterialSymbol
-                  icon={RESOURCE_ICON[resource.icon]}
-                  size={22}
-                  color={theme.color.primary}
-                />
-                <Text
-                  variant="bodySmall"
-                  style={{
-                    fontSize: 17,
-                    lineHeight: 21,
-                    fontWeight: '600',
-                    letterSpacing: -0.2,
-                    color: academicsTheme.headingText,
-                    marginTop: 8,
-                  }}
-                >
-                  {resource.label}
-                </Text>
-                <Text
-                  variant="caption"
-                  style={{ fontSize: 12.5, lineHeight: 16, color: academicsTheme.metaText, marginTop: 2 }}
-                >
-                  {resource.subtitle}
-                </Text>
-              </MeGlassCard>
+            {resourceRows(ACADEMIC_RESOURCES).map((row) => (
+              <View key={row.map((item) => item.id).join('-')} style={styles.resourceRow}>
+                {row.map((resource) => (
+                  <MeGlassCard
+                    key={resource.id}
+                    onPress={() => openResource(resource)}
+                    accessibilityLabel={`${resource.label}. ${resource.subtitle}`}
+                    style={styles.resourceCard}
+                    contentStyle={styles.resourceContent}
+                  >
+                    <MaterialSymbol
+                      icon={RESOURCE_ICON[resource.icon]}
+                      size={22}
+                      color={theme.color.primary}
+                    />
+                    <Text
+                      variant="bodySmall"
+                      style={{
+                        fontSize: 17,
+                        lineHeight: 21,
+                        fontWeight: '600',
+                        letterSpacing: -0.2,
+                        color: academicsTheme.headingText,
+                        marginTop: 8,
+                      }}
+                    >
+                      {resource.label}
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={{
+                        fontSize: 12.5,
+                        lineHeight: 16,
+                        color: academicsTheme.metaText,
+                        marginTop: 2,
+                      }}
+                    >
+                      {resource.subtitle}
+                    </Text>
+                  </MeGlassCard>
+                ))}
+              </View>
             ))}
           </View>
         </View>
@@ -610,15 +627,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   resourceGrid: {
+    gap: 8,
+  },
+  resourceRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'stretch',
     gap: 8,
   },
   resourceCard: {
-    width: '48%',
-    flexGrow: 1,
+    flex: 1,
+    alignSelf: 'stretch',
   },
   resourceContent: {
+    flexGrow: 1,
     padding: 14,
   },
 });

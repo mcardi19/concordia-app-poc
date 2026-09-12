@@ -1,20 +1,32 @@
 /**
- * Helpers for Today large/compact Home title scroll coupling.
+ * Helpers for Today large/compact Home title.
+ *
+ * The morph is not scroll-scrubbed. Crossing a distance threshold (the large
+ * title reaching the header) starts a fixed-duration timing. Scroll velocity
+ * only decides *when* it runs, never how fast.
  *
  * With a transparent header + `contentInsetAdjustmentBehavior="automatic"`,
  * `contentOffset.y` at rest is often negative (≈ `-adjustedContentInset.top`).
- * Fade animations must use distance-from-top, never raw offset alone.
+ * Distance-from-top must use inset, never raw offset alone.
  */
-
-/** Scroll distance (pt) at which large Home is fully faded out. */
-export const LARGE_HOME_FADE_END = 16;
 
 /**
- * Compact title stays hidden until content has cleared the header band
- * (session card CTAs must not sit under the centred title).
+ * Scroll distance (pt) at which the in-flow greeting has tucked under the
+ * header. Crossing this starts the collapse timing.
  */
-export const COMPACT_HOME_FADE_START = 56;
-export const COMPACT_HOME_FADE_END = 100;
+export const HOME_GREETING_COLLAPSE_AT = 64;
+
+/**
+ * Scrolling back up past this brings the large greeting in — before the
+ * page is fully at rest, so it does not wait for the true top.
+ */
+export const HOME_GREETING_EXPAND_AT = 44;
+
+/** Large in-flow greeting fade. */
+export const HOME_GREETING_DURATION = 280;
+
+/** Compact header title + date — slower so they settle after the large title. */
+export const HOME_GREETING_COMPACT_DURATION = 520;
 
 /**
  * Distance scrolled from the true top.
@@ -45,19 +57,18 @@ export function nextTopBaseline(
   return previous ?? contentOffsetY;
 }
 
-/** Large Home opacity for a given scroll distance (1 at top → 0 at fadeEnd). */
-export function largeHomeOpacityForScroll(
+/**
+ * Whether the compact header greeting should be showing, with hysteresis so a
+ * value sitting on the trigger does not flip every frame.
+ */
+export function homeGreetingCollapsedForScroll(
   scrollDistance: number,
-  fadeEnd: number = LARGE_HOME_FADE_END,
-): number {
-  if (fadeEnd <= 0) {
-    return scrollDistance <= 0 ? 1 : 0;
+  currentlyCollapsed: boolean,
+  collapseAt: number = HOME_GREETING_COLLAPSE_AT,
+  expandAt: number = HOME_GREETING_EXPAND_AT,
+): boolean {
+  if (currentlyCollapsed) {
+    return scrollDistance > expandAt;
   }
-  if (scrollDistance <= 0) {
-    return 1;
-  }
-  if (scrollDistance >= fadeEnd) {
-    return 0;
-  }
-  return 1 - scrollDistance / fadeEnd;
+  return scrollDistance >= collapseAt;
 }

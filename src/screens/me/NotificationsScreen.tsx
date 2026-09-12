@@ -1,13 +1,6 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useHeaderHeight } from '@react-navigation/elements';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
-import {
-  CURTAIN_BLUR_DEPTH,
-  CURTAIN_FADE_DEPTH,
-  CURTAIN_FADE_IN,
-  ScrollCurtain,
-} from '@/components/design-system/ScrollCurtain';
 import { MaterialSymbol } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -21,15 +14,16 @@ import {
   type NotificationItem,
 } from './notificationsData';
 import { useMeTheme } from './meTheme';
-import type { MeStackScreenProps } from '@/navigation/types';
+import { InboxSheetChrome } from './InboxSheetChrome';
+import type { RootStackScreenProps } from '@/navigation/types';
 
-type Props = MeStackScreenProps<'Notifications'>;
+type Props = RootStackScreenProps<'Notifications'>;
 
 const ICON_SIZE = 40;
 const ROW_PADDING_TOP = 14;
 
 /**
- * 05a · Notifications — the inbox, reached from the bell in the Me masthead.
+ * 05a · Notifications — the inbox, reached from the Home header bell.
  *
  * Distinct from notification *preferences*: this is what arrived, not what is
  * allowed to arrive. Read state lives here rather than in a store because
@@ -43,22 +37,10 @@ export function NotificationsScreen({ navigation }: Props) {
   const [readIds, setReadIds] = useState<ReadonlySet<string>>(() => new Set());
 
   /*
-    The header is transparent, so the curtain is what keeps content legible as
-    it passes underneath. RN's `Animated` rather than Reanimated because
-    `ScrollCurtain` takes an `Animated.AnimatedInterpolation` — the same value
-    Home and search already drive it with.
+    Form sheets allow two children: a header (`collapsable={false}`) and one
+    ScrollView. A native bar, or a third sibling such as ScrollCurtain, zeros
+    the body on iOS.
   */
-  const headerHeight = useHeaderHeight();
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const curtainOpacity = useMemo(
-    () =>
-      scrollY.interpolate({
-        inputRange: [...CURTAIN_FADE_IN, 9999],
-        outputRange: [0, 1, 1],
-        extrapolate: 'clamp',
-      }),
-    [scrollY],
-  );
 
   const unreadCount = notificationFilterCount(notificationGroups, 'unread', readIds) ?? 0;
 
@@ -86,18 +68,15 @@ export function NotificationsScreen({ navigation }: Props) {
   );
 
   return (
-    <View style={[styles.root, { backgroundColor: me.pageBackground }]}>
-      <Animated.ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: headerHeight + 4 }]}
+    <View
+      collapsable={false}
+      style={[styles.root, { backgroundColor: me.pageBackground }]}
+    >
+      <InboxSheetChrome title="Notifications" onClose={() => navigation.goBack()} />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
-        /* The curtain replaces the bar's own background, so content must run
-           under it rather than being inset below it. */
-        contentInsetAdjustmentBehavior="never"
       >
       {/* Filter chips */}
       <ScrollView
@@ -193,16 +172,7 @@ export function NotificationsScreen({ navigation }: Props) {
           ? 'You’re caught up. Manage notification types in Settings.'
           : 'Manage notification types in Settings.'}
         </Text>
-      </Animated.ScrollView>
-
-      {/* Above the list, below the bar — drawn only once content scrolls up. */}
-      <ScrollCurtain
-        color={me.pageBackground}
-        height={headerHeight + CURTAIN_FADE_DEPTH}
-        blurHeight={headerHeight + CURTAIN_BLUR_DEPTH}
-        blurred
-        opacity={curtainOpacity}
-      />
+      </ScrollView>
     </View>
   );
 }
@@ -299,7 +269,11 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
+    paddingTop: 4,
     paddingBottom: 40,
   },
   chipScroll: {

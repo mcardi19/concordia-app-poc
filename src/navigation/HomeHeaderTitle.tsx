@@ -1,36 +1,29 @@
-import React from 'react';
-import { Animated, StyleSheet, Text as RNText } from 'react-native';
+import React, { useCallback, useRef } from 'react';
+import { StyleSheet, Text as RNText } from 'react-native';
+import Animated, {
+  Easing,
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { HEADER_BAR_BUTTON_SIZE } from './HeaderIconButton';
 import {
-  COMPACT_HOME_FADE_END,
-  COMPACT_HOME_FADE_START,
-  LARGE_HOME_FADE_END,
+  HOME_GREETING_COMPACT_DURATION,
+  HOME_GREETING_DURATION,
+  homeGreetingCollapsedForScroll,
 } from './homeScrollTitle';
 
-type ScrollY = Animated.Value | Animated.AnimatedInterpolation<number>;
-
-export const LARGE_HOME_FADE_RANGE = [0, LARGE_HOME_FADE_END] as const;
-export const COMPACT_HOME_FADE_RANGE = [
-  COMPACT_HOME_FADE_START,
-  COMPACT_HOME_FADE_END,
-] as const;
-
 /*
-  The compact greeting arrives as two beats rather than one: the title runs
-  over the first two thirds of the range and the subtitle over the last two
-  thirds, so they overlap in the middle. Reading the same window twice with
-  different bounds is what staggers them — the subtitle is still moving after
-  the title has settled.
+  Progress 0 = large greeting at rest, 1 = compact header greeting settled.
+  The compact pair still arrives as two beats: title over the first two thirds,
+  subtitle over the last two thirds, overlapping in the middle.
 */
-const COMPACT_SPAN = COMPACT_HOME_FADE_END - COMPACT_HOME_FADE_START;
-const COMPACT_TITLE_RANGE = [
-  COMPACT_HOME_FADE_START,
-  COMPACT_HOME_FADE_START + COMPACT_SPAN * 0.66,
-] as const;
-const COMPACT_SUBTITLE_RANGE = [
-  COMPACT_HOME_FADE_START + COMPACT_SPAN * 0.34,
-  COMPACT_HOME_FADE_END,
-] as const;
+const LARGE_RANGE = [0, 0.55] as const;
+const COMPACT_TITLE_RANGE = [0.12, 0.68] as const;
+const COMPACT_SUBTITLE_RANGE = [0.38, 1] as const;
 
 /** Points each compact line rises through as it fades in. */
 const COMPACT_RISE = 10;
@@ -64,8 +57,66 @@ type GreetingProps = {
   dateLabel: string;
   color: string;
   subtitleColor: string;
-  scrollY: ScrollY;
+  progress: SharedValue<number>;
 };
+
+/**
+ * Scroll distance only trips collapse/expand. The morph itself is a timing
+ * on this value (0 at top → 1 collapsed), so flick speed cannot scrub it.
+ */
+export function useHomeGreetingProgress() {
+  const largeProgress = useSharedValue(0);
+  const compactProgress = useSharedValue(0);
+  const collapsedRef = useRef(false);
+
+  const onScrollDistance = useCallback((distance: number) => {
+    const next = homeGreetingCollapsedForScroll(distance, collapsedRef.current);
+    if (next === collapsedRef.current) {
+      return;
+    }
+    collapsedRef.current = next;
+    const toValue = next ? 1 : 0;
+    largeProgress.value = withTiming(toValue, {
+      duration: HOME_GREETING_DURATION,
+      easing: Easing.out(Easing.cubic),
+    });
+    compactProgress.value = withTiming(toValue, {
+      duration: HOME_GREETING_COMPACT_DURATION,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [compactProgress, largeProgress]);
+
+  return {
+    largeProgress,
+    compactProgress,
+    onGreetingScrollDistance: onScrollDistance,
+  };
+}
+
+function useGreetingMotion(
+  progress: SharedValue<number>,
+  range: readonly [number, number],
+  leaving: boolean,
+) {
+  return useAnimatedStyle(() => {
+    const opacity = interpolate(
+      progress.value,
+      [...range],
+      leaving ? [1, 0] : [0, 1],
+      Extrapolation.CLAMP,
+    );
+    const translateY = interpolate(
+      progress.value,
+      [...range],
+      leaving ? [0, -8] : [COMPACT_RISE, 0],
+      Extrapolation.CLAMP,
+    );
+    return {
+      opacity,
+      transform: [{ translateY }],
+    };
+  });
+}
 
 function GreetingText({
   dateLabel,
@@ -76,7 +127,7 @@ function GreetingText({
   subtitleSize,
   subtitleLeading,
   subtitleWeight,
-}: Omit<GreetingProps, 'scrollY'> & {
+}: Omit<GreetingProps, 'progress'> & {
   titleSize: number;
   titleLeading: number;
   subtitleSize: number;
@@ -121,7 +172,7 @@ export function HomeGreeting({
   dateLabel,
   color,
   subtitleColor,
-}: Omit<GreetingProps, 'scrollY'>) {
+}: Omit<GreetingProps, 'progress'>) {
   return (
     <GreetingText
       dateLabel={dateLabel}
@@ -137,35 +188,19 @@ export function HomeGreeting({
 }
 
 /**
- * Resting greeting — fades out over the first few points of scroll.
- *
- * Opacity comes from `scrollY`, like the translate. It briefly took a
- * React-state opacity instead, to stop the fade sticking; that made every
- * scroll frame a re-render of the whole screen, and the sticking was really
- * the overlay being unmounted and remounted as it faded.
+ * Resting greeting — fades out on the collapse timing, then travels with
+ * the page. Progress, not scroll offset, drives the morph.
  */
 export function HomeGreetingLarge({
   dateLabel,
   color,
   subtitleColor,
-  scrollY,
+  progress,
 }: GreetingProps) {
-  const opacity = scrollY.interpolate({
-    inputRange: [...LARGE_HOME_FADE_RANGE],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-  const translateY = scrollY.interpolate({
-    inputRange: [...LARGE_HOME_FADE_RANGE],
-    outputRange: [0, -8],
-    extrapolate: 'clamp',
-  });
+  const style = useGreetingMotion(progress, LARGE_RANGE, true);
 
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[styles.layer, { opacity, transform: [{ translateY }] }]}
-    >
+    <Animated.View pointerEvents="none" style={[styles.layer, style]}>
       <GreetingText
         dateLabel={dateLabel}
         color={color}
@@ -183,9 +218,10 @@ export function HomeGreetingLarge({
 /**
  * Scrolled greeting — the same words, smaller, on the same left margin.
  *
- * A separate copy rather than the resting one scaled down: the two fade
- * ranges do not meet, so the greeting goes away entirely and comes back
- * small, instead of shrinking continuously under your finger.
+ * A separate copy rather than the resting one scaled down. The fade windows
+ * overlap on the same timed progress, so the large title is still leaving as
+ * the compact one arrives — two opacities, not a live scale, but it reads
+ * as one morph.
  *
  * Left-aligned, which is why this is a screen overlay rather than the
  * navigator's `headerTitle` — that slot is centred and cannot be moved.
@@ -194,7 +230,7 @@ export function HomeGreetingCompact({
   dateLabel,
   color,
   subtitleColor,
-  scrollY,
+  progress,
   inline = false,
 }: GreetingProps & {
   /**
@@ -203,26 +239,8 @@ export function HomeGreetingCompact({
    */
   inline?: boolean;
 }) {
-  const titleOpacity = scrollY.interpolate({
-    inputRange: [...COMPACT_TITLE_RANGE],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-  const titleTranslate = scrollY.interpolate({
-    inputRange: [...COMPACT_TITLE_RANGE],
-    outputRange: [COMPACT_RISE, 0],
-    extrapolate: 'clamp',
-  });
-  const subtitleOpacity = scrollY.interpolate({
-    inputRange: [...COMPACT_SUBTITLE_RANGE],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-  const subtitleTranslate = scrollY.interpolate({
-    inputRange: [...COMPACT_SUBTITLE_RANGE],
-    outputRange: [COMPACT_RISE, 0],
-    extrapolate: 'clamp',
-  });
+  const titleStyle = useGreetingMotion(progress, COMPACT_TITLE_RANGE, false);
+  const subtitleStyle = useGreetingMotion(progress, COMPACT_SUBTITLE_RANGE, false);
 
   return (
     <Animated.View
@@ -233,28 +251,30 @@ export function HomeGreetingCompact({
     >
       <Animated.Text
         numberOfLines={1}
-        style={{
-          fontSize: COMPACT_TITLE_SIZE,
-          lineHeight: COMPACT_TITLE_LEADING,
-          fontWeight: '600',
-          letterSpacing: -0.4,
-          color,
-          opacity: titleOpacity,
-          transform: [{ translateY: titleTranslate }],
-        }}
+        style={[
+          {
+            fontSize: COMPACT_TITLE_SIZE,
+            lineHeight: COMPACT_TITLE_LEADING,
+            fontWeight: '600',
+            letterSpacing: -0.4,
+            color,
+          },
+          titleStyle,
+        ]}
       >
         Today
       </Animated.Text>
       <Animated.Text
         numberOfLines={1}
-        style={{
-          fontSize: COMPACT_SUBTITLE_SIZE,
-          lineHeight: COMPACT_SUBTITLE_LEADING,
-          fontWeight: '400',
-          color: subtitleColor,
-          opacity: subtitleOpacity,
-          transform: [{ translateY: subtitleTranslate }],
-        }}
+        style={[
+          {
+            fontSize: COMPACT_SUBTITLE_SIZE,
+            lineHeight: COMPACT_SUBTITLE_LEADING,
+            fontWeight: '400',
+            color: subtitleColor,
+          },
+          subtitleStyle,
+        ]}
       >
         {dateLabel}
       </Animated.Text>
@@ -267,6 +287,7 @@ const styles = StyleSheet.create({
   layer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   /** Header-row seat: fills the gap between Emergency and the trailing actions. */
   inline: {
@@ -274,6 +295,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     justifyContent: 'center',
     overflow: 'hidden',
+    backgroundColor: 'transparent',
     // Extra air after Emergency — the row gap alone sat the title too close.
     marginLeft: 10,
   },

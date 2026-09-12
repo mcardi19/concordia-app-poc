@@ -289,6 +289,7 @@ export function MeHeaderChrome({
 
   return (
     <View
+      collapsable={false}
       pointerEvents="box-none"
       style={[
         styles.chromeOverlay,

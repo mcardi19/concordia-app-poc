@@ -15,8 +15,8 @@ export function TodayStack() {
   return (
     <Stack.Navigator screenOptions={screenOptions}>
       {/*
-        The Home top chrome — Emergency, the search field, Notifications and
-        Profile — is rendered by the screen (`HomeHeaderBar`) rather than the
+        The Home top chrome — Profile, the search field, Notifications and
+        Emergency — is rendered by the screen (`HomeHeaderBar`) rather than the
         navigator, so the search field can be the dominant full-width element.
       */}
       <Stack.Screen name="Today" component={TodayScreen} options={{ headerShown: false }} />

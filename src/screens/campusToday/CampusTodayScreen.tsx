@@ -291,7 +291,6 @@ export function CampusTodayScreen({}: Props) {
     }
   }, []);
 
-  const radius = theme.radius.lg;
   const filtersActive =
     filter !== 'all' || formatFilter !== 'all' || costFilter !== 'all';
   const countLabel =
@@ -477,7 +476,6 @@ export function CampusTodayScreen({}: Props) {
                     <CampusEventCard
                       key={item.id}
                       item={item}
-                      radius={radius}
                       added={addedIds.has(item.id)}
                       onToggleAdd={() => {
                         const added = addedIds.has(item.id);

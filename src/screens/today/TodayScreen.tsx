@@ -33,7 +33,11 @@ import {
   type PinnedChip,
 } from '@/components/feature/today';
 import { useTheme } from '@/design-system/theme';
-import { GREETING_BLOCK_HEIGHT, HomeGreetingLarge } from '@/navigation/HomeHeaderTitle';
+import {
+  GREETING_BLOCK_HEIGHT,
+  HomeGreetingLarge,
+  useHomeGreetingProgress,
+} from '@/navigation/HomeHeaderTitle';
 import { useNow } from '@/hooks';
 import { HomeHeaderBar, HOME_HEADER_BAND } from '@/navigation/HomeHeaderBar';
 import { reportTabBarScrollOffset } from '@/navigation/tabBarMinimize';
@@ -106,6 +110,8 @@ export function TodayScreen({ navigation }: Props) {
   const inset = theme.spacing.screenHorizontal;
   const todaySession = useTodaySession();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const { largeProgress, compactProgress, onGreetingScrollDistance } =
+    useHomeGreetingProgress();
   const lastTabMinimizeYRef = useRef(0);
   const { chips: defaultChips, catalog: pinnedChipCatalog } = usePinnedChipCatalog();
   const [isPinnedEditing, setIsPinnedEditing] = useState(false);
@@ -153,20 +159,25 @@ export function TodayScreen({ navigation }: Props) {
   /*
     The ScrollView is `contentInsetAdjustmentBehavior="never"` and holds its
     own `paddingTop`, so the resting `contentOffset.y` is 0 and the raw offset
-    already *is* the distance from the top. Clamped at 0 so the top rubber-band
-    reads as "at the top" rather than driving the fades backwards.
+    already *is* the distance from the top. The curtain still maps native
+    `scrollY`. The greeting morph is a separate timing — the listener only
+    trips collapse when the large title reaches the header.
   */
-  const onScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const y = Math.max(0, event.nativeEvent.contentOffset.y);
-      // The only per-frame write. Both titles interpolate off this value, so
-      // scrolling drives the fade without re-rendering the screen.
-      scrollY.setValue(y);
-
-      reportTabBarScrollOffset(y, lastTabMinimizeYRef.current);
-      lastTabMinimizeYRef.current = y;
-    },
-    [scrollY],
+  const onScroll = useMemo(
+    () =>
+      Animated.event(
+        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+        {
+          useNativeDriver: true,
+          listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+            const y = Math.max(0, event.nativeEvent.contentOffset.y);
+            onGreetingScrollDistance(y);
+            reportTabBarScrollOffset(y, lastTabMinimizeYRef.current);
+            lastTabMinimizeYRef.current = y;
+          },
+        },
+      ),
+    [onGreetingScrollDistance, scrollY],
   );
 
   const handleChipPress = useCallback(
@@ -242,7 +253,7 @@ export function TodayScreen({ navigation }: Props) {
             gap: SECTION_GAP,
           }}
           contentInsetAdjustmentBehavior="never"
-          scrollEventThrottle={1}
+          scrollEventThrottle={16}
           onScroll={onScroll}
           showsVerticalScrollIndicator={false}
         >
@@ -257,7 +268,7 @@ export function TodayScreen({ navigation }: Props) {
                 dateLabel={dateLabelLong}
                 color={theme.color.text.primary}
                 subtitleColor={theme.color.text.subtler}
-                scrollY={scrollY}
+                progress={largeProgress}
               />
             </View>
             <TodaySessionCard session={todaySession} />
@@ -314,13 +325,11 @@ export function TodayScreen({ navigation }: Props) {
           onEmergency={() => navigation.navigate('Emergency')}
           onSearch={() => navigation.navigate('Search')}
           onNotifications={() =>
-            navigation.dispatch(
-              CommonActions.navigate('Account', { screen: 'Notifications' }),
-            )
+            navigation.dispatch(CommonActions.navigate('Notifications'))
           }
           onProfile={() => navigation.dispatch(CommonActions.navigate('Account'))}
           dateLabel={dateLabelShort}
-          scrollY={scrollY}
+          greetingProgress={compactProgress}
         />
       </View>
 

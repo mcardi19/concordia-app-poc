@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     borderRadius: META_CHEVRON_SIZE / 2,
   },
   metaChevronIcon: {
-    transform: [{ translateX: 2 }],
+    transform: [{ translateX: -2 }],
   },
   placeTimeRow: {
     flexDirection: 'row',

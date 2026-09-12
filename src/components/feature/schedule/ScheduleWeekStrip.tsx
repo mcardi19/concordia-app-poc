@@ -69,7 +69,9 @@ const WEEKDAY_HEADER_HEIGHT = 20;
 const MONTH_ROWS = 6;
 const MONTH_PAGE_HEIGHT = MONTH_ROWS * DAY_ROW_HEIGHT;
 /* The animated height is set on the padded root, so it has to carry the padding. */
-const ROOT_VERTICAL_PADDING = 14 * 2;
+const ROOT_PADDING_TOP = 14;
+const ROOT_PADDING_BOTTOM = 4;
+const ROOT_VERTICAL_PADDING = ROOT_PADDING_TOP + ROOT_PADDING_BOTTOM;
 /** Weekday row stays fixed; only the day numbers page under it. */
 const COLLAPSED_HEIGHT =
   WEEKDAY_HEADER_HEIGHT + DAY_ROW_HEIGHT + ROOT_VERTICAL_PADDING;
@@ -175,7 +177,6 @@ function DayCell({
 }: {
   date: Date;
   selected: boolean;
-  /** Calendar "today" — kept visible in the month grid even when not selected. */
   today?: boolean;
   /** Bumps when the selected day changes, including from the timetable pager. */
   pulseId: number;
@@ -203,10 +204,11 @@ function DayCell({
   const cellStamp = utcDay(date);
 
   /**
-   * Resting fill is a React style, not a worklet. Expanding the month remounts
-   * these cells, and a newly mounted `useAnimatedStyle` can sit at its default
-   * (transparent) until some SharedValue ticks — which is why the selected
-   * circle vanished on the grid. Pager interpolation only overrides mid-swipe.
+   * Resting fill and number opacity are React styles. Expanding the month
+   * remounts these cells; a newly mounted `useAnimatedStyle` that sets
+   * `backgroundColor` starts at transparent and overrides the selected circle
+   * until some SharedValue ticks. Pager interpolation only runs mid-swipe,
+   * and only then is allowed to own those properties.
    */
   const circleStyle = useAnimatedStyle(() => {
     const progress = pagerProgress.value;
@@ -215,10 +217,7 @@ function DayCell({
     const scale =
       pressScale.value * (traveling ? pagerNumberScale(progress, offset, stepDays) : 1);
     if (!traveling) {
-      return {
-        backgroundColor: selected ? primary : idleFill,
-        transform: [{ scale }],
-      };
+      return { transform: [{ scale }] };
     }
     return {
       backgroundColor: interpolateColor(
@@ -230,10 +229,14 @@ function DayCell({
     };
   });
 
+  const restFillStyle = useAnimatedStyle(() => ({
+    opacity: Math.abs(pagerProgress.value) > 0.05 ? 0 : 1,
+  }));
+
   const idleNumberStyle = useAnimatedStyle(() => {
     const progress = pagerProgress.value;
     if (Math.abs(progress) < 0.05) {
-      return { opacity: selected ? 0 : 1 };
+      return {};
     }
     const offset = dayOffsetFromStamp(cellStamp, selectedStamp.value);
     return { opacity: 1 - daySelectionFill(progress, offset, stepDays) };
@@ -242,7 +245,7 @@ function DayCell({
   const selectedNumberStyle = useAnimatedStyle(() => {
     const progress = pagerProgress.value;
     if (Math.abs(progress) < 0.05) {
-      return { opacity: selected ? 1 : 0 };
+      return {};
     }
     const offset = dayOffsetFromStamp(cellStamp, selectedStamp.value);
     return { opacity: daySelectionFill(progress, offset, stepDays) };
@@ -294,23 +297,28 @@ function DayCell({
         style={[
           styles.circle,
           showLetter ? null : styles.circleFlush,
-          { backgroundColor: selected ? primary : 'transparent' },
           circleStyle,
         ]}
       >
-        {today && !selected ? (
-          <View
-            pointerEvents="none"
-            style={[styles.todayRing, { borderColor: primary }]}
-          />
-        ) : null}
+        {/*
+          Resting selection is a plain view, not an animated backgroundColor.
+          Month expand remounts these cells; a worklet-owned fill starts
+          transparent and swallows the brand circle until a SharedValue ticks.
+        */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.circleFill,
+            { backgroundColor: selected ? primary : 'transparent' },
+            scrollProgress ? restFillStyle : null,
+          ]}
+        />
         <Animated.Text
           style={[
             styles.dayNum,
             styles.dayNumIdle,
-            today && !selected ? { color: primary, fontWeight: '700' } : null,
             { opacity: selected ? 0 : 1 },
-            idleNumberStyle,
+            scrollProgress ? idleNumberStyle : null,
           ]}
         >
           {date.getDate()}
@@ -320,7 +328,7 @@ function DayCell({
             styles.dayNum,
             styles.dayNumSelected,
             { opacity: selected ? 1 : 0 },
-            selectedNumberStyle,
+            scrollProgress ? selectedNumberStyle : null,
           ]}
         >
           {date.getDate()}
@@ -540,7 +548,6 @@ export function ScheduleWeekStrip({
                     today={utcDay(date) === todayStamp}
                     pulseId={pulseId}
                     stepDays={stepDays}
-                    scrollProgress={scrollProgress}
                     selectedStamp={selectedStampSv}
                     onPress={() => onSelectDate(date)}
                     showLetter={false}
@@ -552,7 +559,7 @@ export function ScheduleWeekStrip({
         </View>
       );
     },
-    [selectedDate, todayStamp, onSelectDate, pulseId, stepDays, scrollProgress, selectedStampSv],
+    [selectedDate, todayStamp, onSelectDate, pulseId, stepDays, selectedStampSv],
   );
 
   const getMonthLayout = useCallback(
@@ -674,7 +681,8 @@ export function ScheduleWeekStrip({
 
 const styles = StyleSheet.create({
   root: {
-    paddingVertical: 14,
+    paddingTop: ROOT_PADDING_TOP,
+    paddingBottom: ROOT_PADDING_BOTTOM,
     overflow: 'hidden',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: scheduleTheme.mastheadBorder,
@@ -728,14 +736,7 @@ const styles = StyleSheet.create({
   circleFlush: {
     marginTop: 0,
   },
-  todayRing: {
-    ...StyleSheet.absoluteFillObject,
-    borderWidth: 1.5,
-    borderRadius: CIRCLE / 2,
-    borderCurve: 'continuous',
-  },
   circle: {
-    overflow: 'visible',
     width: CIRCLE,
     height: CIRCLE,
     borderRadius: CIRCLE / 2,
@@ -743,5 +744,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 6,
+  },
+  circleFill: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: CIRCLE / 2,
+    borderCurve: 'continuous',
   },
 });

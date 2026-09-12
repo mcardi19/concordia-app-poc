@@ -3,8 +3,8 @@ import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 /**
  * Dismiss the Account modal from any nested Me screen.
  *
- * `goBack()` on the Me stack only pops Notifications → Me home. Walking up
- * until the parent owns the `Account` route pops the modal itself.
+ * `goBack()` on the Me stack only pops Settings → Me home. Walking up until
+ * the parent owns the `Account` route pops the modal itself.
  */
 export function dismissAccountModal(navigation: NavigationProp<ParamListBase>) {
   let current: NavigationProp<ParamListBase> | undefined = navigation;

@@ -1,5 +1,6 @@
 import React, { useMemo, type ReactNode } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MsIconDefinition } from 'material-symbols-react-native';
 import { GlassView } from 'expo-glass-effect';
@@ -40,16 +41,16 @@ type Props = {
   onNotifications: () => void;
   onProfile: () => void;
   dateLabel: string;
-  scrollY: Animated.Value;
+  greetingProgress: SharedValue<number>;
 };
 
 /**
  * Home top chrome, rendered by the screen rather than the navigator (Today
  * sets `headerShown: false`).
  *
- * Order, leading → trailing: Emergency, the compact greeting (fades in on
- * scroll), then Search + Notifications (one shared glass pill) and the
- * profile initials badge.
+ * Order, leading → trailing: the profile initials badge, the compact
+ * greeting (timed fade once the large title reaches the header), then
+ * Search + Notifications (one shared glass pill) and Emergency.
  */
 export function HomeHeaderBar({
   onEmergency,
@@ -57,7 +58,7 @@ export function HomeHeaderBar({
   onNotifications,
   onProfile,
   dateLabel,
-  scrollY,
+  greetingProgress,
 }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -73,20 +74,14 @@ export function HomeHeaderBar({
       style={[styles.container, { paddingTop: insets.top + HOME_HEADER_TOP_GAP }]}
     >
       <View style={styles.row}>
-        <GlassActionButton
-          icon={msSecuritySemibold}
-          accessibilityLabel="Emergency and crisis help"
-          onPress={onEmergency}
-          glass={glass}
-          tint={theme.color.primary}
-        />
+        <ProfileInitialsButton initials={initials} onPress={onProfile} glass={glass} />
 
         <HomeGreetingCompact
           inline
           dateLabel={dateLabel}
           color={theme.color.text.primary}
           subtitleColor={theme.color.text.subtler}
-          scrollY={scrollY}
+          progress={greetingProgress}
         />
 
         <View style={styles.pairWrap}>
@@ -117,7 +112,13 @@ export function HomeHeaderBar({
           </View>
         </View>
 
-        <ProfileInitialsButton initials={initials} onPress={onProfile} glass={glass} />
+        <GlassActionButton
+          icon={msSecuritySemibold}
+          accessibilityLabel="Emergency and crisis help"
+          onPress={onEmergency}
+          glass={glass}
+          tint={theme.color.primary}
+        />
       </View>
     </View>
   );

@@ -169,7 +169,6 @@ export function TodayCampusCarousel({ items, onPress }: CampusProps) {
           >
             <CampusEventCard
               item={item}
-              radius={theme.radius.lg}
               compact
               added={added}
               onToggleAdd={() => {

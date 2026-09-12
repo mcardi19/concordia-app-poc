@@ -1,13 +1,6 @@
-import React, { useMemo, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
-import { useHeaderHeight } from '@react-navigation/elements';
+import React from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/design-system';
-import {
-  CURTAIN_BLUR_DEPTH,
-  CURTAIN_FADE_DEPTH,
-  CURTAIN_FADE_IN,
-  ScrollCurtain,
-} from '@/components/design-system/ScrollCurtain';
 import { MaterialSymbol, msNotifications } from '@/components/icons';
 import { radiusStyle, useTheme } from '@/design-system/theme';
 import { semanticSpacing } from '@/design-system/tokens';
@@ -17,9 +10,10 @@ import {
   NOTIFICATION_CATEGORY_LABEL,
 } from './notificationsData';
 import { useMeTheme } from './meTheme';
-import type { MeStackScreenProps } from '@/navigation/types';
+import { InboxSheetChrome } from './InboxSheetChrome';
+import type { RootStackScreenProps } from '@/navigation/types';
 
-type Props = MeStackScreenProps<'NotificationDetail'>;
+type Props = RootStackScreenProps<'NotificationDetail'>;
 
 const ICON_SIZE = 52;
 
@@ -31,7 +25,7 @@ const ICON_SIZE = 52;
  * Marking read stays with the list — it owns that state, and it marks on the
  * same tap that brings you here.
  */
-export function NotificationDetailScreen({ route }: Props) {
+export function NotificationDetailScreen({ navigation, route }: Props) {
   const theme = useTheme();
   const me = useMeTheme();
   const { id } = route.params;
@@ -39,28 +33,22 @@ export function NotificationDetailScreen({ route }: Props) {
   const item = findNotification(id);
   const groupLabel = notificationGroupLabel(id);
 
-  const headerHeight = useHeaderHeight();
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const curtainOpacity = useMemo(
-    () =>
-      scrollY.interpolate({
-        inputRange: [...CURTAIN_FADE_IN, 9999],
-        outputRange: [0, 1, 1],
-        extrapolate: 'clamp',
-      }),
-    [scrollY],
-  );
-
   /* Defensive: the id comes from route params, which outlive the feed. */
   if (!item) {
     return (
-      <View style={[styles.root, styles.missing, { backgroundColor: me.pageBackground }]}>
-        <Text variant="body" style={{ color: me.headingText, fontWeight: '600' }}>
-          Notification unavailable
-        </Text>
-        <Text variant="bodySmall" style={[styles.missingBody, { color: me.metaText }]}>
-          This notification is no longer in your inbox.
-        </Text>
+      <View
+        collapsable={false}
+        style={[styles.root, { backgroundColor: me.pageBackground }]}
+      >
+        <InboxSheetChrome title="Notification" onBack={() => navigation.goBack()} />
+        <View style={styles.missing}>
+          <Text variant="body" style={{ color: me.headingText, fontWeight: '600' }}>
+            Notification unavailable
+          </Text>
+          <Text variant="bodySmall" style={[styles.missingBody, { color: me.metaText }]}>
+            This notification is no longer in your inbox.
+          </Text>
+        </View>
       </View>
     );
   }
@@ -68,16 +56,15 @@ export function NotificationDetailScreen({ route }: Props) {
   const received = groupLabel ? `${groupLabel} · ${item.time}` : item.time;
 
   return (
-    <View style={[styles.root, { backgroundColor: me.pageBackground }]}>
-      <Animated.ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: headerHeight + 8 }]}
+    <View
+      collapsable={false}
+      style={[styles.root, { backgroundColor: me.pageBackground }]}
+    >
+      <InboxSheetChrome title="" onBack={() => navigation.goBack()} />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
-        contentInsetAdjustmentBehavior="never"
       >
         <View style={[styles.icon, radiusStyle(14), { backgroundColor: `${theme.color.primary}1A` }]}>
           <MaterialSymbol icon={item.icon} size={26} color={theme.color.primary} />
@@ -128,15 +115,7 @@ export function NotificationDetailScreen({ route }: Props) {
             Manage notification types in Settings.
           </Text>
         </View>
-      </Animated.ScrollView>
-
-      <ScrollCurtain
-        color={me.pageBackground}
-        height={headerHeight + CURTAIN_FADE_DEPTH}
-        blurHeight={headerHeight + CURTAIN_BLUR_DEPTH}
-        blurred
-        opacity={curtainOpacity}
-      />
+      </ScrollView>
     </View>
   );
 }
@@ -145,11 +124,16 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: semanticSpacing.screenHorizontal,
+    paddingTop: 8,
     paddingBottom: 48,
   },
   missing: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: semanticSpacing.screenHorizontal,
