@@ -41,6 +41,19 @@ Then press `i` for iOS simulator or `a` for Android, or scan the QR code with **
 | `npm run lint` | Run ESLint                     |
 | `npm run format` | Format with Prettier           |
 | `npm run sync:buildings` | Regenerate `src/data/buildings/catalog.ts` from maps XML + overrides |
+| `npm run storybook` | Start on-device Storybook (iOS/Android dev client) |
+| `npm run storybook:web` | Start the browser workshop at http://localhost:6006 |
+| `npm run storybook:ios` | On-device Storybook on the iOS simulator |
+| `npm run storybook:android` | On-device Storybook on the Android emulator |
+
+### Storybook
+
+Two workshops share the same `src/components/**/*.stories.tsx` files:
+
+- **Browser:** `npm run storybook:web` → [http://localhost:6006](http://localhost:6006). This is Vite + `react-native-web`. `http://localhost:8081` is Metro, not this page.
+- **Device:** `npm run storybook`, then press **`i`** or **`a`**. Needed when a story depends on native modules.
+
+`npm start` is unchanged: on-device Storybook is only bundled when `STORYBOOK_ENABLED=true`. The first on-device run may need a native rebuild (`npm run ios` / `npm run android`) so datetime picker and slider are in the dev client.
 
 ## Tests
 

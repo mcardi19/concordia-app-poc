@@ -142,6 +142,7 @@ Rule: New features use existing navigation, design system, API client, auth, and
 
 - **Unit**: Utils, hooks, services (pure logic). Jest.
 - **Component**: Design system and key screens. React Native Testing Library; assert labels, roles, and token-driven styles where useful.
+- **Storybook**: Browser workshop (`npm run storybook:web`) plus on-device (`npm run storybook`) for design-system and feature components. Colocate `*.stories.tsx` with the component. Does not replace Jest.
 - **E2E**: Critical flows (e.g. login, home, one feature). Detox or Maestro; run on release branches or nightly.
 - **Coverage**: Define goals (e.g. 80% for utils/services); run Jest with coverage in CI. Document how to run each type in README.
 

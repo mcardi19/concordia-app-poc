@@ -4,7 +4,7 @@ import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
-  { ignores: ['node_modules/', '.expo/', 'dist/', 'coverage/'] },
+  { ignores: ['node_modules/', '.expo/', 'dist/', 'coverage/', '.rnstorybook/storybook.requires.ts'] },
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
